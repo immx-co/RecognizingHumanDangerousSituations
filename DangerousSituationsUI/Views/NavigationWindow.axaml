@@ -1,0 +1,55 @@
+<Window xmlns="https://github.com/avaloniaui"
+				xmlns:rxui="http://reactiveui.net"
+				xmlns:app="clr-namespace:DangerousSituationsUI"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:DangerousSituationsUI.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="DangerousSituationsUI.Views.NavigationWindow"
+        Title="Dangerous Situations Recognition Application"
+        MinHeight="900"
+        MinWidth="1600"
+        x:DataType="vm:NavigationViewModel"
+        Icon="/Assets/avalonia-logo.ico">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+      <StackPanel.Styles>
+        <Style Selector="StackPanel > :is(Control)">
+          <Setter Property="Margin" Value="2"/>
+        </Style>
+        <Style Selector="StackPanel > TextBlock">
+          <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+      </StackPanel.Styles>
+
+      <Button Content="Главное окно"
+              Command="{Binding GoMainWindow}"
+              IsEnabled="True"/>
+      <Button Content="Журнал событий для изображений"
+              Command="{Binding GoEventJournalWindow}"
+              IsEnabled="True"/>
+      <Button Content="Журнал событий для видео"
+              Command="{Binding GoVideoEventJournalWindow}"
+              IsEnabled="True"/>
+      <Button Content="Конфигурация"
+              Command="{Binding GoConfiguration}"
+              IsEnabled="True"/>
+    </StackPanel>
+
+    <rxui:RoutedViewHost Grid.Row="1" Router="{Binding Router}">
+      <rxui:RoutedViewHost.DefaultContent>
+      </rxui:RoutedViewHost.DefaultContent>
+      <rxui:RoutedViewHost.ViewLocator>
+        <!-- See AppViewLocator.cs section below -->
+        <app:AppViewLocator />
+      </rxui:RoutedViewHost.ViewLocator>
+    </rxui:RoutedViewHost>
+  </Grid>
+</Window>

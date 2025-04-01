@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:vm="using:DangerousSituationsUI.ViewModels"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DangerousSituationsUI.Views.VideoEventJournalView"
+             x:DataType="vm:VideoEventJournalViewModel">
+
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="600"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <StackPanel Grid.Column="0">
+      <ComboBox Width="600"
+                HorizontalAlignment="Stretch"
+                Margin="0, 13, 0, 13"
+                ItemsSource="{Binding VideoItems}"
+                SelectedItem="{Binding SelectedVideoItem}"/>
+      <Border Height="700"
+							Width="600">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto">
+          <ListBox ItemsSource="{Binding EventResults}"
+               SelectionMode="Single"
+               SelectedItem="{Binding SelectedEventResult}">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}"
+                       Margin="5" />
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </ScrollViewer>
+      </Border>
+    </StackPanel>
+
+    <StackPanel Grid.Column="1"
+								VerticalAlignment="Center"
+								HorizontalAlignment="Center">
+      <TextBlock Text="{Binding Title}"
+								 Margin="0 0 0 10"/>
+      <Grid Width="800"
+						Height="400">
+        <Border Background="Gainsboro">
+          <Image MaxWidth="800"
+								 MaxHeight="400"
+								 Source="{Binding CurrentImage}"
+								 RenderOptions.BitmapInterpolationMode="HighQuality">
+          </Image>
+        </Border>
+        <ItemsControl ItemsSource="{Binding RectItems}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Canvas>
+                <Border BorderBrush="{Binding Color}"
+										BorderThickness="2"
+										Width="{Binding Width}"
+										Height="{Binding Height}"
+										Canvas.Left="{Binding X}"
+										Canvas.Top="{Binding Y}"/>
+              </Canvas>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Grid>
+      <StackPanel Margin="0 10 0 0"
+						HorizontalAlignment="Left">
+        <ListBox ItemsSource="{Binding LegendItems}" MaxWidth="200">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Ellipse Width="15" Height="15" Fill="{Binding Color}"/>
+                <TextBlock Text="{Binding ClassName}"/>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </StackPanel>
+    </StackPanel>
+  </Grid>
+  
+</UserControl>

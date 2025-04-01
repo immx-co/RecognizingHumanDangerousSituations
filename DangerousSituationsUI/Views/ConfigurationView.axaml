@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DangerousSituationsUI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DangerousSituationsUI.Views.ConfigurationView"
+             x:DataType="vm:ConfigurationViewModel">
+
+  <Grid>
+    <StackPanel Width="400"
+					HorizontalAlignment="Left"
+					Margin="20">
+      <StackPanel Margin="0 0 0 10">
+        <Label Content="Строка подключения к базе данных:"/>
+        <TextBox Text="{Binding ConnectionString}"/>
+      </StackPanel>
+      <StackPanel Margin="0 0 0 10">
+        <Label Content="URL нейросетевого сервиса:"/>
+        <TextBox Text="{Binding Url}"/>
+      </StackPanel>
+      <StackPanel Margin="0 0 0 10">
+        <Label Content="Таймаут нейросетевого watcher:"/>
+        <TextBox Text="{Binding NeuralWatcherTimeout}"/>
+      </StackPanel>
+      <StackPanel>
+        <Label Content="Частота отправки кадров на нейросетевой сервис:"/>
+        <NumericUpDown Minimum="1"
+							   ShowButtonSpinner="False"
+							   Value="{Binding FrameRate}"/>
+      </StackPanel>
+    </StackPanel>
+    <StackPanel VerticalAlignment="Bottom"
+					HorizontalAlignment="Right"
+					Margin="20">
+      <Button Content="Сохранить"
+					Command="{Binding SaveConfigCommand}"/>
+    </StackPanel>
+  </Grid>
+  
+</UserControl>
