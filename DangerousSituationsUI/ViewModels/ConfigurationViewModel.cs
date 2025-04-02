@@ -1,4 +1,4 @@
-﻿using DangerousSituationsUI.Services;
+﻿using ClassLibrary.Services;
 using MsBox.Avalonia;
 using ReactiveUI;
 using Serilog;
@@ -6,6 +6,7 @@ using System.Reactive;
 using System.Threading.Tasks;
 using System.Threading;
 using System;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -21,6 +22,8 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
     private int _frameRate;
 
     private readonly ConfigurationService _configurationService;
+
+    HubConnectionWrapper _hubConnectionWrapper;
     #endregion
 
     #region View Model Settings
@@ -62,10 +65,11 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Constructors
-    public ConfigurationViewModel(IScreen screen, ConfigurationService configurationService)
+    public ConfigurationViewModel(IScreen screen, ConfigurationService configurationService, HubConnectionWrapper hubConnectionWrapper)
     {
         HostScreen = screen;
         _configurationService = configurationService;
+        _hubConnectionWrapper = hubConnectionWrapper;
 
         ConnectionString = _configurationService.GetConnectionString("dbStringConnection");
         Url = _configurationService.GetConnectionString("srsStringConnection");
@@ -73,33 +77,31 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
         FrameRate = _configurationService.GetFrameRate();
 
         SaveConfigCommand = ReactiveCommand.CreateFromTask(SaveConfig);
+
+        _hubConnectionWrapper.Connection.On("SaveConfigOk", () =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                ShowMessageBox("Success", $"Конфигурация успешно сохранена!");
+                return;
+            });
+        });
+
+        _hubConnectionWrapper.Connection.On("SaveConfigFailed", () =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                ShowMessageBox("Failed", "Возникла ошибка при сохранении конфигурации.");
+                return;
+            });
+        });
     }
     #endregion
 
     #region Private Methods
     private async Task SaveConfig()
     {
-        try
-        {
-            Log.Information("Save Configuration: Start");
-            Log.Debug("ConfigurationViewModel.SaveConfig: Start");
-            await _configurationService.UpdateAppSettingsAsync(appSettings =>
-            {
-                appSettings.ConnectionStrings.dbStringConnection = ConnectionString;
-                appSettings.ConnectionStrings.srsStringConnection = Url;
-                appSettings.NeuralWatcherTimeout = NeuralWatcherTimeout;
-                appSettings.FrameRate.Value = FrameRate;
-            });
-
-            ShowMessageBox("Success", $"Конфигурация успешно сохранена!");
-            Log.Information("Save Configuration: Done");
-            Log.Debug("ConfigurationViewModel.SaveConfig: Done");
-        }
-        catch (Exception ex)
-        {
-            ShowMessageBox("Failed", "Возникла ошибка при сохранении конфигурации.");
-            Log.Warning("ConfigurationViewModel.SaveConfig: Error; Message: Возникла ошибка при сохранении конфигурации.");
-        }
+        await _hubConnectionWrapper.SaveConfig(ConnectionString, Url, NeuralWatcherTimeout, FrameRate);
     }
     #endregion
 

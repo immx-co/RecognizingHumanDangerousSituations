@@ -4,6 +4,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
+using ClassLibrary.Services;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
 using DangerousSituationsUI.Services;
