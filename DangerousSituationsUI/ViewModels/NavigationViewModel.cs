@@ -27,7 +27,6 @@ public class NavigationViewModel : ReactiveObject
 
         GoMainWindow = ReactiveCommand.Create(NavigateToMainWindow);
         GoConfiguration = ReactiveCommand.Create(NavigateToConfigurationWindow);
-        GoEventJournalWindow = ReactiveCommand.Create(NavigateToEventJournalWindow);
         GoVideoEventJournalWindow = ReactiveCommand.Create(NavigateToVideoEventJournalWindow);
 
         Router.Navigate.Execute(_serviceProvider.GetRequiredService<MainViewModel>());
@@ -37,12 +36,6 @@ public class NavigationViewModel : ReactiveObject
     {
         CheckDisposedCancelletionToken();
         Router.Navigate.Execute(_serviceProvider.GetRequiredService<MainViewModel>());
-    }
-
-    private void NavigateToEventJournalWindow()
-    {
-        CheckDisposedCancelletionToken();
-        Router.Navigate.Execute(_serviceProvider.GetRequiredService<EventJournalViewModel>());
     }
 
     private void NavigateToVideoEventJournalWindow()

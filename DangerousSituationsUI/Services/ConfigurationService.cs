@@ -58,7 +58,6 @@ public class ConfigurationService
     public int GetFrameRate()
     {
         return FrameRate;
-        ;
     }
 
     public async Task UpdateAppSettingsAsync(Action<AppSettings> updateAction)

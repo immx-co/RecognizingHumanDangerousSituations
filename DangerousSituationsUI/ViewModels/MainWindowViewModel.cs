@@ -20,6 +20,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -28,23 +29,16 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     #region Private Fields
     private Bitmap? _currentImage;
 
-    private List<Bitmap?> _imageFilesBitmap = new();
-
-    private List<IStorageFile>? _imageFiles = new();
-
-    private IStorageFile? _videoFile;
-
     private List<Bitmap?> _frames = new();
 
     private string _currentFileName;
-
-    private string _frameTitle;
 
     private FilesService _filesService;
 
     private VideoService _videoService;
 
     private RectItemService _rectItemService;
+
     private readonly ConfigurationService _configurationService;
 
     private IServiceProvider _serviceProvider;
@@ -61,23 +55,16 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private bool _areConnectButtonEnabled = true;
 
-    private bool _isVideoSelected = false;
-
     private AvaloniaList<RectItem> _rectItems;
 
     private AvaloniaList<AvaloniaList<RectItem>> _rectItemsLists;
 
-    private int _currentNumberOfImage;
-
     private AvaloniaList<LegendItem> _legendItems;
 
     private int _currentNumberOfFrame;
-
-    private List<AvaloniaList<string>> _detections;
     #endregion
 
     #region Public Fields
-    public EventJournalViewModel _eventJournalViewModel;
 
     public VideoEventJournalViewModel _videoEventJournalViewModel;
     #endregion
@@ -120,12 +107,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         get => _currentFileName;
         set => this.RaiseAndSetIfChanged(ref _currentFileName, value);
-    }
-
-    public string FrameTitle
-    {
-        get => _frameTitle;
-        set => this.RaiseAndSetIfChanged(ref _frameTitle, value);
     }
 
     public ISolidColorBrush ConnectionStatus
@@ -179,7 +160,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         IServiceProvider serviceProvider,
         VideoService videoService,
         RectItemService rectItemService,
-        EventJournalViewModel eventJournalViewModel,
         VideoEventJournalViewModel videoEventJournalViewModel)
     {
         HostScreen = screen;
@@ -187,7 +167,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _videoService = videoService;
         _rectItemService = rectItemService;
         _serviceProvider = serviceProvider;
-        _eventJournalViewModel = eventJournalViewModel;
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _configurationService = configurationService;
 
@@ -206,56 +185,32 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         CanSwitchImages = false;
 
         ConnectCommand = ReactiveCommand.CreateFromTask(CheckHealthAsync);
-        SendImageCommand = ReactiveCommand.CreateFromTask(OpenImageFileAsync);
         SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         SendVideoCommand = ReactiveCommand.CreateFromTask(OpenVideoAsync);
-        ImageBackCommand = ReactiveCommand.Create(Previous);
-        ImageForwardCommand = ReactiveCommand.Create(Next);
+        ImageBackCommand = ReactiveCommand.Create(PreviousFrame);
+        ImageForwardCommand = ReactiveCommand.Create(NextFrame);
     }
     #endregion
 
     #region Command Methods
-    private async Task OpenImageFileAsync()
-    {
-        Log.Information("Start sending image file");
-        Log.Debug("MainViewModel.OpenImageFileAsync: Start");
-
-        try
-        {
-            var file = await _filesService.OpenImageFileAsync();
-            if (file != null)
-            {
-                await InitImagesAsync(new List<IStorageFile> { file });
-                CanSwitchImages = false;
-                _isVideoSelected = false;
-                FrameTitle = String.Empty;
-                InitEventJournal();
-            }
-        }
-        finally
-        {
-            IsLoading = false;
-            ProgressPercentage = 0;
-            Log.Information("End sending image file");
-            Log.Debug("MainViewModel.OpenImageFileAsync: Done");
-        }
-    }
-
     private async Task OpenFolderAsync()
     {
         Log.Information("Start sending folder");
         Log.Debug("MainViewModel.OpenFolderAsync: Start");
-
+        AreButtonsEnabled = false;
         try
         {
-            var files = await _filesService.OpenImageFolderAsync();
+            var files = await _filesService.OpenVideoFolderAsync();
             if (files != null)
             {
-                await InitImagesAsync(files);
-                CanSwitchImages = true;
-                _isVideoSelected = false;
-                FrameTitle = String.Empty;
-                InitEventJournal();
+                foreach(var file in files)
+                {
+                    CurrentFileName = file.Name;
+                    await InitFramesAsync(file);
+                    CurrentFileName = string.Empty;
+                    IsLoading = false;
+                    ProgressPercentage = 0;
+                }
             }
         }
         catch
@@ -264,13 +219,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.");
             return;
         }
-        finally
-        {
-            IsLoading = false;
-            ProgressPercentage = 0;
-            Log.Information("End sending folder");
-            Log.Debug("MainViewModel.OpenFolderAsync: Done");
-        }
+        finally { AreButtonsEnabled = true; }
     }
 
     private async Task OpenVideoAsync()
@@ -278,6 +227,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         Log.Information("Start sending video");
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
         _videoEventJournalViewModel.EventResults = new AvaloniaList<string>();
+        AreButtonsEnabled = false;
         try
         {
             var file = await _filesService.OpenVideoFileAsync();
@@ -285,174 +235,29 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             {
                 await InitFramesAsync(file);
                 CanSwitchImages = true;
-                _isVideoSelected = true;
-                FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
             }
-        }
-        finally
-        {
             IsLoading = false;
             ProgressPercentage = 0;
             await _videoEventJournalViewModel.FillComboBox();
             Log.Information("End sending video");
             Log.Debug("MainViewModel.OpenVideoAsync: Done");
         }
-    }
-
-    private void Next()
-    {
-        if (_isVideoSelected) NextFrame();
-        else NextImage();
-    }
-
-    private void Previous()
-    {
-        if (_isVideoSelected) PreviousFrame();
-        else PreviousImage();
+        catch 
+        {
+            string message = "Возникла ошибка на этапе обработки видео.";
+            ShowMessageBox("Error", message);
+            Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: {Message}", message);
+        }
+        finally { AreButtonsEnabled = true; }
     }
     #endregion
-
-    #region Image Methods
-    private async Task InitImagesAsync(List<IStorageFile> files)
-    {
-        Log.Debug("MainViewModel.InitImagesAsync: Start");
-        IsLoading = true;
-        var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
-        var filesBitmap = new List<Bitmap>();
-        int totalFiles = files.Count;
-        _detections = new();
-
-        for (int idx = 0; idx < totalFiles; idx++)
-        {
-            var file = files[idx];
-            var fileBitmap = new Bitmap(await file.OpenReadAsync());
-            filesBitmap.Add(fileBitmap);
-
-            var results = await GetImageDetectionResultsAsync(file, fileBitmap);
-            itemsLists.Add(results);
-
-            ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
-        }
-
-        _imageFilesBitmap = filesBitmap;
-        _rectItemsLists = itemsLists;
-        _imageFiles = files;
-
-        _currentNumberOfImage = 0;
-        SetImage();
-        Log.Debug("MainViewModel.InitImagesAsync: End");
-    }
-
-    private async Task<AvaloniaList<RectItem>> GetImageDetectionResultsAsync(IStorageFile file, Bitmap fileBitmap)
-    {
-        Log.Debug("MainViewModel.GetImageDetectionResultsAsync: Start");
-        List<RecognitionResult> detections = await GetImageRecognitionResultsAsync(file);
-        var items = new AvaloniaList<RectItem>();
-        var detectionList = new AvaloniaList<string>();
-        foreach (RecognitionResult det in detections)
-        {
-            try
-            {
-                items.Add(_rectItemService.InitRect(det, fileBitmap));
-                await SaveRecognitionResultAsync(det);
-                string eventLine = $"Class: {det.ClassName}; x: {det.X}; y: {det.Y}; width: {det.Width}; height: {det.Height}";
-                detectionList.Add(eventLine);
-            }
-            catch (Exception ex)
-            {
-                ShowMessageBox("Error", $"Ошибка при обработке детекции: {ex.Message}");
-                Log.Warning("MainViewModel.GetImageDetectionResultsAsync: Error; Message: {@Message}", ex.Message);
-            }
-        }
-        Log.Debug("MainViewModel.GetImageDetectionResultsAsync: Done");
-
-        _detections.Add(detectionList);
-
-        return items;
-    }
-
-    private async Task<List<RecognitionResult>> GetImageRecognitionResultsAsync(IStorageFile file)
-    {
-        Log.Debug("MainViewModel.GetImageRecognitionResultsAsync: Start");
-        string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
-        using (var client = new HttpClient())
-        {
-            try
-            {
-                using (var imageStream = await file.OpenReadAsync())
-                {
-                    var content = new MultipartFormDataContent();
-                    var imageContent = new StreamContent(imageStream);
-                    imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
-                    content.Add(imageContent, "image", file.Name);
-
-                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/inference", content);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var jsonResponse = await response.Content.ReadAsStringAsync();
-                        var result = JsonSerializer.Deserialize<DetectedAndClassifiedObject>(jsonResponse);
-
-                        if (result?.ObjectBbox != null)
-                        {
-                            return result.ObjectBbox.Select(bbox => new RecognitionResult
-                            {
-                                ClassName = bbox.ClassName,
-                                X = bbox.X,
-                                Y = bbox.Y,
-                                Width = bbox.Width,
-                                Height = bbox.Height
-                            }).ToList();
-                        }
-                    }
-                    else
-                    {
-                        ShowMessageBox("Error", $"Ошибка при отправке изображения: {response.StatusCode}");
-                        Log.Warning("MainViewModel.GetImageRecognitionResultsAsync: Error; Message: {@Message}", $"Ошибка при отправке изображения: {response.StatusCode}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowMessageBox("Error", $"Ошибка при отправке изображения: {ex.Message}");
-                Log.Warning("MainViewModel.GetImageRecognitionResultsAsync: Error; Message: {@Message}", ex.Message);
-            }
-        }
-        Log.Debug("MainViewModel.GetImageRecognitionResultsAsync: Done");
-        return new List<RecognitionResult>();
-    }
-
-    private void NextImage()
-    {
-        if (_currentNumberOfImage < _imageFilesBitmap.Count - 1) _currentNumberOfImage++;
-        else _currentNumberOfImage = 0;
-
-        SetImage();
-    }
-
-    private void PreviousImage()
-    {
-        if (_currentNumberOfImage > 0) _currentNumberOfImage--;
-        else _currentNumberOfImage = _imageFilesBitmap.Count - 1;
-
-        SetImage();
-    }
-
-    private void SetImage()
-    {
-        CurrentFileName = _imageFiles[_currentNumberOfImage].Name;
-        CurrentImage = _imageFilesBitmap[_currentNumberOfImage];
-        RectItems = _rectItemsLists[_currentNumberOfImage];
-    }
 
     private void ResetUI()
     {
         RectItems = new AvaloniaList<RectItem>();
         CurrentImage = null;
-        CurrentFileName = String.Empty;
-        FrameTitle = String.Empty;
+        CurrentFileName = String.Empty;        
     }
-    #endregion
 
     #region Video Methods
     private async Task InitializeVideoEventJournalWindow()
@@ -483,13 +288,11 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         await SaveDataIntoDatabase(file, frameNDetections);
 
-        _videoFile = file;
         _rectItemsLists = itemsLists;
         _frames = frames;
 
         CurrentFileName = file.Name;
         _currentNumberOfFrame = 0;
-        SetFrame();
         Log.Debug("MainViewModel.InitFramesAsync: End");
     }
 
@@ -642,8 +445,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         CurrentImage = _frames[_currentNumberOfFrame];
         RectItems = _rectItemsLists[_currentNumberOfFrame];
-
-        FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
     }
     #endregion
 
@@ -771,25 +572,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandard(caption, message);
         messageBoxStandardWindow.ShowAsync();
-    }
-    #endregion
-
-    #region Event Journal Methods
-    private void InitEventJournal()
-    {
-        var dictioanary = new Dictionary<string, Bitmap>();
-        AvaloniaList<string> names = new();
-        var eventResults = new Dictionary<string, AvaloniaList<string>>();
-        for (int i = 0; i < _imageFiles.Count; i++)
-        {
-            dictioanary.Add(_imageFiles[i].Name, _imageFilesBitmap[i]);
-            names.Add(_imageFiles[i].Name);
-            eventResults.Add(_imageFiles[i].Name, _detections[i]);
-        }
-        _eventJournalViewModel.ImagesDictionary = dictioanary;
-        _eventJournalViewModel.ImageNames = names;
-        _eventJournalViewModel.EventResults = eventResults;
-        _eventJournalViewModel.SelectedImageName = _eventJournalViewModel.ImageNames[0];
     }
     #endregion
 
