@@ -32,10 +32,7 @@
       <Button Content="Главное окно"
               Command="{Binding GoMainWindow}"
               IsEnabled="True"/>
-      <Button Content="Журнал событий для изображений"
-              Command="{Binding GoEventJournalWindow}"
-              IsEnabled="True"/>
-      <Button Content="Журнал событий для видео"
+      <Button Content="Журнал событий"
               Command="{Binding GoVideoEventJournalWindow}"
               IsEnabled="True"/>
       <Button Content="Конфигурация"

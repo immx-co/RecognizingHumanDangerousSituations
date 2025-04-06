@@ -63,7 +63,6 @@ namespace DangerousSituationsUI
                 servicesCollection.AddSingleton(configuration);
                 servicesCollection.AddSingleton<NavigationViewModel>();
                 servicesCollection.AddSingleton<MainViewModel>();
-                servicesCollection.AddSingleton<EventJournalViewModel>();
                 servicesCollection.AddSingleton<VideoEventJournalViewModel>();
                 servicesCollection.AddSingleton<ConfigurationViewModel>();
 

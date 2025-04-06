@@ -32,7 +32,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
     private string _selectedEventResult;
 
-    private List<VideoItemModel> _videoItems;
+    private List<VideoItemModel>? _videoItems;
 
     private VideoItemModel _selectedVideoItem;
 
@@ -88,7 +88,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         set => this.RaiseAndSetIfChanged(ref _legendItems, value);
     }
 
-    public List<VideoItemModel> VideoItems
+    public List<VideoItemModel>? VideoItems
     {
         get => _videoItems;
         set => this.RaiseAndSetIfChanged(ref _videoItems, value);
@@ -266,7 +266,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         Clear();
         try
         {
-            VideoItems.Clear();
+            VideoItems?.Clear();
         }
         catch (NullReferenceException ex)
         {
