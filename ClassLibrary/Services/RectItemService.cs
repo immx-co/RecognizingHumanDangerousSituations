@@ -1,7 +1,7 @@
 ﻿using Avalonia.Media.Imaging;
 using ClassLibrary.Database.Models;
 
-namespace DangerousSituationsUI.Services;
+namespace ClassLibrary.Services;
 
 public class RectItemService
 {

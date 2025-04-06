@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ClassLibrary.Services;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -257,7 +258,14 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         }).ToListAsync();
 
         VideoItems = videos;
-        SelectedVideoItem = VideoItems[0];
+        try
+        {
+            SelectedVideoItem = VideoItems[0];
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            ;
+        }
     }
 
     public void ClearUI()

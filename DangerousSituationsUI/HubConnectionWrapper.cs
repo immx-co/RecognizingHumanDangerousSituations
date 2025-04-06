@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
+﻿using Avalonia.Platform.Storage;
+using DangerousSituationsUI.Services;
+using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Threading.Tasks;
 
@@ -37,6 +39,13 @@ public class HubConnectionWrapper
     public async Task SaveConfig(string connectionString, string url, int neuralWatcherTimeout, int frameRate)
     {
         await Connection.InvokeAsync("SaveConfig", connectionString, url, neuralWatcherTimeout, frameRate);
+    }
+    #endregion
+
+    #region
+    public async Task OpenVideoAsync(IStorageFile choicedFile)
+    {
+        await Connection.InvokeAsync("OpenVideoAsync", choicedFile);
     }
     #endregion
 }

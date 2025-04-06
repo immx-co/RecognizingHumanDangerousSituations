@@ -21,6 +21,8 @@ namespace SignalRApplication
                     );
 
             builder.Services.AddSingleton<ConfigurationService>();
+            builder.Services.AddTransient<VideoService>();
+            builder.Services.AddTransient<RectItemService>();
 
             var app = builder.Build();
 

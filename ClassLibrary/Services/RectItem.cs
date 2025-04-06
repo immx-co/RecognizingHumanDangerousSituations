@@ -1,4 +1,4 @@
-﻿namespace DangerousSituationsUI.Services;
+﻿namespace ClassLibrary.Services;
 
 public class RectItem
 {

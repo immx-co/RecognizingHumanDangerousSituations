@@ -65,7 +65,10 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Constructors
-    public ConfigurationViewModel(IScreen screen, ConfigurationService configurationService, HubConnectionWrapper hubConnectionWrapper)
+    public ConfigurationViewModel(
+        IScreen screen, 
+        ConfigurationService configurationService, 
+        HubConnectionWrapper hubConnectionWrapper)
     {
         HostScreen = screen;
         _configurationService = configurationService;

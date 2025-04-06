@@ -21,6 +21,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -75,6 +76,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private int _currentNumberOfFrame;
 
     private List<AvaloniaList<string>> _detections;
+
+    HubConnectionWrapper _hubConnectionWrapper;
     #endregion
 
     #region Public Fields
@@ -181,7 +184,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         VideoService videoService,
         RectItemService rectItemService,
         EventJournalViewModel eventJournalViewModel,
-        VideoEventJournalViewModel videoEventJournalViewModel)
+        VideoEventJournalViewModel videoEventJournalViewModel,
+        HubConnectionWrapper hubConnectionWrapper)
     {
         HostScreen = screen;
         _filesService = filesService;
@@ -191,6 +195,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _eventJournalViewModel = eventJournalViewModel;
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _configurationService = configurationService;
+        _hubConnectionWrapper = hubConnectionWrapper;
 
         ConnectionStatus = Brushes.Gray;
         AreButtonsEnabled = false;
@@ -212,6 +217,100 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         SendVideoCommand = ReactiveCommand.CreateFromTask(OpenVideoAsync);
         ImageBackCommand = ReactiveCommand.Create(Previous);
         ImageForwardCommand = ReactiveCommand.Create(Next);
+
+        #region Hub Connection Callback Methods
+        _hubConnectionWrapper.Connection.On("VideoEventJournalViewModelClear", () =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                _videoEventJournalViewModel.EventResults = new AvaloniaList<string>();
+            });
+        });
+
+        _hubConnectionWrapper.Connection.On("ShowProgressBar", () =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                IsLoading = true;
+            });
+        });
+
+        _hubConnectionWrapper.Connection.On<HttpResponseMessage>("ErrorWhenSendingVideo", (response) =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                ShowMessageBox("Error", $"Ошибка при отправке видео: {response.StatusCode}");
+            });
+        });
+
+        _hubConnectionWrapper.Connection.On<Exception>("ErrorProcessingDetection", (ex) =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                ShowMessageBox("Error", $"Ошибка при обработке детекции: {ex.Message}");
+            });
+        });
+
+        _hubConnectionWrapper.Connection.On<Exception>("ErrorWhenSendingVideoException", (ex) =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                ShowMessageBox("Error", $"Ошибка при отправке видео: {ex.Message}");
+            });
+        });
+
+        _hubConnectionWrapper.Connection.On<int>("UpdateProgressPercentage", (progressPercentage) =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                ProgressPercentage = progressPercentage;
+            });
+        });
+
+        _hubConnectionWrapper.Connection.On<IStorageFile,
+            AvaloniaList<AvaloniaList<RectItem>>,
+            List<Bitmap>,
+            string,
+            int>
+            ("InitFramesAsyncDoneSuccessfully", (
+            file,
+            itemsList,
+            frames,
+            currentFileName,
+            currentNumberOfFrame) =>
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    _videoFile = file;
+                    _rectItemsLists = itemsList;
+                    _frames = frames;
+                    CurrentFileName = currentFileName;
+                    _currentNumberOfFrame = currentNumberOfFrame;
+                    FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
+                    SetFrame();
+                });
+            });
+
+        _hubConnectionWrapper.Connection.On<bool, bool>
+            ("OpenVideoAsyncDoneSuccessfully", (canSwitchImages, isVideoSelected) =>
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    CanSwitchImages = canSwitchImages;
+                    _isVideoSelected = isVideoSelected;
+                });
+            });
+
+        _hubConnectionWrapper.Connection.On<bool, int>("OpenVideoAsyncFinally", (isLoading, progressPercentage) =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+            {
+                IsLoading = isLoading;
+                ProgressPercentage = progressPercentage;
+                await _videoEventJournalViewModel.FillComboBox();
+            });
+        });
+        #endregion
     }
     #endregion
 
@@ -278,26 +377,13 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         Log.Information("Start sending video");
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
-        _videoEventJournalViewModel.EventResults = new AvaloniaList<string>();
-        try
+        var file = await _filesService.OpenVideoFileAsync();
+        if (file != null)
         {
-            var file = await _filesService.OpenVideoFileAsync();
-            if (file != null)
-            {
-                await InitFramesAsync(file);
-                CanSwitchImages = true;
-                _isVideoSelected = true;
-                FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
-            }
+            await _hubConnectionWrapper.OpenVideoAsync(file);
         }
-        finally
-        {
-            IsLoading = false;
-            ProgressPercentage = 0;
-            await _videoEventJournalViewModel.FillComboBox();
-            Log.Information("End sending video");
-            Log.Debug("MainViewModel.OpenVideoAsync: Done");
-        }
+        Log.Information("End sending video");
+        Log.Debug("MainViewModel.OpenVideoAsync: Done");
     }
 
     private void Next()

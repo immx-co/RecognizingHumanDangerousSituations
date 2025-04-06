@@ -7,7 +7,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace DangerousSituationsUI.Services;
+namespace ClassLibrary.Services;
 
 public class VideoService
 {
