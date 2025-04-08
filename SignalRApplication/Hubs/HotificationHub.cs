@@ -63,18 +63,16 @@ public class HotificationHub : Hub
     #endregion
 
     #region Main Window View Model
-    public async Task OpenVideoAsync(IStorageFile? choicedFile)
+    public async Task OpenVideoAsync(string fileLocalPath, string videoFileName, string videoFilePath)
     {
         Log.Information("Start sending video");
         Log.Debug("NotificationHub.OpenVideoAsync: Start");
         await Clients.Caller.SendAsync("VideoEventJournalViewModelClear");
         try
         {
-            if (choicedFile != null)
-            {
-                await InitFramesAsync(choicedFile);
-                await Clients.Caller.SendAsync("OpenVideoAsyncDoneSuccessfully", true, true);
-            }
+            await InitFramesAsync(fileLocalPath, videoFileName, videoFilePath);
+            await Clients.Caller.SendAsync("OpenVideoAsyncDoneSuccessfully", true, true);
+            return;
         }
         finally
         {
@@ -86,12 +84,12 @@ public class HotificationHub : Hub
     #endregion
 
     #region Main Window View Model Private Methods
-    private async Task InitFramesAsync(IStorageFile file)
+    private async Task InitFramesAsync(string fileLocalPath, string videoFileName, string videoFilePath)
     {
         Log.Debug("NotificationHub.InitFramesAsync: Start");
         await Clients.Caller.SendAsync("ShowProgressBar");
         var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
-        var frames = await _videoService.GetFramesAsync(file);
+        var frames = await _videoService.GetFramesAsync(fileLocalPath);
 
         List<FrameNDetections> frameNDetections = new List<FrameNDetections>();
         int totalFiles = frames.Count();
@@ -108,8 +106,8 @@ public class HotificationHub : Hub
             });
         }
 
-        await SaveDataIntoDatabase(file, frameNDetections);
-        await Clients.Caller.SendAsync("InitFramesAsyncDoneSuccessfully", file, itemsLists, frames, file.Name, 0);
+        await SaveDataIntoDatabase(videoFileName, videoFilePath, frameNDetections);
+        await Clients.Caller.SendAsync("InitFramesAsyncDoneSuccessfully", itemsLists, frames, videoFileName, 0, fileLocalPath);
         Log.Debug("NotificationHub.InitFramesAsync: End");
     }
 
@@ -202,7 +200,7 @@ public class HotificationHub : Hub
 
     #region Data Base Methods
     // Переписать в дальнейшем на паттерн Repository
-    private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
+    private async Task<Video> SaveDataIntoDatabase(string videoFileName, string videoFilePath, List<FrameNDetections> framesNDetections)
     {
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Start");
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
@@ -244,8 +242,8 @@ public class HotificationHub : Hub
 
         Video videoModel = new Video
         {
-            VideoName = videoFile.Name,
-            FilePath = videoFile.Path.ToString(),
+            VideoName = videoFileName,
+            FilePath = videoFilePath,
             CreatedAt = DateTime.UtcNow,
             Frames = framesModel,
         };

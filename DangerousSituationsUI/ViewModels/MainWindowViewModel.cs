@@ -22,6 +22,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using ClassLibrary;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -77,7 +78,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private List<AvaloniaList<string>> _detections;
 
-    HubConnectionWrapper _hubConnectionWrapper;
+    private HubConnectionWrapper _hubConnectionWrapper;
+
+    private MutablePair<string, IStorageFile> _mappedVideoFiles = new MutablePair<string, IStorageFile>();
     #endregion
 
     #region Public Fields
@@ -267,29 +270,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             });
         });
 
-        _hubConnectionWrapper.Connection.On<IStorageFile,
-            AvaloniaList<AvaloniaList<RectItem>>,
-            List<Bitmap>,
-            string,
-            int>
-            ("InitFramesAsyncDoneSuccessfully", (
-            file,
-            itemsList,
-            frames,
-            currentFileName,
-            currentNumberOfFrame) =>
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                {
-                    _videoFile = file;
-                    _rectItemsLists = itemsList;
-                    _frames = frames;
-                    CurrentFileName = currentFileName;
-                    _currentNumberOfFrame = currentNumberOfFrame;
-                    FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
-                    SetFrame();
-                });
-            });
+        _hubConnectionWrapper.Connection.On<AvaloniaList<AvaloniaList<RectItem>>, List<Bitmap>, string, int, string>("InitFramesAsyncDoneSuccessfully", InitFramesAsyncDoneSuccessfully);
 
         _hubConnectionWrapper.Connection.On<bool, bool>
             ("OpenVideoAsyncDoneSuccessfully", (canSwitchImages, isVideoSelected) =>
@@ -377,10 +358,12 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         Log.Information("Start sending video");
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
-        var file = await _filesService.OpenVideoFileAsync();
+        IStorageFile? file = await _filesService.OpenVideoFileAsync();
         if (file != null)
         {
-            await _hubConnectionWrapper.OpenVideoAsync(file);
+            _mappedVideoFiles.Key = file.Path.LocalPath;
+            _mappedVideoFiles.Value = file;
+            await _hubConnectionWrapper.OpenVideoAsync(file.Path.LocalPath, file.Name, file.Path.ToString());
         }
         Log.Information("End sending video");
         Log.Debug("MainViewModel.OpenVideoAsync: Done");
@@ -542,171 +525,24 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Video Methods
+
+    private void InitFramesAsyncDoneSuccessfully(AvaloniaList<AvaloniaList<RectItem>> itemsList, List<Bitmap> frames, string currentFileName, int currentNumberOfFrame, string fileLocalPath)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            _rectItemsLists = itemsList;
+            _frames = frames;
+            _videoFile = _mappedVideoFiles.GetValue(fileLocalPath);
+            CurrentFileName = currentFileName;
+            _currentNumberOfFrame = currentNumberOfFrame;
+            FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
+            SetFrame();
+        });
+    }
+
     private async Task InitializeVideoEventJournalWindow()
     {
         await _videoEventJournalViewModel.FillComboBox();
-    }
-
-    private async Task InitFramesAsync(IStorageFile file)
-    {
-        Log.Debug("MainViewModel.InitFramesAsync: Start");
-        IsLoading = true;
-        var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
-        var frames = await _videoService.GetFramesAsync(file);
-
-        List<FrameNDetections> frameNDetections = new List<FrameNDetections>();
-        int totalFiles = frames.Count();
-        for (int idx = 0; idx < totalFiles; idx++)
-        {
-            var results = await GetFrameDetectionResultsAsync(frames[idx], idx + 1);
-            itemsLists.Add(results);
-            ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
-            frameNDetections.Add(new FrameNDetections
-            {
-                Frame = frames[idx],
-                Detections = results
-            });
-        }
-
-        await SaveDataIntoDatabase(file, frameNDetections);
-
-        _videoFile = file;
-        _rectItemsLists = itemsLists;
-        _frames = frames;
-
-        CurrentFileName = file.Name;
-        _currentNumberOfFrame = 0;
-        SetFrame();
-        Log.Debug("MainViewModel.InitFramesAsync: End");
-    }
-
-    private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
-    {
-        Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Start");
-        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
-
-        List<Frame> framesModel = new List<Frame>();
-        await Task.Run(() =>
-        {
-            foreach (FrameNDetections currentFrameNDetections in framesNDetections)
-            {
-                using var memoryStream = new MemoryStream();
-                currentFrameNDetections.Frame.Save(memoryStream);
-                byte[] frameBytes = memoryStream.ToArray();
-
-                var currentDetections = currentFrameNDetections.Detections.Select((detection) => new Detection
-                {
-                    ClassName = detection.Color switch
-                    {
-                        "Green" => "human",
-                        "Red" => "wind/sup-board",
-                        "Blue" => "bouy",
-                        "Yellow" => "sailboat",
-                        "Purple" => "kayak"
-                    },
-                    X = detection.X,
-                    Y = detection.Y,
-                    Width = detection.Width,
-                    Height = detection.Height
-                }).ToList();
-
-                Frame currentFrame = new Frame
-                {
-                    FrameData = frameBytes,
-                    CreatedAt = DateTime.UtcNow,
-                    Detections = currentDetections
-                };
-                framesModel.Add(currentFrame);
-            }
-        });
-
-        Video videoModel = new Video
-        {
-            VideoName = videoFile.Name,
-            FilePath = videoFile.Path.ToString(),
-            CreatedAt = DateTime.UtcNow,
-            Frames = framesModel,
-        };
-        var addedVideoEntity = db.Videos.Add(videoModel);
-        await db.SaveChangesAsync();
-        return addedVideoEntity.Entity;
-    }
-
-    private async Task<AvaloniaList<RectItem>> GetFrameDetectionResultsAsync(Bitmap frame, int numberOfFrame)
-    {
-        Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Start");
-        List<RecognitionResult> detections = await GetFrameRecognitionResultsAsync(frame, numberOfFrame);
-        var items = new AvaloniaList<RectItem>();
-
-        foreach (RecognitionResult det in detections)
-        {
-            try
-            {
-                items.Add(_rectItemService.InitRect(det, frame));
-                await SaveRecognitionResultAsync(det);
-            }
-            catch (Exception ex)
-            {
-                ShowMessageBox("Error", $"Ошибка при обработке детекции: {ex.Message}");
-                Log.Warning("MainViewModel.GetFrameDetectionResultsAsync: Error; Message: {@Message}", ex.Message);
-            }
-        }
-        Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Done");
-        return items;
-    }
-
-    private async Task<List<RecognitionResult>> GetFrameRecognitionResultsAsync(Bitmap frame, int numberOfFrame)
-    {
-        Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Start");
-        string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
-        using (var client = new HttpClient())
-        {
-            try
-            {
-                using (MemoryStream imageStream = new())
-                {
-                    frame.Save(imageStream);
-                    imageStream.Seek(0, SeekOrigin.Begin);
-
-                    var content = new MultipartFormDataContent();
-                    var imageContent = new StreamContent(imageStream);
-                    imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
-                    content.Add(imageContent, "image", $"frame{numberOfFrame}.img");
-
-                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/inference", content);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var jsonResponse = await response.Content.ReadAsStringAsync();
-                        var result = JsonSerializer.Deserialize<DetectedAndClassifiedObject>(jsonResponse);
-
-                        if (result?.ObjectBbox != null)
-                        {
-                            return result.ObjectBbox.Select(bbox => new RecognitionResult
-                            {
-                                ClassName = bbox.ClassName,
-                                X = bbox.X,
-                                Y = bbox.Y,
-                                Width = bbox.Width,
-                                Height = bbox.Height
-                            }).ToList();
-                        }
-                    }
-                    else
-                    {
-                        ShowMessageBox("Error", $"Ошибка при отправке видео: {response.StatusCode}");
-                        Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", $"Ошибка при отправке видео: {response.StatusCode}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowMessageBox("Error", $"Ошибка при отправке видео: {ex.Message}");
-                Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", ex.Message);
-            }
-        }
-        Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Done");
-        return new List<RecognitionResult>();
     }
 
     private void NextFrame()

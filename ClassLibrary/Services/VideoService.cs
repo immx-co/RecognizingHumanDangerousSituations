@@ -11,17 +11,17 @@ namespace ClassLibrary.Services;
 
 public class VideoService
 {
-    private readonly ConfigurationService _configurationService;
+    ConfigurationService _configurationService;
 
     public VideoService(ConfigurationService configurationService)
     {
         _configurationService = configurationService;
     }
 
-    public async Task<List<Bitmap>> GetFramesAsync(IStorageFile file)
+    public async Task<List<Bitmap>> GetFramesAsync(string fileLocalPath)
     {
         var bitmapImages = new List<Bitmap>();
-        var capture = new VideoCapture(file.Path.LocalPath);
+        var capture = new VideoCapture(fileLocalPath);
         var image = new Mat();
 
         int frameRate = _configurationService.GetFrameRate();

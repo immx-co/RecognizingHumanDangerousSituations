@@ -43,9 +43,9 @@ public class HubConnectionWrapper
     #endregion
 
     #region
-    public async Task OpenVideoAsync(IStorageFile choicedFile)
+    public async Task OpenVideoAsync(string fileLocalPath, string videoFileName, string videoFilePath)
     {
-        await Connection.InvokeAsync("OpenVideoAsync", choicedFile);
+        await Connection.InvokeAsync("OpenVideoAsync", fileLocalPath, videoFileName, videoFilePath);
     }
     #endregion
 }
