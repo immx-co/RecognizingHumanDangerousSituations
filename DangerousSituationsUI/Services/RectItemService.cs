@@ -1,5 +1,6 @@
 ﻿using Avalonia.Media.Imaging;
 using ClassLibrary.Database.Models;
+using ClassLibrary.Services;
 
 namespace DangerousSituationsUI.Services;
 

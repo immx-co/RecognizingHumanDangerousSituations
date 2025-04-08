@@ -1,5 +1,6 @@
 ﻿using Avalonia.Collections;
 using ClassLibrary.Database.Models;
+using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
 using ReactiveUI;
 using Serilog;

@@ -1,7 +1,9 @@
-﻿using ClassLibrary.Services;
+﻿using ClassLibrary.Database.Models;
+using ClassLibrary.Database;
+using ClassLibrary.Datacontracts;
+using ClassLibrary.Services;
 using Microsoft.AspNetCore.SignalR;
 using Serilog;
-using System;
 
 namespace SignalRApplication.Hubs;
 

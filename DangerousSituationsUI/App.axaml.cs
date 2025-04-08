@@ -5,6 +5,7 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using ClassLibrary;
 using ClassLibrary.Database;
+using ClassLibrary.Repository;
 using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
 using DangerousSituationsUI.ViewModels;
@@ -79,6 +80,8 @@ namespace DangerousSituationsUI
                     );
 
                 servicesCollection.AddSingleton<HubConnectionWrapper>();
+
+                servicesCollection.AddScoped<IRepository, Repository>();
 
                 ServiceProvider servicesProvider = servicesCollection.BuildServiceProvider();
 
