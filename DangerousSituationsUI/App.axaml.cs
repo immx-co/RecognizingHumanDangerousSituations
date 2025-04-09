@@ -1,22 +1,23 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using ClassLibrary;
+using ClassLibrary.Database;
+using ClassLibrary.Repository;
+using ClassLibrary.Services;
+using DangerousSituationsUI.Services;
 using DangerousSituationsUI.ViewModels;
-using System.Linq;
+using DangerousSituationsUI.Views;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
-using DangerousSituationsUI.Views;
-using DangerousSituationsUI.Services;
-using Avalonia.Controls;
-using Microsoft.Extensions.Configuration;
-using System;
-using ClassLibrary.Database;
-using ClassLibrary;
 using Serilog;
-using Microsoft.EntityFrameworkCore;
+using System;
 using System.IO;
-using Avalonia.Win32.Interop.Automation;
+using System.Linq;
 
 namespace DangerousSituationsUI
 {
@@ -71,9 +72,20 @@ namespace DangerousSituationsUI
                 servicesCollection.AddTransient<VideoService>();
                 servicesCollection.AddTransient<RectItemService>();
 
-                servicesCollection.AddDbContext<ApplicationContext>(options => options.UseNpgsql(configuration.GetConnectionString("dbStringConnection")), ServiceLifetime.Transient);
+                servicesCollection.AddDbContext<ApplicationContext>(options => 
+                    options.UseNpgsql(
+                        configuration.GetConnectionString("dbStringConnection")), 
+                        ServiceLifetime.Transient
+                    );
+
+                servicesCollection.AddSingleton<HubConnectionWrapper>();
+
+                servicesCollection.AddScoped<IRepository, Repository>();
 
                 ServiceProvider servicesProvider = servicesCollection.BuildServiceProvider();
+
+                servicesProvider.GetRequiredService<HubConnectionWrapper>().Start();
+                Log.Logger.Information("Оформлено подключение к хабу.");
 
                 desktop.MainWindow = new NavigationWindow
                 {

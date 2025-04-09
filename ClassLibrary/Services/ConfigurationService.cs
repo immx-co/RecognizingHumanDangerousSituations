@@ -1,11 +1,7 @@
-﻿using ClassLibrary;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.IO;
+﻿using Microsoft.Extensions.Configuration;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace DangerousSituationsUI.Services;
+namespace ClassLibrary.Services;
 
 public class ConfigurationService
 {
@@ -62,7 +58,7 @@ public class ConfigurationService
 
     public async Task UpdateAppSettingsAsync(Action<AppSettings> updateAction)
     {
-        var appSettingsPath = Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\", "appsettings.json");
+        var appSettingsPath = Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\..\\DangerousSituationsUI", "appsettings.json");
 
         var json = await File.ReadAllTextAsync(appSettingsPath);
 

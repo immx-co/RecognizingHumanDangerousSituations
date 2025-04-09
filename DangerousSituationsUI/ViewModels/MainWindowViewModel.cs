@@ -4,6 +4,8 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
+using ClassLibrary.Services;
+using ClassLibrary.Datacontracts;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
 using DangerousSituationsUI.Services;
@@ -20,7 +22,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
+using ClassLibrary.Repository;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -215,7 +217,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         }
         catch
         {
-            ShowMessageBox("Error", "В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.");
+            ShowMessageBox("Error", "В выбранной директории отсутcтвуют изображения или пристуствуют файлы с недопустимым расширением.");
             Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.");
             return;
         }
@@ -299,55 +301,57 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
     {
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Start");
-        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
-        List<Frame> framesModel = new List<Frame>();
-        await Task.Run(() =>
-        {
-            foreach (FrameNDetections currentFrameNDetections in framesNDetections)
-            {
-                using var memoryStream = new MemoryStream();
-                currentFrameNDetections.Frame.Save(memoryStream);
-                byte[] frameBytes = memoryStream.ToArray();
+        using var scope = _serviceProvider.CreateScope();
+        var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
 
-                var currentDetections = currentFrameNDetections.Detections.Select((detection) => new Detection
-                {
-                    ClassName = detection.Color switch
-                    {
-                        "Green" => "human",
-                        "Red" => "wind/sup-board",
-                        "Blue" => "bouy",
-                        "Yellow" => "sailboat",
-                        "Purple" => "kayak"
-                    },
-                    X = detection.X,
-                    Y = detection.Y,
-                    Width = detection.Width,
-                    Height = detection.Height
-                }).ToList();
-
-                Frame currentFrame = new Frame
-                {
-                    FrameData = frameBytes,
-                    CreatedAt = DateTime.UtcNow,
-                    Detections = currentDetections
-                };
-                framesModel.Add(currentFrame);
-            }
-        });
-
-        Video videoModel = new Video
+        // Создаем модель Video
+        var videoModel = new Video
         {
             VideoName = videoFile.Name,
             FilePath = videoFile.Path.ToString(),
             CreatedAt = DateTime.UtcNow,
-            Frames = framesModel,
+            Frames = new List<Frame>()
         };
-        var addedVideoEntity = db.Videos.Add(videoModel);
-        await db.SaveChangesAsync();
-        return addedVideoEntity.Entity;
-    }
 
+        foreach (var frameNDetection in framesNDetections)
+        {
+            using var memoryStream = new MemoryStream();
+            frameNDetection.Frame.Save(memoryStream);
+            byte[] frameBytes = memoryStream.ToArray();
+
+            var detections = frameNDetection.Detections.Select(detection => new Detection
+            {
+                ClassName = detection.Color switch
+                {
+                    "Green" => "human",
+                    "Red" => "wind/sup-board",
+                    "Blue" => "bouy",
+                    "Yellow" => "sailboat",
+                    "Purple" => "kayak"
+                },
+                X = detection.X,
+                Y = detection.Y,
+                Width = detection.Width,
+                Height = detection.Height
+            }).ToList();
+
+            var frame = new Frame
+            {
+                FrameData = frameBytes,
+                CreatedAt = DateTime.UtcNow,
+                Detections = detections
+            };
+
+            videoModel.Frames.Add(frame);
+        }
+
+        var addedVideo = await repository.AddVideoAsync(videoModel);
+        await repository.SaveChangesAsync();
+
+        Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Done");
+        return addedVideo;
+    }
     private async Task<AvaloniaList<RectItem>> GetFrameDetectionResultsAsync(Bitmap frame, int numberOfFrame)
     {
         Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Start");
@@ -607,13 +611,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         [JsonPropertyName("object_bbox")]
         public List<InferenceResult> ObjectBbox { get; set; }
-    }
-
-    public class FrameNDetections
-    {
-        public Bitmap Frame { get; set; }
-
-        public AvaloniaList<RectItem> Detections { get; set; }
     }
     #endregion
 }
