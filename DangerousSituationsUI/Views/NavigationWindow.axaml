@@ -30,6 +30,9 @@
       </StackPanel.Styles>
 
       <Button Content="Главное окно"
+              Command="{Binding GoInputApplicationWindow}"
+              IsEnabled="True"/>
+      <Button Content="Приложение"
               Command="{Binding GoMainWindow}"
               IsEnabled="True"/>
       <Button Content="Журнал событий"

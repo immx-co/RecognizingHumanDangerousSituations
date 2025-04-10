@@ -62,6 +62,7 @@ namespace DangerousSituationsUI
                 servicesCollection.AddSingleton<IScreen, IScreenRealization>();
 
                 servicesCollection.AddSingleton(configuration);
+                servicesCollection.AddSingleton<InputApplicationViewModel>();
                 servicesCollection.AddSingleton<NavigationViewModel>();
                 servicesCollection.AddSingleton<MainViewModel>();
                 servicesCollection.AddSingleton<VideoEventJournalViewModel>();

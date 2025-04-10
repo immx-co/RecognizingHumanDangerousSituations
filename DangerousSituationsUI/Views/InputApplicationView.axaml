@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DangerousSituationsUI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:InputApplicationViewModel"
+             x:Class="DangerousSituationsUI.Views.InputApplicationView">
+
+  <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+    <StackPanel Spacing="20" Width="400">
+      <TextBlock Text="Recognition Dangerous Situations"
+                 FontSize="24"
+                 FontWeight="Bold"
+                 HorizontalAlignment="Center"/>
+
+      <TextBlock Text="Система для автоматического распознавания опасных ситуаций с помощью компьютерного зрения"
+                 TextWrapping="Wrap"
+                 TextAlignment="Center"
+                 FontSize="14"
+                 HorizontalAlignment="Center"/>
+
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+        <Button Content="Вход" Width="110" HorizontalContentAlignment="Center"/>
+        <Button Content="Регистрация" Width="110" HorizontalContentAlignment="Center"/>
+      </StackPanel>
+    </StackPanel>
+  </Grid>
+  
+</UserControl>

@@ -20,6 +20,8 @@ public class NavigationViewModel : ReactiveObject
 
     public ReactiveCommand<Unit, Unit> GoConfiguration { get; }
 
+    public ReactiveCommand<Unit, Unit> GoInputApplicationWindow { get; }
+
     public NavigationViewModel(IScreen screenRealization, IServiceProvider serviceProvider)
     {
         Router = screenRealization.Router;
@@ -28,8 +30,9 @@ public class NavigationViewModel : ReactiveObject
         GoMainWindow = ReactiveCommand.Create(NavigateToMainWindow);
         GoConfiguration = ReactiveCommand.Create(NavigateToConfigurationWindow);
         GoVideoEventJournalWindow = ReactiveCommand.Create(NavigateToVideoEventJournalWindow);
+        GoInputApplicationWindow = ReactiveCommand.Create(NavigateToInputApplicationWindow);
 
-        Router.Navigate.Execute(_serviceProvider.GetRequiredService<MainViewModel>());
+        Router.Navigate.Execute(_serviceProvider.GetRequiredService<InputApplicationViewModel>());
     }
 
     private void NavigateToMainWindow()
@@ -48,6 +51,12 @@ public class NavigationViewModel : ReactiveObject
     {
         CheckDisposedCancelletionToken();
         Router.Navigate.Execute(_serviceProvider.GetRequiredService<ConfigurationViewModel>());
+    }
+
+    private void NavigateToInputApplicationWindow()
+    {
+        CheckDisposedCancelletionToken();
+        Router.Navigate.Execute(_serviceProvider.GetRequiredService<InputApplicationViewModel>());
     }
 
     private void CheckDisposedCancelletionToken()

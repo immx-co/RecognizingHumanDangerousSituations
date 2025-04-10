@@ -9,6 +9,7 @@ public class AppViewLocator : IViewLocator
 {
     public IViewFor ResolveView<T>(T viewModel, string contract = null) => viewModel switch
     {
+        InputApplicationViewModel context => new InputApplicationView { ViewModel = context },
         MainViewModel context => new MainView { ViewModel = context },
         VideoEventJournalViewModel context => new VideoEventJournalView { ViewModel = context },
         ConfigurationViewModel context => new ConfigurationView { ViewModel = context },
