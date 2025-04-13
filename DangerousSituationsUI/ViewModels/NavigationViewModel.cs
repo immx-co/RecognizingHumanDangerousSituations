@@ -1,11 +1,10 @@
-﻿using System.Reactive.Linq;
-using System.Linq;
+﻿using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
-using System.Reactive;
 using System;
-using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
+using System.Reactive;
 using System.Reactive.Disposables;
-using Avalonia.Collections;
+using System.Reactive.Linq;
 
 namespace DangerousSituationsUI.ViewModels;
 

@@ -1,12 +1,11 @@
 ﻿using ClassLibrary.Services;
+using Microsoft.AspNetCore.SignalR.Client;
 using MsBox.Avalonia;
 using ReactiveUI;
-using Serilog;
-using System.Reactive;
-using System.Threading.Tasks;
-using System.Threading;
 using System;
-using Microsoft.AspNetCore.SignalR.Client;
+using System.Reactive;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DangerousSituationsUI.ViewModels;
 

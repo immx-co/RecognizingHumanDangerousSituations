@@ -20,8 +20,8 @@ public class FilesService
             var files = folder?.GetItemsAsync().ToBlockingEnumerable();
             List<IStorageFile> storageFiles = new();
 
-            foreach(var file in files) if (file.Name.Split('.')[1] != "mp4") throw new Exception();
-            
+            foreach (var file in files) if (file.Name.Split('.')[1] != "mp4") throw new Exception();
+
             foreach (var file in files)
             {
                 if (file.Path.IsFile)

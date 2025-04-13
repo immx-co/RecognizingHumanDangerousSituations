@@ -1,8 +1,7 @@
-﻿using ClassLibrary.Services;
-using Avalonia.Media.Imaging;
+﻿using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using ClassLibrary.Services;
 using OpenCvSharp;
-using System;
 using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;

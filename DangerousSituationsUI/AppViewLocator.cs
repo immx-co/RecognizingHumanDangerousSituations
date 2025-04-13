@@ -1,7 +1,7 @@
 ﻿using DangerousSituationsUI.ViewModels;
 using DangerousSituationsUI.Views;
-using System;
 using ReactiveUI;
+using System;
 
 namespace DangerousSituationsUI;
 

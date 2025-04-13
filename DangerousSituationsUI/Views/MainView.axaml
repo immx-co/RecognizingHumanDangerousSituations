@@ -3,13 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="1600" d:DesignHeight="900"
              x:Class="DangerousSituationsUI.Views.MainView"
              x:DataType="vm:MainViewModel">
 
   <UserControl.Resources>
-    <StreamGeometry x:Key="chevron_left_regular">M31.8839 8.36612C32.372 8.85427 32.372 9.64573 31.8839 10.1339L18.0178 24L31.8839 37.8661C32.372 38.3543 32.372 39.1457 31.8839 39.6339C31.3957 40.122 30.6043 40.122 30.1161 39.6339L15.3661 24.8839C14.878 24.3957 14.878 23.6043 15.3661 23.1161L30.1161 8.36612C30.6043 7.87796 31.3957 7.87796 31.8839 8.36612Z</StreamGeometry>
-    <StreamGeometry x:Key="chevron_right_regular">M16.1161 39.6339C15.628 39.1457 15.628 38.3543 16.1161 37.8661L29.9822 24L16.1161 10.1339C15.628 9.64573 15.628 8.85427 16.1161 8.36612C16.6043 7.87796 17.3957 7.87796 17.8839 8.36612L32.6339 23.1161C33.122 23.6043 33.122 24.3957 32.6339 24.8839L17.8839 39.6339C17.3957 40.122 16.6043 40.122 16.1161 39.6339Z</StreamGeometry>
+	  <StreamGeometry x:Key="pause_regular">M17.75,7 C19.5449254,7 21,8.45507456 21,10.25 L21,37.75 C21,39.5449254 19.5449254,41 17.75,41 L12.25,41 C10.4550746,41 9,39.5449254 9,37.75 L9,10.25 C9,8.45507456 10.4550746,7 12.25,7 L17.75,7 Z M35.75,7 C37.5449254,7 39,8.45507456 39,10.25 L39,37.75 C39,39.5449254 37.5449254,41 35.75,41 L30.25,41 C28.4550746,41 27,39.5449254 27,37.75 L27,10.25 C27,8.45507456 28.4550746,7 30.25,7 L35.75,7 Z M17.75,9.5 L12.25,9.5 C11.8357864,9.5 11.5,9.83578644 11.5,10.25 L11.5,37.75 C11.5,38.1642136 11.8357864,38.5 12.25,38.5 L17.75,38.5 C18.1642136,38.5 18.5,38.1642136 18.5,37.75 L18.5,10.25 C18.5,9.83578644 18.1642136,9.5 17.75,9.5 Z M35.75,9.5 L30.25,9.5 C29.8357864,9.5 29.5,9.83578644 29.5,10.25 L29.5,37.75 C29.5,38.1642136 29.8357864,38.5 30.25,38.5 L35.75,38.5 C36.1642136,38.5 36.5,38.1642136 36.5,37.75 L36.5,10.25 C36.5,9.83578644 36.1642136,9.5 35.75,9.5 Z</StreamGeometry>
+	  <StreamGeometry x:Key="stop_regular">M19.25 4.5C19.3881 4.5 19.5 4.61193 19.5 4.75V19.25C19.5 19.3881 19.3881 19.5 19.25 19.5H4.75C4.61193 19.5 4.5 19.3881 4.5 19.25V4.75C4.5 4.61193 4.61193 4.5 4.75 4.5H19.25ZM4.75 3C3.7835 3 3 3.7835 3 4.75V19.25C3 20.2165 3.7835 21 4.75 21H19.25C20.2165 21 21 20.2165 21 19.25V4.75C21 3.7835 20.2165 3 19.25 3H4.75Z</StreamGeometry>
+	  <StreamGeometry x:Key="play_regular">M13.7501344,8.41212026 L38.1671892,21.1169293 C39.7594652,21.9454306 40.3786269,23.9078584 39.5501255,25.5001344 C39.2420737,26.0921715 38.7592263,26.5750189 38.1671892,26.8830707 L13.7501344,39.5878797 C12.1578584,40.4163811 10.1954306,39.7972194 9.36692926,38.2049434 C9.12586301,37.7416442 9,37.2270724 9,36.704809 L9,11.295191 C9,9.50026556 10.4550746,8.045191 12.25,8.045191 C12.6976544,8.045191 13.1396577,8.13766178 13.5485655,8.31589049 L13.7501344,8.41212026 Z M12.5961849,10.629867 L12.4856981,10.5831892 C12.4099075,10.5581 12.3303482,10.545191 12.25,10.545191 C11.8357864,10.545191 11.5,10.8809774 11.5,11.295191 L11.5,36.704809 C11.5,36.8253313 11.5290453,36.9440787 11.584676,37.0509939 C11.7758686,37.4184422 12.2287365,37.5613256 12.5961849,37.370133 L37.0132397,24.665324 C37.1498636,24.5942351 37.2612899,24.4828088 37.3323788,24.3461849 C37.5235714,23.9787365 37.380688,23.5258686 37.0132397,23.334676 L12.5961849,10.629867 Z</StreamGeometry>
   </UserControl.Resources>
   <Grid>
     <Grid.ColumnDefinitions>
@@ -52,41 +54,44 @@
         </StackPanel>
       </StackPanel>
       <StackPanel HorizontalAlignment="Center"
-						Orientation="Horizontal">
-        <Button Margin="0 0 5 0"
-						IsVisible="{Binding CanSwitchImages}"
-						Command="{Binding ImageBackCommand}">
-          <PathIcon Data="{StaticResource chevron_left_regular}"/>
-        </Button>
+				  Orientation="Vertical">
         <Grid Width="800"
-					  Height="400">
+			  Height="400">
           <Border Background="Gainsboro">
-            <Image MaxWidth="800"
-							   MaxHeight="400"
-							   Source="{Binding CurrentImage}"
-							   RenderOptions.BitmapInterpolationMode="HighQuality">
-            </Image>
+			  <vlc:VideoView MediaPlayer="{Binding MediaPlayer}">
+			  </vlc:VideoView>
           </Border>
-          <ItemsControl ItemsSource="{Binding RectItems}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Canvas>
-                  <Border BorderBrush="{Binding Color}"
-                      BorderThickness="2"
-                      Width="{Binding Width}"
-                      Height="{Binding Height}"
-                      Canvas.Left="{Binding X}"
-                      Canvas.Top="{Binding Y}"/>
-                </Canvas>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
         </Grid>
-        <Button Margin="5 0 0 0"
-						IsVisible="{Binding CanSwitchImages}"
-						Command="{Binding ImageForwardCommand}">
-          <PathIcon Data="{StaticResource chevron_right_regular}"/>
-        </Button>
+		  <StackPanel Orientation="Horizontal">
+			  <StackPanel HorizontalAlignment="Left"
+						  Orientation="Horizontal">
+				  <Border Background="{Binding StopButtonColor}">
+					  <Button Command="{Binding StopCommand}"
+							  IsEnabled="{Binding CanStop}">			 	  
+						  <PathIcon Data="{StaticResource stop_regular}"
+									Background="{Binding StopButtonColor}"/>				 
+					  </Button>
+				  </Border>
+				  <Border Background="{Binding PlayButtonColor}">
+					  <Button Command="{Binding PlayCommand}"
+							  IsEnabled="{Binding CanPlay}">
+						  <PathIcon Data="{StaticResource play_regular}"/>
+					  </Button>
+				  </Border>
+				  <Border Background="{Binding PauseButtonColor}">
+					  <Button Command="{Binding PauseCommand}"
+							  IsEnabled="{Binding CanPause}">
+						  <PathIcon Data="{StaticResource pause_regular}"
+									Background="{Binding PauseButtonColor}"/>
+					  </Button>
+				  </Border>
+			  </StackPanel>
+			  <StackPanel VerticalAlignment="Center"
+						  Margin="30 0 0 0">
+				  <TextBlock Text="{Binding VideoTime}"
+							 FontSize="20"/>
+			  </StackPanel>
+		  </StackPanel>
       </StackPanel>
       <Grid VerticalAlignment="Bottom"
 				  HorizontalAlignment="Center"
@@ -117,7 +122,7 @@
             <Ellipse Width="20" Height="20" Fill="{Binding ConnectionStatus}"/>
           </StackPanel>
         </StackPanel>
-      </Grid>
+	  </Grid>
     </StackPanel>
   </Grid>
 </UserControl>

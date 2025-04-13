@@ -75,9 +75,9 @@ namespace DangerousSituationsUI
                 servicesCollection.AddTransient<VideoService>();
                 servicesCollection.AddTransient<RectItemService>();
 
-                servicesCollection.AddDbContext<ApplicationContext>(options => 
+                servicesCollection.AddDbContext<ApplicationContext>(options =>
                     options.UseNpgsql(
-                        configuration.GetConnectionString("dbStringConnection")), 
+                        configuration.GetConnectionString("dbStringConnection")),
                         ServiceLifetime.Transient
                     );
 

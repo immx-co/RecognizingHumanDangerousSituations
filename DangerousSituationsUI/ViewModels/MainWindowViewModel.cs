@@ -4,11 +4,13 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
-using ClassLibrary.Services;
 using ClassLibrary.Datacontracts;
+using ClassLibrary.Repository;
+using ClassLibrary.Services;
+using DangerousSituationsUI.Services;
+using LibVLCSharp.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
-using DangerousSituationsUI.Services;
 using ReactiveUI;
 using Serilog;
 using System;
@@ -22,16 +24,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using ClassLibrary.Repository;
 
 namespace DangerousSituationsUI.ViewModels;
 
 public class MainViewModel : ReactiveObject, IRoutableViewModel
 {
     #region Private Fields
-    private Bitmap? _currentImage;
-
-    private List<Bitmap?> _frames = new();
 
     private string _currentFileName;
 
@@ -47,8 +45,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private ISolidColorBrush _connectionStatus;
 
-    private bool _canSwitchImages;
-
     private bool _isLoading;
 
     private int _progressPercentage;
@@ -57,13 +53,29 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private bool _areConnectButtonEnabled = true;
 
-    private AvaloniaList<RectItem> _rectItems;
-
-    private AvaloniaList<AvaloniaList<RectItem>> _rectItemsLists;
-
     private AvaloniaList<LegendItem> _legendItems;
 
-    private int _currentNumberOfFrame;
+    private AvaloniaList<string> _filesNames;
+
+    private AvaloniaList<IStorageFile> _files;
+
+    private LibVLC _libVLC = new LibVLC();
+
+    private MediaPlayer _mediaPlayer;
+
+    private bool _canPlay;
+
+    private bool _canPause;
+
+    private bool _canStop;
+
+    private string _playButtonColor;
+
+    private string _pauseButtonColor;
+
+    private string _stopButtonColor;
+
+    private string _videoTime;
     #endregion
 
     #region Public Fields
@@ -79,10 +91,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Commands
-    public ReactiveCommand<Unit, Unit> ImageBackCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> ImageForwardCommand { get; }
-
     public ReactiveCommand<Unit, Unit> SendImageCommand { get; }
 
     public ReactiveCommand<Unit, Unit> SendFolderCommand { get; }
@@ -90,21 +98,15 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     public ReactiveCommand<Unit, Unit> SendVideoCommand { get; }
 
     public ReactiveCommand<Unit, Unit> ConnectCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> PlayCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> PauseCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> StopCommand { get; }
     #endregion
 
     #region Properties
-    public AvaloniaList<RectItem> RectItems
-    {
-        get => _rectItems;
-        set => this.RaiseAndSetIfChanged(ref _rectItems, value);
-    }
-
-    public Bitmap? CurrentImage
-    {
-        get => _currentImage;
-        set => this.RaiseAndSetIfChanged(ref _currentImage, value);
-    }
-
     public string CurrentFileName
     {
         get => _currentFileName;
@@ -115,12 +117,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         get => _connectionStatus;
         private set => this.RaiseAndSetIfChanged(ref _connectionStatus, value);
-    }
-
-    public bool CanSwitchImages
-    {
-        get => _canSwitchImages;
-        set => this.RaiseAndSetIfChanged(ref _canSwitchImages, value);
     }
 
     public bool IsLoading
@@ -151,6 +147,60 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         get => _legendItems;
         set => this.RaiseAndSetIfChanged(ref _legendItems, value);
+    }
+
+    public MediaPlayer MediaPlayer
+    {
+        get => _mediaPlayer;
+        set => this.RaiseAndSetIfChanged(ref _mediaPlayer, value);
+    }
+
+    public AvaloniaList<string> FilesNames
+    {
+        get => _filesNames;
+        set => this.RaiseAndSetIfChanged(ref _filesNames, value);
+    }
+
+    public bool CanPlay
+    {
+        get => _canPlay;
+        set => this.RaiseAndSetIfChanged(ref _canPlay, value);
+    }
+
+    public bool CanPause
+    {
+        get => _canPause;
+        set => this.RaiseAndSetIfChanged(ref _canPause, value);
+    }
+
+    public bool CanStop
+    {
+        get => _canStop;
+        set => this.RaiseAndSetIfChanged(ref _canStop, value);
+    }
+
+    public string PlayButtonColor
+    {
+        get => _playButtonColor;
+        set => this.RaiseAndSetIfChanged(ref _playButtonColor, value);
+    }
+
+    public string StopButtonColor
+    {
+        get => _stopButtonColor;
+        set => this.RaiseAndSetIfChanged(ref _stopButtonColor, value);
+    }
+
+    public string PauseButtonColor
+    {
+        get => _pauseButtonColor;
+        set => this.RaiseAndSetIfChanged(ref _pauseButtonColor, value);
+    }
+
+    public string VideoTime
+    {
+        get => _videoTime;
+        set => this.RaiseAndSetIfChanged(ref _videoTime, value);
     }
     #endregion
 
@@ -184,13 +234,18 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             new LegendItem { ClassName = "kayak", Color = "Purple" }
         };
 
-        CanSwitchImages = false;
+        SetPauseFlag(false);
+        SetPlayFlag(false);
+        SetStopFlag(false);
+
+        VideoTime = GetVideoTimeString(0);
 
         ConnectCommand = ReactiveCommand.CreateFromTask(CheckHealthAsync);
         SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         SendVideoCommand = ReactiveCommand.CreateFromTask(OpenVideoAsync);
-        ImageBackCommand = ReactiveCommand.Create(PreviousFrame);
-        ImageForwardCommand = ReactiveCommand.Create(NextFrame);
+        PlayCommand = ReactiveCommand.Create(PlayVideo);
+        PauseCommand = ReactiveCommand.Create(PauseVideo);
+        StopCommand = ReactiveCommand.Create(StopVideo);
     }
     #endregion
 
@@ -205,7 +260,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             var files = await _filesService.OpenVideoFolderAsync();
             if (files != null)
             {
-                foreach(var file in files)
+                foreach (var file in files)
                 {
                     CurrentFileName = file.Name;
                     await InitFramesAsync(file);
@@ -233,18 +288,25 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         try
         {
             var file = await _filesService.OpenVideoFileAsync();
+
             if (file != null)
             {
                 await InitFramesAsync(file);
-                CanSwitchImages = true;
+                _files = [file];
+
+                await _videoEventJournalViewModel.FillComboBox();
+
+                using var media = new Media(_libVLC, _files[0].Path);
+                SetMediaPlayer(media);
             }
+
             IsLoading = false;
             ProgressPercentage = 0;
-            await _videoEventJournalViewModel.FillComboBox();
+
             Log.Information("End sending video");
             Log.Debug("MainViewModel.OpenVideoAsync: Done");
         }
-        catch 
+        catch
         {
             string message = "Возникла ошибка на этапе обработки видео.";
             ShowMessageBox("Error", message);
@@ -252,13 +314,32 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         }
         finally { AreButtonsEnabled = true; }
     }
+
+    private void PlayVideo()
+    {
+        MediaPlayer.Play();
+    }
+
+    private void PauseVideo()
+    {
+        MediaPlayer.Pause();
+    }
+
+    private void StopVideo()
+    {
+        MediaPlayer?.Stop();
+
+        VideoTime = GetVideoTimeString(0);
+
+        SetPlayFlag(true);
+        SetPauseFlag(false);
+        SetStopFlag(false);
+    }
     #endregion
 
     private void ResetUI()
     {
-        RectItems = new AvaloniaList<RectItem>();
-        CurrentImage = null;
-        CurrentFileName = String.Empty;        
+        CurrentFileName = String.Empty;
     }
 
     #region Video Methods
@@ -290,11 +371,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         await SaveDataIntoDatabase(file, frameNDetections);
 
-        _rectItemsLists = itemsLists;
-        _frames = frames;
-
         CurrentFileName = file.Name;
-        _currentNumberOfFrame = 0;
         Log.Debug("MainViewModel.InitFramesAsync: End");
     }
 
@@ -428,28 +505,60 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Done");
         return new List<RecognitionResult>();
     }
+    #endregion
 
-    private void NextFrame()
+    #region MediaPlayer Methods
+    public void SetMediaPlayer(Media media)
     {
-        if (_currentNumberOfFrame < _frames.Count - 1) _currentNumberOfFrame++;
-        else _currentNumberOfFrame = 0;
+        StopVideo();
 
-        SetFrame();
+        MediaPlayer = new(media);
+
+        MediaPlayer.Playing += (object? sender, EventArgs args) =>
+        {
+            SetPauseFlag(true);
+            SetPlayFlag(false);
+            SetStopFlag(true);
+        };
+        MediaPlayer.Paused += (object? sender, EventArgs args) =>
+        {
+            SetPauseFlag(false);
+            SetPlayFlag(true);
+            SetStopFlag(true);
+        };
+        MediaPlayer.EndReached += (object? sender, EventArgs args) =>
+        {
+            SetPauseFlag(false);
+            SetPlayFlag(false);
+            SetStopFlag(true);
+        };
+        MediaPlayer.TimeChanged += (object? sender, MediaPlayerTimeChangedEventArgs args) =>
+        {
+            VideoTime = GetVideoTimeString(args.Time);
+        };
     }
 
-    private void PreviousFrame()
+    private void SetPlayFlag(bool flag)
     {
-        if (_currentNumberOfFrame > 0) _currentNumberOfFrame--;
-        else _currentNumberOfFrame = _frames.Count - 1;
-
-        SetFrame();
+        CanPlay = flag;
+        PlayButtonColor = SetButtonColor(flag);
     }
 
-    private void SetFrame()
+    private void SetStopFlag(bool flag)
     {
-        CurrentImage = _frames[_currentNumberOfFrame];
-        RectItems = _rectItemsLists[_currentNumberOfFrame];
+        CanStop = flag;
+        StopButtonColor = SetButtonColor(flag);
     }
+
+    private void SetPauseFlag(bool flag)
+    {
+        CanPause = flag;
+        PauseButtonColor = SetButtonColor(flag);
+    }
+
+    private string SetButtonColor(bool flag) => flag ? "LightGray" : "Gray";
+
+    private string GetVideoTimeString(long ms) => TimeSpan.FromMilliseconds(ms).ToString();
     #endregion
 
     #region Client Methods

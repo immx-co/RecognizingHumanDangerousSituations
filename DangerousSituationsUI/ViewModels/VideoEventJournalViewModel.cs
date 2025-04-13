@@ -1,9 +1,10 @@
 ﻿using Avalonia.Collections;
 using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
+using ClassLibrary.Services;
+using DangerousSituationsUI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using DangerousSituationsUI.Services;
 using ReactiveUI;
 using Serilog;
 using System;
@@ -12,7 +13,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ClassLibrary.Services;
 
 namespace DangerousSituationsUI.ViewModels;
 

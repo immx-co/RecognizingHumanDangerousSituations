@@ -2,18 +2,14 @@
 using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
 using Microsoft.Extensions.DependencyInjection;
+using MsBox.Avalonia;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
 using System.Reactive;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using MsBox.Avalonia;
-using Tmds.DBus.Protocol;
-using System.ComponentModel.DataAnnotations;
 
 namespace DangerousSituationsUI.ViewModels;
 
