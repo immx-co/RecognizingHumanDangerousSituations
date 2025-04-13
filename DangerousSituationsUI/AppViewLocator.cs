@@ -13,6 +13,8 @@ public class AppViewLocator : IViewLocator
         MainViewModel context => new MainView { ViewModel = context },
         VideoEventJournalViewModel context => new VideoEventJournalView { ViewModel = context },
         ConfigurationViewModel context => new ConfigurationView { ViewModel = context },
+        RegistrationViewModel context => new RegistrationView { ViewModel = context },
+        AuthorizationViewModel context => new AuthorizationView { ViewModel = context },
         _ => throw new ArgumentOutOfRangeException(nameof(viewModel))
     };
 }

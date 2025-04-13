@@ -4,14 +4,31 @@ using ReactiveUI;
 using System.Reactive;
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reactive.Disposables;
+using Avalonia.Collections;
 
 namespace DangerousSituationsUI.ViewModels;
 
-public class NavigationViewModel : ReactiveObject
+public class NavigationViewModel : ReactiveObject, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
     public RoutingState Router { get; }
 
+    #region Private Properties
+    private bool _isAppButtonsEnable = false;
+
+    private readonly CompositeDisposable _disposables = new CompositeDisposable();
+    #endregion
+
+    #region Public Properties
+    public bool IsAppButtonsEnable
+    {
+        get => _isAppButtonsEnable;
+        set => this.RaiseAndSetIfChanged(ref _isAppButtonsEnable, value);
+    }
+    #endregion
+
+    #region Public Commands
     public ReactiveCommand<Unit, Unit> GoMainWindow { get; }
 
     public ReactiveCommand<Unit, Unit> GoEventJournalWindow { get; }
@@ -21,6 +38,7 @@ public class NavigationViewModel : ReactiveObject
     public ReactiveCommand<Unit, Unit> GoConfiguration { get; }
 
     public ReactiveCommand<Unit, Unit> GoInputApplicationWindow { get; }
+    #endregion
 
     public NavigationViewModel(IScreen screenRealization, IServiceProvider serviceProvider)
     {
@@ -32,9 +50,18 @@ public class NavigationViewModel : ReactiveObject
         GoVideoEventJournalWindow = ReactiveCommand.Create(NavigateToVideoEventJournalWindow);
         GoInputApplicationWindow = ReactiveCommand.Create(NavigateToInputApplicationWindow);
 
+        Router.CurrentViewModel.Subscribe(currentVm =>
+        {
+            if (currentVm is InputApplicationViewModel)
+            {
+                IsAppButtonsEnable = false;
+            }
+        }).DisposeWith(_disposables);
+
         Router.Navigate.Execute(_serviceProvider.GetRequiredService<InputApplicationViewModel>());
     }
 
+    #region Private Methods
     private void NavigateToMainWindow()
     {
         CheckDisposedCancelletionToken();
@@ -70,4 +97,12 @@ public class NavigationViewModel : ReactiveObject
             }
         }
     }
+    #endregion
+
+    #region Public Methods
+    public void Dispose()
+    {
+        _disposables?.Dispose();
+    }
+    #endregion
 }

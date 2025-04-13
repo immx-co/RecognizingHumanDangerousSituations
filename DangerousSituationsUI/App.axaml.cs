@@ -67,6 +67,8 @@ namespace DangerousSituationsUI
                 servicesCollection.AddSingleton<MainViewModel>();
                 servicesCollection.AddSingleton<VideoEventJournalViewModel>();
                 servicesCollection.AddSingleton<ConfigurationViewModel>();
+                servicesCollection.AddSingleton<RegistrationViewModel>();
+                servicesCollection.AddSingleton<AuthorizationViewModel>();
 
                 servicesCollection.AddSingleton<ConfigurationService>();
                 servicesCollection.AddTransient<FilesService>();
@@ -80,6 +82,8 @@ namespace DangerousSituationsUI
                     );
 
                 servicesCollection.AddSingleton<HubConnectionWrapper>();
+
+                servicesCollection.AddSingleton<PasswordHasher>();
 
                 servicesCollection.AddScoped<IRepository, Repository>();
 

@@ -21,8 +21,8 @@
                  HorizontalAlignment="Center"/>
 
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-        <Button Content="Вход" Width="110" HorizontalContentAlignment="Center"/>
-        <Button Content="Регистрация" Width="110" HorizontalContentAlignment="Center"/>
+        <Button Command="{Binding GoAuthorization}" Content="Вход" Width="110" HorizontalContentAlignment="Center"/>
+        <Button Command="{Binding GoRegistration}" Content="Регистрация" Width="110" HorizontalContentAlignment="Center"/>
       </StackPanel>
     </StackPanel>
   </Grid>

@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:vm="using:DangerousSituationsUI.ViewModels"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DangerousSituationsUI.Views.RegistrationView"
+             x:DataType="vm:RegistrationViewModel">
+
+  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+    <StackPanel HorizontalAlignment="Center">
+      <TextBlock Text="Регистрация" Margin="0,0,0,20"/>
+    </StackPanel>
+    <TextBox Text="{Binding Nickname, Mode=TwoWay}" Width="200" Height="30" Watermark="Username" Margin="0, 5"/>
+    <TextBox Text="{Binding Password, Mode=TwoWay}" Width="200" Height="30" Watermark="Password" Margin="0, 5" PasswordChar="*"/>
+    <TextBox Text="{Binding Email, Mode=TwoWay}" Width="200" Height="30" Watermark="Email" Margin="0, 5, 0, 20"/>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+      <Button Content="Назад" Command="{Binding BackCommand}" Margin="15 0 " />
+      <Button Content="Зарегистрироваться" Command="{Binding RegistrationCommand}" />
+    </StackPanel>
+  </StackPanel>
+  
+</UserControl>

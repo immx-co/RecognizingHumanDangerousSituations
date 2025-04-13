@@ -34,13 +34,13 @@
               IsEnabled="True"/>
       <Button Content="Приложение"
               Command="{Binding GoMainWindow}"
-              IsEnabled="True"/>
+              IsEnabled="{Binding IsAppButtonsEnable}"/>
       <Button Content="Журнал событий"
               Command="{Binding GoVideoEventJournalWindow}"
-              IsEnabled="True"/>
+              IsEnabled="{Binding IsAppButtonsEnable}"/>
       <Button Content="Конфигурация"
               Command="{Binding GoConfiguration}"
-              IsEnabled="True"/>
+              IsEnabled="{Binding IsAppButtonsEnable}"/>
     </StackPanel>
 
     <rxui:RoutedViewHost Grid.Row="1" Router="{Binding Router}">
