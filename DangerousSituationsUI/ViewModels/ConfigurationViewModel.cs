@@ -1,5 +1,6 @@
 ﻿using ClassLibrary.Services;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using MsBox.Avalonia;
 using ReactiveUI;
 using System;
@@ -77,10 +78,14 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
 
         SaveConfigCommand = ReactiveCommand.CreateFromTask(SaveConfig);
 
-        _hubConnectionWrapper.Connection.On("SaveConfigOk", () =>
+        _hubConnectionWrapper.Connection.On<string, string, int, int>("SaveConfigOk", (dbStringConnection, srsStringConnection, neuralWatcherTimeout, frameRate) =>
         {
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
+                _configurationService.DbStringConnection = dbStringConnection;
+                _configurationService.SrsStringConnection = srsStringConnection;
+                _configurationService.NeuralWatcherTimeout = neuralWatcherTimeout;
+                _configurationService.FrameRate = frameRate;
                 ShowMessageBox("Success", $"Конфигурация успешно сохранена!");
                 return;
             });

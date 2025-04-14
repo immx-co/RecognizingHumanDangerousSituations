@@ -31,7 +31,10 @@ public class HotificationHub : Hub
                 appSettings.FrameRate.Value = frameRate;
             });
 
-            await Clients.Caller.SendAsync("SaveConfigOk");
+            await Clients.Caller.SendAsync("SaveConfigOk", _configurationService.GetConnectionString("dbStringConnection"), 
+                _configurationService.GetConnectionString("srsStringConnection"),
+                _configurationService.GetNeuralWatcherTimeout(), 
+                _configurationService.GetFrameRate());
             Log.Debug("HotificationHub.SaveConfig: Done.");
             return;
         }

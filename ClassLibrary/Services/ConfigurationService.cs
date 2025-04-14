@@ -5,16 +5,18 @@ namespace ClassLibrary.Services;
 
 public class ConfigurationService
 {
-    #region Private Fields
+    #region Private Properties
     private readonly IConfiguration _configuration;
+    #endregion
 
-    private string dbStringConnection;
+    #region Public Properties
+    public string DbStringConnection { get; set; }
 
-    private string srsStringConnection;
+    public string SrsStringConnection { get; set; }
 
-    private int NeuralWatcherTimeout;
+    public int NeuralWatcherTimeout { get; set; }
 
-    private int FrameRate;
+    public int FrameRate { get; set; }
     #endregion
 
     #region Constructor
@@ -22,8 +24,8 @@ public class ConfigurationService
     {
         _configuration = configuration;
 
-        dbStringConnection = _configuration.GetConnectionString("dbStringConnection");
-        srsStringConnection = _configuration.GetConnectionString("srsStringConnection");
+        DbStringConnection = _configuration.GetConnectionString("dbStringConnection");
+        SrsStringConnection = _configuration.GetConnectionString("srsStringConnection");
         NeuralWatcherTimeout = _configuration.GetSection("NeuralWatcherTimeout").Get<int>();
         FrameRate = Convert.ToInt32(_configuration.GetSection("FrameRate:Value").Value);
     }
@@ -34,11 +36,11 @@ public class ConfigurationService
     {
         if (name == "dbStringConnection")
         {
-            return dbStringConnection;
+            return DbStringConnection;
         }
         else if (name == "srsStringConnection")
         {
-            return srsStringConnection;
+            return SrsStringConnection;
         }
         else
         {
@@ -70,8 +72,8 @@ public class ConfigurationService
 
         await File.WriteAllTextAsync(appSettingsPath, updatedJson);
 
-        dbStringConnection = appSettings.ConnectionStrings.dbStringConnection;
-        srsStringConnection = appSettings.ConnectionStrings.srsStringConnection;
+        DbStringConnection = appSettings.ConnectionStrings.dbStringConnection;
+        SrsStringConnection = appSettings.ConnectionStrings.srsStringConnection;
         NeuralWatcherTimeout = appSettings.NeuralWatcherTimeout;
         FrameRate = appSettings.FrameRate.Value;
     }
