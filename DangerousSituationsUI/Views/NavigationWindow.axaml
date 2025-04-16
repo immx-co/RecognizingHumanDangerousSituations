@@ -34,13 +34,16 @@
               IsEnabled="True"/>
       <Button Content="Приложение"
               Command="{Binding GoMainWindow}"
-              IsEnabled="{Binding IsAppButtonsEnable}"/>
+              IsEnabled="{Binding IsAppButtonsEnable}"
+              IsVisible="{Binding IsAppButtonsEnable}"/>
       <Button Content="Журнал событий"
               Command="{Binding GoVideoEventJournalWindow}"
-              IsEnabled="{Binding IsAppButtonsEnable}"/>
+              IsEnabled="{Binding IsAppButtonsEnable}"
+              IsVisible="{Binding IsAppButtonsEnable}"/>
       <Button Content="Конфигурация"
               Command="{Binding GoConfiguration}"
-              IsEnabled="{Binding IsAppButtonsEnable}"/>
+              IsEnabled="{Binding IsAppButtonsEnable}"
+              IsVisible="{Binding IsAppButtonsEnable}"/>
       
       <Button Content="Пользователи"
               Command="{Binding GoUserManagement}"
