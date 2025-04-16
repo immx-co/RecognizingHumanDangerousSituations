@@ -78,6 +78,11 @@ namespace DangerousSituationsUI.ViewModels
                     user.UserAdmin = !isAdmin;
             }
         }
+
+        public void UpdateUsersList()
+        {
+            LoadUsers();
+        }
         #endregion
 
 

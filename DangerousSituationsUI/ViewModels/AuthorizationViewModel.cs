@@ -17,6 +17,8 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
 
     PasswordHasher _hasher;
 
+    UserManagementViewModel _userManagmentViewModel;
+
     #region View Model Settings
     public IScreen HostScreen { get; }
 
@@ -57,12 +59,13 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
 
     public ReactiveCommand<Unit, Unit> BackCommand { get; }
 
-    public AuthorizationViewModel(IScreen screen, IServiceProvider serviceProvider, PasswordHasher hasher)
+    public AuthorizationViewModel(IScreen screen, IServiceProvider serviceProvider, PasswordHasher hasher, UserManagementViewModel userManagmentViewModel)
     {
         HostScreen = screen;
 
         _serviceProvider = serviceProvider;
         _hasher = hasher;
+        _userManagmentViewModel = userManagmentViewModel;
 
         LoginCommand = ReactiveCommand.Create(Login);
         BackCommand = ReactiveCommand.Create(() =>
@@ -107,6 +110,8 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
         {
             _serviceProvider.GetRequiredService<NavigationViewModel>().IsAdminPrivilege = true;
         }
+
+        _userManagmentViewModel.UpdateUsersList();
     }
 
     private void ShowMessageBox(string caption, string message)
