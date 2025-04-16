@@ -695,12 +695,12 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private async Task SaveRecognitionResultAsync(RecognitionResult recognitionResult)
     {
         Log.Debug("MainViewModel.SaveRecognitionResultAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Start\n"; ;
+        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Start\n";
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
         db.RecognitionResults.AddRange(recognitionResult);
         await db.SaveChangesAsync();
         Log.Debug("MainViewModel.SaveRecognitionResultAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Done\n"; ;
+        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Done\n"; 
     }
     #endregion
 
