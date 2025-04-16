@@ -135,7 +135,9 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     private void Render()
     {
         Log.Information("Start render event journal image");
+        LogJournalViewModel.logString += "Start render event journal image\n";
         Log.Debug("EventJournalViewModel.Render: Start");
+        LogJournalViewModel.logString += "EventJournalViewModel.Render: Start\n";
         var result = ParseSelectedVideoEventResult();
         var resultVideoInitRectItem = VideoInitRectItem(result);
         if (resultVideoInitRectItem is null)
@@ -146,12 +148,15 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         CurrentImage = currentImage;
         Title = title.ToString();
         Log.Debug("EventJournalViewModel.Render: Done; Title: {@Title}; Event Result: {@VideoEventResult}", Title, result);
+        LogJournalViewModel.logString += ("EventJournalViewModel.Render: Done; Title: {@Title}; Event Result: {@VideoEventResult}\n", Title, result);
         Log.Information("End render event journal image");
+        LogJournalViewModel.logString += "End render event journal image\n";
     }
 
     private (Avalonia.Media.Imaging.Bitmap, Guid)? VideoInitRectItem(VideoEventResult videoEventResult)
     {
         Log.Debug("EventJournalViewModel.VideoInitRectItem: Start");
+        LogJournalViewModel.logString += "EventJournalViewModel.VideoInitRectItem: Start\n";
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
         var dbFrame = db.Frames.Where(frame => frame.FrameId == videoEventResult.Name).FirstOrDefault();
@@ -210,6 +215,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     private async Task DisplayVideoImages(VideoItemModel videoItem)
     {
         Log.Debug("EventJournalViewModel.DisplayVideoImages: Start");
+        LogJournalViewModel.logString += "EventJournalViewModel.DisplayVideoImages: Start\n";
         EventResults = new();
         Guid videoGuid = videoItem.VideoId;
 
@@ -249,6 +255,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     public async Task FillComboBox()
     {
         Log.Debug("VideoEventJournalViewModel.FillComboBox: Start");
+        LogJournalViewModel.logString += "VideoEventJournalViewModel.FillComboBox: Start\n";
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
         var videos = await db.Videos.Select((entity) => new VideoItemModel
@@ -271,6 +278,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     public void ClearUI()
     {
         Log.Debug("VideoEventJournalViewModel.ClearUI: Start");
+        LogJournalViewModel.logString += "VideoEventJournalViewModel.ClearUI: Start\n";
         Clear();
         try
         {
@@ -283,6 +291,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         EventResults.Clear();
         SelectedVideoItem = null;
         Log.Debug("VideoEventJournalViewModel.ClearUI: End");
+        LogJournalViewModel.logString += "VideoEventJournalViewModel.ClearUI: End\n";
     }
     #endregion
 

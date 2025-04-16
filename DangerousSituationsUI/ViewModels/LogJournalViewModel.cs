@@ -19,7 +19,7 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
 
     #region Private Fields
 
-    private string _logString;
+    public static string? logString;
 
     #endregion
 
@@ -34,8 +34,8 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
     #region Properties
     public string LogString
     {
-        get => _logString;
-        set => this.RaiseAndSetIfChanged(ref _logString, value);
+        get => logString;
+        set => this.RaiseAndSetIfChanged(ref logString, value);
     }
 
     #endregion
@@ -45,17 +45,11 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
     {
         HostScreen = screen;
         _serviceProvider = serviceProvider;
-        LogString += Log.Logger.ToString();
 
     }
     #endregion
 
     #region Public Methodes
-
-    public void AddLogString(string log)
-    {
-        LogString += log;
-    }
 
     #endregion
 
