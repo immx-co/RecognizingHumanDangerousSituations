@@ -41,6 +41,12 @@
       <Button Content="Конфигурация"
               Command="{Binding GoConfiguration}"
               IsEnabled="{Binding IsAppButtonsEnable}"/>
+      
+      <Button Content="Пользователи"
+              Command="{Binding GoUserManagement}"
+              IsEnabled="{Binding IsAdminPrivilege}"
+              IsVisible="{Binding IsAdminPrivilege}"/>
+      
     </StackPanel>
 
     <rxui:RoutedViewHost Grid.Row="1" Router="{Binding Router}">

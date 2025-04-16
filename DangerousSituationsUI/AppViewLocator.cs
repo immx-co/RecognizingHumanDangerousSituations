@@ -15,6 +15,7 @@ public class AppViewLocator : IViewLocator
         ConfigurationViewModel context => new ConfigurationView { ViewModel = context },
         RegistrationViewModel context => new RegistrationView { ViewModel = context },
         AuthorizationViewModel context => new AuthorizationView { ViewModel = context },
+        UserManagementViewModel context => new UserManagementView { ViewModel = context },
         _ => throw new ArgumentOutOfRangeException(nameof(viewModel))
     };
 }

@@ -15,6 +15,7 @@ public class NavigationViewModel : ReactiveObject, IDisposable
 
     #region Private Properties
     private bool _isAppButtonsEnable = false;
+    private bool _isAdminPrivilege = false;
 
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
     #endregion
@@ -24,6 +25,11 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     {
         get => _isAppButtonsEnable;
         set => this.RaiseAndSetIfChanged(ref _isAppButtonsEnable, value);
+    }
+    public bool IsAdminPrivilege
+    {
+        get => _isAdminPrivilege;
+        set => this.RaiseAndSetIfChanged(ref _isAdminPrivilege, value);
     }
     #endregion
 
@@ -37,6 +43,9 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     public ReactiveCommand<Unit, Unit> GoConfiguration { get; }
 
     public ReactiveCommand<Unit, Unit> GoInputApplicationWindow { get; }
+
+    public ReactiveCommand<Unit, Unit> GoUserManagement { get; }
+
     #endregion
 
     public NavigationViewModel(IScreen screenRealization, IServiceProvider serviceProvider)
@@ -48,12 +57,14 @@ public class NavigationViewModel : ReactiveObject, IDisposable
         GoConfiguration = ReactiveCommand.Create(NavigateToConfigurationWindow);
         GoVideoEventJournalWindow = ReactiveCommand.Create(NavigateToVideoEventJournalWindow);
         GoInputApplicationWindow = ReactiveCommand.Create(NavigateToInputApplicationWindow);
+        GoUserManagement = ReactiveCommand.Create(NavigateToUserManagementWindow);
 
         Router.CurrentViewModel.Subscribe(currentVm =>
         {
             if (currentVm is InputApplicationViewModel)
             {
                 IsAppButtonsEnable = false;
+                IsAdminPrivilege = false;
             }
         }).DisposeWith(_disposables);
 
@@ -83,6 +94,12 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     {
         CheckDisposedCancelletionToken();
         Router.Navigate.Execute(_serviceProvider.GetRequiredService<InputApplicationViewModel>());
+    }
+
+    private void NavigateToUserManagementWindow()
+    {
+        CheckDisposedCancelletionToken();
+        Router.Navigate.Execute(_serviceProvider.GetRequiredService<UserManagementViewModel>());
     }
 
     private void CheckDisposedCancelletionToken()

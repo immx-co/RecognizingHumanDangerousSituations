@@ -102,6 +102,11 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
 
         HostScreen.Router.Navigate.Execute(_serviceProvider.GetRequiredService<MainViewModel>());
         _serviceProvider.GetRequiredService<NavigationViewModel>().IsAppButtonsEnable = true;
+
+        if (dbUser.IsAdmin) 
+        {
+            _serviceProvider.GetRequiredService<NavigationViewModel>().IsAdminPrivilege = true;
+        }
     }
 
     private void ShowMessageBox(string caption, string message)
