@@ -1,4 +1,5 @@
-﻿using ClassLibrary.Services;
+﻿using ClassLibrary;
+using ClassLibrary.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using MsBox.Avalonia;
@@ -7,13 +8,18 @@ using System;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace DangerousSituationsUI.ViewModels;
 
 public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
 {
 
-    #region Public Fields
+    IServiceProvider _serviceProvider;
+
+    #region Private Fields
+
+    private string _logString;
 
     #endregion
 
@@ -25,11 +31,32 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
     public CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     #endregion
 
+    #region Properties
+    public string LogString
+    {
+        get => _logString;
+        set => this.RaiseAndSetIfChanged(ref _logString, value);
+    }
+
+    #endregion
+
     #region Contructor
-    public LogJournalViewModel(IScreen screen)
+    public LogJournalViewModel(IScreen screen, IServiceProvider serviceProvider)
     {
         HostScreen = screen;
+        _serviceProvider = serviceProvider;
+        LogString += Log.Logger.ToString();
 
     }
     #endregion
+
+    #region Public Methodes
+
+    public void AddLogString(string log)
+    {
+        LogString += log;
+    }
+
+    #endregion
+
 }
