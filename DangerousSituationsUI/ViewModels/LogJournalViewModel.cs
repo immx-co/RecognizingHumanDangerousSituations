@@ -14,13 +14,10 @@ namespace DangerousSituationsUI.ViewModels;
 
 public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
 {
-
     IServiceProvider _serviceProvider;
 
     #region Private Fields
-
     public static string? logString;
-
     #endregion
 
     #region View Model Settings
@@ -31,13 +28,12 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
     public CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     #endregion
 
-    #region Properties
+    #region Public Fields
     public string LogString
     {
         get => logString;
         set => this.RaiseAndSetIfChanged(ref logString, value);
     }
-
     #endregion
 
     #region Contructor
@@ -48,9 +44,4 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
 
     }
     #endregion
-
-    #region Public Methodes
-
-    #endregion
-
 }
