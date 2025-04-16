@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DangerousSituationsUI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DangerousSituationsUI.Views.LogJournalView"
+             x:DataType="vm:LogJournalViewModel">
+
+	<Grid>
+		<StackPanel Width="400"
+						HorizontalAlignment="Left"
+						Margin="20">
+			<StackPanel Margin="0 0 0 10">
+				<Label Content="Строка подключения к базе данных:"/>
+			</StackPanel>
+		</StackPanel>
+	</Grid>
+
+</UserControl>

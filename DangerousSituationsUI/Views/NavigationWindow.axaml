@@ -41,6 +41,9 @@
       <Button Content="Конфигурация"
               Command="{Binding GoConfiguration}"
               IsEnabled="{Binding IsAppButtonsEnable}"/>
+		<Button Content="Журнал логов"
+				Command="{Binding GoLogJournalWindow}"
+				IsEnabled="{Binding IsAppButtonsEnable}"/>
     </StackPanel>
 
     <rxui:RoutedViewHost Grid.Row="1" Router="{Binding Router}">

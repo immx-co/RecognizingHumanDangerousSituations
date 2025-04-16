@@ -69,6 +69,7 @@ namespace DangerousSituationsUI
                 servicesCollection.AddSingleton<ConfigurationViewModel>();
                 servicesCollection.AddSingleton<RegistrationViewModel>();
                 servicesCollection.AddSingleton<AuthorizationViewModel>();
+                servicesCollection.AddSingleton<LogJournalViewModel>();
 
                 servicesCollection.AddSingleton<ConfigurationService>();
                 servicesCollection.AddTransient<FilesService>();

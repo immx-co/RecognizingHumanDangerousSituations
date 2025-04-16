@@ -36,6 +36,8 @@ public class NavigationViewModel : ReactiveObject, IDisposable
 
     public ReactiveCommand<Unit, Unit> GoConfiguration { get; }
 
+    public ReactiveCommand<Unit, Unit> GoLogJournalWindow { get; }
+
     public ReactiveCommand<Unit, Unit> GoInputApplicationWindow { get; }
     #endregion
 
@@ -48,6 +50,7 @@ public class NavigationViewModel : ReactiveObject, IDisposable
         GoConfiguration = ReactiveCommand.Create(NavigateToConfigurationWindow);
         GoVideoEventJournalWindow = ReactiveCommand.Create(NavigateToVideoEventJournalWindow);
         GoInputApplicationWindow = ReactiveCommand.Create(NavigateToInputApplicationWindow);
+        GoLogJournalWindow = ReactiveCommand.Create(NavigateToLogJournalWindow);
 
         Router.CurrentViewModel.Subscribe(currentVm =>
         {
@@ -83,6 +86,11 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     {
         CheckDisposedCancelletionToken();
         Router.Navigate.Execute(_serviceProvider.GetRequiredService<InputApplicationViewModel>());
+    }
+    private void NavigateToLogJournalWindow()
+    {
+        CheckDisposedCancelletionToken();
+        Router.Navigate.Execute(_serviceProvider.GetRequiredService<LogJournalViewModel>());
     }
 
     private void CheckDisposedCancelletionToken()
