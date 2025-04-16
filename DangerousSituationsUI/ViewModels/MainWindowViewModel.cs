@@ -43,8 +43,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private IServiceProvider _serviceProvider;
 
-    private ISolidColorBrush _connectionStatus;
-
     private bool _isLoading;
 
     private int _progressPercentage;
@@ -111,12 +109,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         get => _currentFileName;
         set => this.RaiseAndSetIfChanged(ref _currentFileName, value);
-    }
-
-    public ISolidColorBrush ConnectionStatus
-    {
-        get => _connectionStatus;
-        private set => this.RaiseAndSetIfChanged(ref _connectionStatus, value);
     }
 
     public bool IsLoading
@@ -222,7 +214,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _configurationService = configurationService;
 
-        ConnectionStatus = Brushes.Gray;
         AreButtonsEnabled = false;
 
         _legendItems = new AvaloniaList<LegendItem>
@@ -583,7 +574,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     #region Client Methods
     private async Task CheckHealthAsync()
     {
-        ConnectionStatus = Brushes.Red;
+        _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
         string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
         using (var client = new HttpClient())
         {
@@ -599,7 +590,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     var healthResponse = JsonSerializer.Deserialize<HealthCheckResponse>(jsonResponse);
                     if (healthResponse?.StatusCode == 200)
                     {
-                        ConnectionStatus = Brushes.Green;
+                        _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Green;
                         AreButtonsEnabled = true;
                         AreConnectButtonEnabled = false;
                         ShowMessageBox("Success", $"Сервис доступен. Статус: {healthResponse.StatusCode}");
@@ -610,7 +601,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     }
                     else
                     {
-                        ConnectionStatus = Brushes.Red;
+                        _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
                         _videoEventJournalViewModel.ClearUI();
                         ShowMessageBox("Failed", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}");
                         Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}");
@@ -619,7 +610,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                 }
                 else
                 {
-                    ConnectionStatus = Brushes.Red;
+                    _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
                     _videoEventJournalViewModel.ClearUI();
                     ShowMessageBox("Failed", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
                     Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
@@ -628,7 +619,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             }
             catch
             {
-                ConnectionStatus = Brushes.Red;
+                _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
                 _videoEventJournalViewModel.ClearUI();
                 ShowMessageBox("Failed", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
                 Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
@@ -662,7 +653,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                             ResetUI();
                             AreConnectButtonEnabled = true;
                             AreButtonsEnabled = false;
-                            ConnectionStatus = Brushes.Red;
+                            _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
                             _videoEventJournalViewModel.ClearUI();
                             ShowMessageBox("Failed", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
                             Log.Debug("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
@@ -678,7 +669,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                         ResetUI();
                         AreConnectButtonEnabled = true;
                         AreButtonsEnabled = false;
-                        ConnectionStatus = Brushes.Red;
+                        _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
                         _videoEventJournalViewModel.ClearUI();
                         ShowMessageBox("Failed", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
                         Log.Debug("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");

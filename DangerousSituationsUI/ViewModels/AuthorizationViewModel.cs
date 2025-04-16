@@ -59,7 +59,11 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
 
     public ReactiveCommand<Unit, Unit> BackCommand { get; }
 
-    public AuthorizationViewModel(IScreen screen, IServiceProvider serviceProvider, PasswordHasher hasher, UserManagementViewModel userManagmentViewModel)
+    public AuthorizationViewModel(IScreen screen, 
+        IServiceProvider serviceProvider, 
+        PasswordHasher hasher, 
+        UserManagementViewModel userManagmentViewModel,
+        NavigationViewModel navigationViewModel)
     {
         HostScreen = screen;
 
@@ -104,6 +108,7 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
         Password = string.Empty;
 
         HostScreen.Router.Navigate.Execute(_serviceProvider.GetRequiredService<MainViewModel>());
+        _serviceProvider.GetRequiredService<NavigationViewModel>().CurrentUser = $"Пользователь: {ActiveUsername}";
         _serviceProvider.GetRequiredService<NavigationViewModel>().IsAppButtonsEnable = true;
 
         if (dbUser.IsAdmin) 

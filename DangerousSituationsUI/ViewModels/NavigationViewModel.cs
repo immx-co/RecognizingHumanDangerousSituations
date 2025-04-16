@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Avalonia.Media;
+using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 using System;
 using System.Linq;
@@ -11,16 +12,22 @@ namespace DangerousSituationsUI.ViewModels;
 public class NavigationViewModel : ReactiveObject, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
+
     public RoutingState Router { get; }
 
-    #region Private Properties
+    #region Private Fields
     private bool _isAppButtonsEnable = false;
+
     private bool _isAdminPrivilege = false;
+
+    private string _currentUser = "User";
+
+    private ISolidColorBrush _connectionStatus;
 
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
     #endregion
 
-    #region Public Properties
+    #region Properties
     public bool IsAppButtonsEnable
     {
         get => _isAppButtonsEnable;
@@ -30,6 +37,18 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     {
         get => _isAdminPrivilege;
         set => this.RaiseAndSetIfChanged(ref _isAdminPrivilege, value);
+    }
+
+    public string CurrentUser
+    {
+        get => _currentUser;
+        set => this.RaiseAndSetIfChanged(ref _currentUser, value);
+    }
+
+    public ISolidColorBrush ConnectionStatus
+    {
+        get => _connectionStatus;
+        set => this.RaiseAndSetIfChanged(ref _connectionStatus, value);
     }
     #endregion
 
@@ -55,6 +74,8 @@ public class NavigationViewModel : ReactiveObject, IDisposable
         Router = screenRealization.Router;
         _serviceProvider = serviceProvider;
 
+        ConnectionStatus = Brushes.Gray;
+
         GoMainWindow = ReactiveCommand.Create(NavigateToMainWindow);
         GoConfiguration = ReactiveCommand.Create(NavigateToConfigurationWindow);
         GoVideoEventJournalWindow = ReactiveCommand.Create(NavigateToVideoEventJournalWindow);
@@ -66,6 +87,7 @@ public class NavigationViewModel : ReactiveObject, IDisposable
         {
             if (currentVm is InputApplicationViewModel)
             {
+                ConnectionStatus = Brushes.Gray;
                 IsAppButtonsEnable = false;
                 IsAdminPrivilege = false;
             }

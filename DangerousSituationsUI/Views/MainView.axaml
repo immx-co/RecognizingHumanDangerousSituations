@@ -108,18 +108,17 @@
           </StackPanel>
           <StackPanel Orientation="Horizontal">
             <Button Content="Отправить папку с видео"
-					Command="{Binding SendFolderCommand}"
-					IsEnabled="{Binding AreButtonsEnabled}"
-					Margin="0 0 5 0"/>
+										Command="{Binding SendFolderCommand}"
+										IsEnabled="{Binding AreButtonsEnabled}"
+										Margin="0 0 5 0"/>
             <Button Content="Отправить видео"
-					Command="{Binding SendVideoCommand}"
-					IsEnabled="{Binding AreButtonsEnabled}"
-					Margin="0 0 5 0"/>
+										Command="{Binding SendVideoCommand}"
+										IsEnabled="{Binding AreButtonsEnabled}"
+										Margin="0 0 5 0"/>
             <Button Content="Подключиться"
-					Command="{Binding ConnectCommand}"
+										Command="{Binding ConnectCommand}"
                     IsEnabled="{Binding AreConnectButtonEnabled}"
-					Margin="0 0 5 0"/>
-            <Ellipse Width="20" Height="20" Fill="{Binding ConnectionStatus}"/>
+										Margin="0 0 5 0"/>
           </StackPanel>
         </StackPanel>
 	  </Grid>
