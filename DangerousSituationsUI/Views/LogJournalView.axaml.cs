@@ -5,7 +5,7 @@ using DangerousSituationsUI.ViewModels;
 using ReactiveUI;
 
 namespace DangerousSituationsUI.Views;
-public partial class LogJournalView : ReactiveWindow<LogJournalViewModel>
+public partial class LogJournalView : ReactiveUserControl<LogJournalViewModel>
 {
     public LogJournalView()
     {

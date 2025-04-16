@@ -12,7 +12,6 @@ namespace DangerousSituationsUI.ViewModels;
 
 public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
 {
-    IServiceProvider _serviceProvider;
 
     #region Public Fields
 
@@ -27,10 +26,9 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Contructor
-    public LogJournalViewModel(IScreen screen, IServiceProvider serviceProvider)
+    public LogJournalViewModel(IScreen screen)
     {
         HostScreen = screen;
-        _serviceProvider = serviceProvider;
 
     }
     #endregion
