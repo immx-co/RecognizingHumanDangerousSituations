@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DangerousSituationsUI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DangerousSituationsUI.Views.LogJournalView"
+             x:DataType="vm:LogJournalViewModel">
+
+	<Grid>
+		<StackPanel Width="600"
+						HorizontalAlignment="Left"
+						Margin="20">
+			<StackPanel Margin="0 0 0 10">
+				<Label Content="Журнал логирования:"/>
+				<TextBox Margin="0 0 0 10" Text="{Binding LogString}" AcceptsReturn="True" TextWrapping="WrapWithOverflow" Height="700" Width="600"></TextBox>
+			</StackPanel>
+		</StackPanel>
+	</Grid>
+
+</UserControl>

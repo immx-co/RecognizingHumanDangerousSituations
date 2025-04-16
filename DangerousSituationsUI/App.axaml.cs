@@ -69,6 +69,7 @@ namespace DangerousSituationsUI
                 servicesCollection.AddSingleton<ConfigurationViewModel>();
                 servicesCollection.AddSingleton<RegistrationViewModel>();
                 servicesCollection.AddSingleton<AuthorizationViewModel>();
+                servicesCollection.AddSingleton<LogJournalViewModel>();
 
                 servicesCollection.AddSingleton<ConfigurationService>();
                 servicesCollection.AddTransient<FilesService>();
@@ -94,7 +95,7 @@ namespace DangerousSituationsUI
 
                 servicesProvider.GetRequiredService<HubConnectionWrapper>().Start();
                 Log.Logger.Information("Оформлено подключение к хабу.");
-
+                LogJournalViewModel.logString += "Оформлено подключение к хабу.\n";
                 desktop.MainWindow = new NavigationWindow
                 {
                     DataContext = servicesProvider.GetRequiredService<NavigationViewModel>()
