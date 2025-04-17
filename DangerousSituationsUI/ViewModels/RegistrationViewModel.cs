@@ -90,6 +90,20 @@ public class RegistrationViewModel : ReactiveObject, IRoutableViewModel
             return;
         }
 
+        if (Password.Length <= 5)
+        {
+            ShowMessageBox("Invalid Password", "Допустимая длина пароля — от 5 символов.");
+            Password = string.Empty;
+            return;
+        }
+
+        if (!Password.Any(ch => char.IsUpper(ch)) || !Password.Any(ch => char.IsPunctuation(ch)) || !Password.Any(ch => char.IsDigit(ch)))
+        {
+            ShowMessageBox("Invalid Password", "Пароль должен содержать латинские буквы в верхнем регистре, цифры и знаки препинания.");
+            Password = string.Empty;
+            return;
+        }
+
         if (!IsValidEmail(Email))
         {
             ShowMessageBox("Invalid Email", $"Почта {Email} невалидна. Попробуйте указать другую почту.");
