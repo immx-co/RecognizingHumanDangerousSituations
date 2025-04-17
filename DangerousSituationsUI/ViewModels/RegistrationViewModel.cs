@@ -110,6 +110,15 @@ public class RegistrationViewModel : ReactiveObject, IRoutableViewModel
             Email = string.Empty;
             return;
         }
+        else
+        {
+            if (dbUsers.Find(user => string.Equals(user.Email, Email, StringComparison.OrdinalIgnoreCase)) != null)
+            {
+                ShowMessageBox("Invalid Email", $"Пользователь с такой почтой уже зарегистрирован. Попробуйте указать другую почту.");
+                Email = string.Empty;
+                return;
+            }
+        }
 
         string hashedPassword = _hasher.HashPassword(Password);
         User registeredUser = new User { Name = Nickname, HashPassword = hashedPassword, Email = Email, IsAdmin = false };
