@@ -74,6 +74,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private string _stopButtonColor;
 
     private string _videoTime;
+
+    private TelegramBotAPI _telegramBotApi;
     #endregion
 
     #region Public Fields
@@ -204,7 +206,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         IServiceProvider serviceProvider,
         VideoService videoService,
         RectItemService rectItemService,
-        VideoEventJournalViewModel videoEventJournalViewModel)
+        VideoEventJournalViewModel videoEventJournalViewModel,
+        TelegramBotAPI telegramBotApi)
     {
         HostScreen = screen;
         _filesService = filesService;
@@ -213,6 +216,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _serviceProvider = serviceProvider;
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _configurationService = configurationService;
+        _telegramBotApi = telegramBotApi;
+
+        _telegramBotApi.StartBotAsync();
 
         AreButtonsEnabled = false;
 

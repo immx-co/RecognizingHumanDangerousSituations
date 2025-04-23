@@ -44,6 +44,17 @@ namespace DangerousSituationsUI
 
         public override void OnFrameworkInitializationCompleted()
         {
+            var envPath = Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\.env");
+            if (File.Exists(envPath))
+            {
+                DotNetEnv.Env.Load(envPath);
+            }
+            else
+            {
+                Log.Error("Не удалось подгрузить env переменные. Требуется token телеграм бота.");
+                throw new InvalidOperationException("Не удалось подгрузить env переменные. Требуется token телеграм бота.");
+            }
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
@@ -90,6 +101,14 @@ namespace DangerousSituationsUI
                 servicesCollection.AddSingleton<PasswordHasher>();
 
                 servicesCollection.AddScoped<IRepository, Repository>();
+
+                string telegramBotToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
+                servicesCollection.AddSingleton<TelegramBotAPI>(provider => 
+                    new TelegramBotAPI(
+                        telegramBotToken,
+                        provider.GetRequiredService<LogJournalViewModel>()
+                    )
+                );
 
                 ServiceProvider servicesProvider = servicesCollection.BuildServiceProvider();
 
