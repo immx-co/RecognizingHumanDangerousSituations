@@ -17,6 +17,7 @@ public class AppViewLocator : IViewLocator
         AuthorizationViewModel context => new AuthorizationView { ViewModel = context },
         UserManagementViewModel context => new UserManagementView { ViewModel = context },
         LogJournalViewModel context => new LogJournalView { ViewModel = context },
+        VideoPlayerViewModel context => new VideoPlayerView { ViewModel = context },
         _ => throw new ArgumentOutOfRangeException(nameof(viewModel))
     };
 }
