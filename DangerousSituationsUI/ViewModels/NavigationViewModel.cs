@@ -67,6 +67,7 @@ public class NavigationViewModel : ReactiveObject, IDisposable
 
     public ReactiveCommand<Unit, Unit> GoUserManagement { get; }
 
+    public ReactiveCommand<Unit, Unit> GoVideoPlayerWindow { get; }
     #endregion
 
     public NavigationViewModel(IScreen screenRealization, IServiceProvider serviceProvider)
@@ -80,6 +81,7 @@ public class NavigationViewModel : ReactiveObject, IDisposable
         GoConfiguration = ReactiveCommand.Create(NavigateToConfigurationWindow);
         GoVideoEventJournalWindow = ReactiveCommand.Create(NavigateToVideoEventJournalWindow);
         GoInputApplicationWindow = ReactiveCommand.Create(NavigateToInputApplicationWindow);
+        GoVideoPlayerWindow = ReactiveCommand.Create(NavigateToVideoPlayerWindow);
         GoUserManagement = ReactiveCommand.Create(NavigateToUserManagementWindow);
         GoLogJournalWindow = ReactiveCommand.Create(NavigateToLogJournalWindow);
 
@@ -130,6 +132,12 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     {
         CheckDisposedCancelletionToken();
         Router.Navigate.Execute(_serviceProvider.GetRequiredService<UserManagementViewModel>());
+    }
+
+    private void NavigateToVideoPlayerWindow()
+    {
+        CheckDisposedCancelletionToken();
+        Router.Navigate.Execute(_serviceProvider.GetRequiredService<VideoPlayerViewModel>());
     }
 
     private void CheckDisposedCancelletionToken()

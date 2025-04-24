@@ -8,13 +8,13 @@ using ClassLibrary.Datacontracts;
 using ClassLibrary.Repository;
 using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
+using LibVLCSharp.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
 using ReactiveUI;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -26,35 +26,23 @@ using System.Threading.Tasks;
 
 namespace DangerousSituationsUI.ViewModels;
 
-public class MainViewModel : ReactiveObject, IRoutableViewModel
+public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 {
     #region Private Fields
-    private Bitmap? _currentImage;
-
-    private List<Bitmap?> _imageFilesBitmap = new();
-
-    private List<IStorageFile>? _imageFiles = new();
-
-    private IStorageFile? _videoFile;
-
-    private List<Bitmap?> _frames = new();
 
     private string _currentFileName;
-
-    private string _frameTitle;
 
     private FilesService _filesService;
 
     private VideoService _videoService;
 
     private RectItemService _rectItemService;
+
     private readonly ConfigurationService _configurationService;
 
     private IServiceProvider _serviceProvider;
 
     private ISolidColorBrush _connectionStatus;
-
-    private bool _canSwitchImages;
 
     private bool _isLoading;
 
@@ -64,16 +52,33 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private bool _areConnectButtonEnabled = true;
 
-    private AvaloniaList<RectItem> _rectItems;
-
-    private AvaloniaList<AvaloniaList<RectItem>> _rectItemsLists;
-
     private AvaloniaList<LegendItem> _legendItems;
 
-    private int _currentNumberOfFrame;
+    private AvaloniaList<string> _filesNames;
+
+    private AvaloniaList<IStorageFile> _files;
+
+    private LibVLC _libVLC = new LibVLC();
+
+    private MediaPlayer _mediaPlayer;
+
+    private bool _canPlay;
+
+    private bool _canPause;
+
+    private bool _canStop;
+
+    private string _playButtonColor;
+
+    private string _pauseButtonColor;
+
+    private string _stopButtonColor;
+
+    private string _videoTime;
     #endregion
 
     #region Public Fields
+
     public VideoEventJournalViewModel _videoEventJournalViewModel;
     #endregion
 
@@ -85,50 +90,32 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Commands
-    public ReactiveCommand<Unit, Unit> ImageBackCommand { get; }
+    public ReactiveCommand<Unit, Unit> SendImageCommand { get; }
 
-    public ReactiveCommand<Unit, Unit> ImageForwardCommand { get; }
+    public ReactiveCommand<Unit, Unit> SendFolderCommand { get; }
 
     public ReactiveCommand<Unit, Unit> SendVideoCommand { get; }
 
     public ReactiveCommand<Unit, Unit> ConnectCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> PlayCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> PauseCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> StopCommand { get; }
     #endregion
 
     #region Properties
-    public AvaloniaList<RectItem> RectItems
-    {
-        get => _rectItems;
-        set => this.RaiseAndSetIfChanged(ref _rectItems, value);
-    }
-
-    public Bitmap? CurrentImage
-    {
-        get => _currentImage;
-        set => this.RaiseAndSetIfChanged(ref _currentImage, value);
-    }
-
     public string CurrentFileName
     {
         get => _currentFileName;
         set => this.RaiseAndSetIfChanged(ref _currentFileName, value);
     }
 
-    public string FrameTitle
-    {
-        get => _frameTitle;
-        set => this.RaiseAndSetIfChanged(ref _frameTitle, value);
-    }
-
     public ISolidColorBrush ConnectionStatus
     {
         get => _connectionStatus;
         private set => this.RaiseAndSetIfChanged(ref _connectionStatus, value);
-    }
-
-    public bool CanSwitchImages
-    {
-        get => _canSwitchImages;
-        set => this.RaiseAndSetIfChanged(ref _canSwitchImages, value);
     }
 
     public bool IsLoading
@@ -160,10 +147,64 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         get => _legendItems;
         set => this.RaiseAndSetIfChanged(ref _legendItems, value);
     }
+
+    public MediaPlayer MediaPlayer
+    {
+        get => _mediaPlayer;
+        set => this.RaiseAndSetIfChanged(ref _mediaPlayer, value);
+    }
+
+    public AvaloniaList<string> FilesNames
+    {
+        get => _filesNames;
+        set => this.RaiseAndSetIfChanged(ref _filesNames, value);
+    }
+
+    public bool CanPlay
+    {
+        get => _canPlay;
+        set => this.RaiseAndSetIfChanged(ref _canPlay, value);
+    }
+
+    public bool CanPause
+    {
+        get => _canPause;
+        set => this.RaiseAndSetIfChanged(ref _canPause, value);
+    }
+
+    public bool CanStop
+    {
+        get => _canStop;
+        set => this.RaiseAndSetIfChanged(ref _canStop, value);
+    }
+
+    public string PlayButtonColor
+    {
+        get => _playButtonColor;
+        set => this.RaiseAndSetIfChanged(ref _playButtonColor, value);
+    }
+
+    public string StopButtonColor
+    {
+        get => _stopButtonColor;
+        set => this.RaiseAndSetIfChanged(ref _stopButtonColor, value);
+    }
+
+    public string PauseButtonColor
+    {
+        get => _pauseButtonColor;
+        set => this.RaiseAndSetIfChanged(ref _pauseButtonColor, value);
+    }
+
+    public string VideoTime
+    {
+        get => _videoTime;
+        set => this.RaiseAndSetIfChanged(ref _videoTime, value);
+    }
     #endregion
 
     #region Constructors
-    public MainViewModel(
+    public VideoPlayerViewModel(
         IScreen screen,
         FilesService filesService,
         ConfigurationService configurationService,
@@ -180,6 +221,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _configurationService = configurationService;
 
+        ConnectionStatus = Brushes.Gray;
         AreButtonsEnabled = false;
 
         _legendItems = new AvaloniaList<LegendItem>
@@ -191,52 +233,112 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             new LegendItem { ClassName = "kayak", Color = "Purple" }
         };
 
-        CanSwitchImages = false;
+        SetPauseFlag(false);
+        SetPlayFlag(false);
+        SetStopFlag(false);
+
+        VideoTime = GetVideoTimeString(0);
 
         ConnectCommand = ReactiveCommand.CreateFromTask(CheckHealthAsync);
+        SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         SendVideoCommand = ReactiveCommand.CreateFromTask(OpenVideoAsync);
-        ImageBackCommand = ReactiveCommand.Create(PreviousFrame);
-        ImageForwardCommand = ReactiveCommand.Create(NextFrame);
+        PlayCommand = ReactiveCommand.Create(PlayVideo);
+        PauseCommand = ReactiveCommand.Create(PauseVideo);
+        StopCommand = ReactiveCommand.Create(StopVideo);
     }
     #endregion
 
     #region Command Methods
+    private async Task OpenFolderAsync()
+    {
+        Log.Information("Start sending folder");
+        Log.Debug("MainViewModel.OpenFolderAsync: Start");
+        AreButtonsEnabled = false;
+        try
+        {
+            var files = await _filesService.OpenVideoFolderAsync();
+            if (files != null)
+            {
+                foreach (var file in files)
+                {
+                    CurrentFileName = file.Name;
+                    await InitFramesAsync(file);
+                    CurrentFileName = string.Empty;
+                    IsLoading = false;
+                    ProgressPercentage = 0;
+                }
+            }
+        }
+        catch
+        {
+            ShowMessageBox("Error", "В выбранной директории отсутcтвуют изображения или пристуствуют файлы с недопустимым расширением.");
+            Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.");
+            return;
+        }
+        finally { AreButtonsEnabled = true; }
+    }
+
     private async Task OpenVideoAsync()
     {
-        Log.Information("Start sending video"); 
-        LogJournalViewModel.logString += "Start sending video\n";
+        Log.Information("Start sending video");
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Start\n";
         _videoEventJournalViewModel.EventResults = new AvaloniaList<string>();
+        AreButtonsEnabled = false;
         try
         {
             var file = await _filesService.OpenVideoFileAsync();
+
             if (file != null)
             {
                 await InitFramesAsync(file);
-                CanSwitchImages = true;
-                FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
+                _files = [file];
+
+                await _videoEventJournalViewModel.FillComboBox();
+
+                using var media = new Media(_libVLC, _files[0].Path);
+                SetMediaPlayer(media);
             }
-        }
-        finally
-        {
+
             IsLoading = false;
             ProgressPercentage = 0;
-            await _videoEventJournalViewModel.FillComboBox();
+
             Log.Information("End sending video");
-            LogJournalViewModel.logString += "End sending video\n";
             Log.Debug("MainViewModel.OpenVideoAsync: Done");
-            LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Done\n";
         }
+        catch
+        {
+            string message = "Возникла ошибка на этапе обработки видео.";
+            ShowMessageBox("Error", message);
+            Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: {Message}", message);
+        }
+        finally { AreButtonsEnabled = true; }
+    }
+
+    private void PlayVideo()
+    {
+        MediaPlayer.Play();
+    }
+
+    private void PauseVideo()
+    {
+        MediaPlayer.Pause();
+    }
+
+    private void StopVideo()
+    {
+        MediaPlayer?.Stop();
+
+        VideoTime = GetVideoTimeString(0);
+
+        SetPlayFlag(true);
+        SetPauseFlag(false);
+        SetStopFlag(false);
     }
     #endregion
 
     private void ResetUI()
     {
-        RectItems = new AvaloniaList<RectItem>();
-        CurrentImage = null;
         CurrentFileName = String.Empty;
-        FrameTitle = String.Empty;
     }
 
     #region Video Methods
@@ -248,7 +350,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private async Task InitFramesAsync(IStorageFile file)
     {
         Log.Debug("MainViewModel.InitFramesAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: Start\n";
         IsLoading = true;
         var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
         var frames = await _videoService.GetFramesAsync(file);
@@ -269,21 +370,13 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         await SaveDataIntoDatabase(file, frameNDetections);
 
-        _videoFile = file;
-        _rectItemsLists = itemsLists;
-        _frames = frames;
-
         CurrentFileName = file.Name;
-        _currentNumberOfFrame = 0;
-        SetFrame();
         Log.Debug("MainViewModel.InitFramesAsync: End");
-        LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: End\n";
     }
 
     private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
     {
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Start\n";
 
         using var scope = _serviceProvider.CreateScope();
         var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
@@ -333,14 +426,11 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         await repository.SaveChangesAsync();
 
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Done\n";
         return addedVideo;
     }
-
     private async Task<AvaloniaList<RectItem>> GetFrameDetectionResultsAsync(Bitmap frame, int numberOfFrame)
     {
         Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.GetFrameDetectionResultsAsync: Start\n";
         List<RecognitionResult> detections = await GetFrameRecognitionResultsAsync(frame, numberOfFrame);
         var items = new AvaloniaList<RectItem>();
 
@@ -355,18 +445,15 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             {
                 ShowMessageBox("Error", $"Ошибка при обработке детекции: {ex.Message}");
                 Log.Warning("MainViewModel.GetFrameDetectionResultsAsync: Error; Message: {@Message}", ex.Message);
-                LogJournalViewModel.logString += ("MainViewModel.GetFrameDetectionResultsAsync: Error; Message: {@Message}\n", ex.Message);
             }
         }
         Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.GetFrameDetectionResultsAsync: Done\n";
         return items;
     }
 
     private async Task<List<RecognitionResult>> GetFrameRecognitionResultsAsync(Bitmap frame, int numberOfFrame)
     {
         Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.GetFrameRecognitionResultsAsync: Start\n";
         string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
         using (var client = new HttpClient())
         {
@@ -405,7 +492,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     {
                         ShowMessageBox("Error", $"Ошибка при отправке видео: {response.StatusCode}");
                         Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", $"Ошибка при отправке видео: {response.StatusCode}");
-                        LogJournalViewModel.logString += ("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", $"Ошибка при отправке видео: {response.StatusCode}\n");
                     }
                 }
             }
@@ -413,48 +499,75 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             {
                 ShowMessageBox("Error", $"Ошибка при отправке видео: {ex.Message}");
                 Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", ex.Message);
-                LogJournalViewModel.logString += ("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}\n", ex.Message);
             }
         }
         Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.GetFrameRecognitionResultsAsync: Done\n";
         return new List<RecognitionResult>();
     }
+    #endregion
 
-    private void NextFrame()
+    #region MediaPlayer Methods
+    public void SetMediaPlayer(Media media)
     {
-        if (_currentNumberOfFrame < _frames.Count - 1) _currentNumberOfFrame++;
-        else _currentNumberOfFrame = 0;
+        StopVideo();
 
-        SetFrame();
+        MediaPlayer = new(media);
+
+        MediaPlayer.Playing += (object? sender, EventArgs args) =>
+        {
+            SetPauseFlag(true);
+            SetPlayFlag(false);
+            SetStopFlag(true);
+        };
+        MediaPlayer.Paused += (object? sender, EventArgs args) =>
+        {
+            SetPauseFlag(false);
+            SetPlayFlag(true);
+            SetStopFlag(true);
+        };
+        MediaPlayer.EndReached += (object? sender, EventArgs args) =>
+        {
+            SetPauseFlag(false);
+            SetPlayFlag(false);
+            SetStopFlag(true);
+        };
+        MediaPlayer.TimeChanged += (object? sender, MediaPlayerTimeChangedEventArgs args) =>
+        {
+            VideoTime = GetVideoTimeString(args.Time);
+        };
     }
 
-    private void PreviousFrame()
+    private void SetPlayFlag(bool flag)
     {
-        if (_currentNumberOfFrame > 0) _currentNumberOfFrame--;
-        else _currentNumberOfFrame = _frames.Count - 1;
-
-        SetFrame();
+        CanPlay = flag;
+        PlayButtonColor = SetButtonColor(flag);
     }
 
-    private void SetFrame()
+    private void SetStopFlag(bool flag)
     {
-        CurrentImage = _frames[_currentNumberOfFrame];
-        RectItems = _rectItemsLists[_currentNumberOfFrame];
-
-        FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
+        CanStop = flag;
+        StopButtonColor = SetButtonColor(flag);
     }
+
+    private void SetPauseFlag(bool flag)
+    {
+        CanPause = flag;
+        PauseButtonColor = SetButtonColor(flag);
+    }
+
+    private string SetButtonColor(bool flag) => flag ? "LightGray" : "Gray";
+
+    private string GetVideoTimeString(long ms) => TimeSpan.FromMilliseconds(ms).ToString();
     #endregion
 
     #region Client Methods
     private async Task CheckHealthAsync()
     {
-        _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
+        ConnectionStatus = Brushes.Red;
         string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
         using (var client = new HttpClient())
         {
             Log.Debug("MainViewModel.CheckHealthAsync: Start");
-            LogJournalViewModel.logString += "MainViewModel.CheckHealthAsync: Start\n";
             try
             {
                 var response = await client.GetAsync($"{surfaceRecognitionServiceAddress}/health");
@@ -465,40 +578,36 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     var healthResponse = JsonSerializer.Deserialize<HealthCheckResponse>(jsonResponse);
                     if (healthResponse?.StatusCode == 200)
                     {
-                        _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Green;
+                        ConnectionStatus = Brushes.Green;
                         AreButtonsEnabled = true;
                         AreConnectButtonEnabled = false;
                         ShowMessageBox("Success", $"Сервис доступен. Статус: {healthResponse.StatusCode}");
                         Task.Run(() => StartNeuralServiceWatcher());
                         Task.Run(InitializeVideoEventJournalWindow);
                         Log.Debug("MainViewModel.CheckHealthAsync: Health checked");
-                        LogJournalViewModel.logString += "MainViewModel.CheckHealthAsync: Health checked\n";
                     }
                     else
                     {
-                        _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
+                        ConnectionStatus = Brushes.Red;
                         _videoEventJournalViewModel.ClearUI();
                         ShowMessageBox("Failed", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}");
                         Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}");
-                        LogJournalViewModel.logString += ("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}\n");
                     }
                 }
                 else
                 {
-                    _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
+                    ConnectionStatus = Brushes.Red;
                     _videoEventJournalViewModel.ClearUI();
                     ShowMessageBox("Failed", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
                     Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
-                    LogJournalViewModel.logString += ("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}\n");
                 }
             }
             catch
             {
-                _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
+                ConnectionStatus = Brushes.Red;
                 _videoEventJournalViewModel.ClearUI();
                 ShowMessageBox("Failed", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
                 Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
-                LogJournalViewModel.logString += ("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}\n");
             }
         }
     }
@@ -506,7 +615,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private async void StartNeuralServiceWatcher()
     {
         Log.Debug("MainViewModel.StartNeuralServiceWatcher: Start health check");
-        LogJournalViewModel.logString += "MainViewModel.StartNeuralServiceWatcher: Start health check\n";
         while (true)
         {
             string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
@@ -528,11 +636,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                             ResetUI();
                             AreConnectButtonEnabled = true;
                             AreButtonsEnabled = false;
-                            _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
+                            ConnectionStatus = Brushes.Red;
                             _videoEventJournalViewModel.ClearUI();
                             ShowMessageBox("Failed", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
                             Log.Debug("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
-                            LogJournalViewModel.logString += ("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.\n");
                         });
                         break;
                     }
@@ -544,11 +651,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                         ResetUI();
                         AreConnectButtonEnabled = true;
                         AreButtonsEnabled = false;
-                        _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
+                        ConnectionStatus = Brushes.Red;
                         _videoEventJournalViewModel.ClearUI();
                         ShowMessageBox("Failed", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
                         Log.Debug("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
-                        LogJournalViewModel.logString += ("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.\n");
                     });
                     break;
                 }
@@ -561,12 +667,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private async Task SaveRecognitionResultAsync(RecognitionResult recognitionResult)
     {
         Log.Debug("MainViewModel.SaveRecognitionResultAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Start\n";
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
         db.RecognitionResults.AddRange(recognitionResult);
         await db.SaveChangesAsync();
         Log.Debug("MainViewModel.SaveRecognitionResultAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Done\n"; 
     }
     #endregion
 
