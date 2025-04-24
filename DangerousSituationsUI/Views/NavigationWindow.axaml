@@ -42,9 +42,10 @@
               IsEnabled="{Binding IsAppButtonsEnable}"
               IsVisible="{Binding IsAppButtonsEnable}"/>
 
-	  <Button Content="Проигрыватель"
-			  Command="{Binding GoVideoPlayerWindow}"
-			  IsEnabled="{Binding IsAppButtonsEnable}"/>
+	    <Button Content="Проигрыватель"
+			        Command="{Binding GoVideoPlayerWindow}"
+			        IsEnabled="{Binding IsAppButtonsEnable}"
+              IsVisible="{Binding IsAppButtonsEnable}"/>
         
       <Button Content="Журнал событий"
               Command="{Binding GoVideoEventJournalWindow}"

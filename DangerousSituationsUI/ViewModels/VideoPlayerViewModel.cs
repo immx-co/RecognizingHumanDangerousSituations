@@ -29,7 +29,6 @@ namespace DangerousSituationsUI.ViewModels;
 public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 {
     #region Private Fields
-
     private string _currentFileName;
 
     private FilesService _filesService;
@@ -42,15 +41,11 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
     private IServiceProvider _serviceProvider;
 
-    private ISolidColorBrush _connectionStatus;
-
     private bool _isLoading;
 
     private int _progressPercentage;
 
     private bool _areButtonsEnabled;
-
-    private bool _areConnectButtonEnabled = true;
 
     private AvaloniaList<LegendItem> _legendItems;
 
@@ -78,12 +73,12 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Public Fields
-
     public VideoEventJournalViewModel _videoEventJournalViewModel;
     #endregion
 
     #region View Model Settings
     public IScreen HostScreen { get; }
+
     public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
 
     public CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -95,8 +90,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     public ReactiveCommand<Unit, Unit> SendFolderCommand { get; }
 
     public ReactiveCommand<Unit, Unit> SendVideoCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> ConnectCommand { get; }
 
     public ReactiveCommand<Unit, Unit> PlayCommand { get; }
 
@@ -110,12 +103,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     {
         get => _currentFileName;
         set => this.RaiseAndSetIfChanged(ref _currentFileName, value);
-    }
-
-    public ISolidColorBrush ConnectionStatus
-    {
-        get => _connectionStatus;
-        private set => this.RaiseAndSetIfChanged(ref _connectionStatus, value);
     }
 
     public bool IsLoading
@@ -134,12 +121,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     {
         get => _areButtonsEnabled;
         private set => this.RaiseAndSetIfChanged(ref _areButtonsEnabled, value);
-    }
-
-    public bool AreConnectButtonEnabled
-    {
-        get => _areConnectButtonEnabled;
-        private set => this.RaiseAndSetIfChanged(ref _areConnectButtonEnabled, value);
     }
 
     public AvaloniaList<LegendItem> LegendItems
@@ -221,7 +202,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _configurationService = configurationService;
 
-        ConnectionStatus = Brushes.Gray;
         AreButtonsEnabled = false;
 
         _legendItems = new AvaloniaList<LegendItem>
@@ -239,7 +219,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
         VideoTime = GetVideoTimeString(0);
 
-        ConnectCommand = ReactiveCommand.CreateFromTask(CheckHealthAsync);
         SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         SendVideoCommand = ReactiveCommand.CreateFromTask(OpenVideoAsync);
         PlayCommand = ReactiveCommand.Create(PlayVideo);
@@ -558,109 +537,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     private string SetButtonColor(bool flag) => flag ? "LightGray" : "Gray";
 
     private string GetVideoTimeString(long ms) => TimeSpan.FromMilliseconds(ms).ToString();
-    #endregion
-
-    #region Client Methods
-    private async Task CheckHealthAsync()
-    {
-        ConnectionStatus = Brushes.Red;
-        string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
-        using (var client = new HttpClient())
-        {
-            Log.Debug("MainViewModel.CheckHealthAsync: Start");
-            try
-            {
-                var response = await client.GetAsync($"{surfaceRecognitionServiceAddress}/health");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var healthResponse = JsonSerializer.Deserialize<HealthCheckResponse>(jsonResponse);
-                    if (healthResponse?.StatusCode == 200)
-                    {
-                        ConnectionStatus = Brushes.Green;
-                        AreButtonsEnabled = true;
-                        AreConnectButtonEnabled = false;
-                        ShowMessageBox("Success", $"Сервис доступен. Статус: {healthResponse.StatusCode}");
-                        Task.Run(() => StartNeuralServiceWatcher());
-                        Task.Run(InitializeVideoEventJournalWindow);
-                        Log.Debug("MainViewModel.CheckHealthAsync: Health checked");
-                    }
-                    else
-                    {
-                        ConnectionStatus = Brushes.Red;
-                        _videoEventJournalViewModel.ClearUI();
-                        ShowMessageBox("Failed", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}");
-                        Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}");
-                    }
-                }
-                else
-                {
-                    ConnectionStatus = Brushes.Red;
-                    _videoEventJournalViewModel.ClearUI();
-                    ShowMessageBox("Failed", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
-                    Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
-                }
-            }
-            catch
-            {
-                ConnectionStatus = Brushes.Red;
-                _videoEventJournalViewModel.ClearUI();
-                ShowMessageBox("Failed", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
-                Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
-            }
-        }
-    }
-
-    private async void StartNeuralServiceWatcher()
-    {
-        Log.Debug("MainViewModel.StartNeuralServiceWatcher: Start health check");
-        while (true)
-        {
-            string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
-            int neuralWatcherTimeout = _configurationService.GetNeuralWatcherTimeout();
-            using (var client = new HttpClient())
-            {
-                try
-                {
-                    await Task.Delay(TimeSpan.FromMilliseconds(neuralWatcherTimeout));
-                    var response = await client.GetAsync($"{surfaceRecognitionServiceAddress}/health");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                        {
-                            ResetUI();
-                            AreConnectButtonEnabled = true;
-                            AreButtonsEnabled = false;
-                            ConnectionStatus = Brushes.Red;
-                            _videoEventJournalViewModel.ClearUI();
-                            ShowMessageBox("Failed", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
-                            Log.Debug("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
-                        });
-                        break;
-                    }
-                }
-                catch (Exception)
-                {
-                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                    {
-                        ResetUI();
-                        AreConnectButtonEnabled = true;
-                        AreButtonsEnabled = false;
-                        ConnectionStatus = Brushes.Red;
-                        _videoEventJournalViewModel.ClearUI();
-                        ShowMessageBox("Failed", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
-                        Log.Debug("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
-                    });
-                    break;
-                }
-            }
-        }
-    }
     #endregion
 
     #region Data Base Methods
