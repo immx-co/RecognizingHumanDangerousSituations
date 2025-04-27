@@ -19,10 +19,13 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reactive;
+using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics.X86;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using static DangerousSituationsUI.ViewModels.MainViewModel;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -71,6 +74,12 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private AvaloniaList<LegendItem> _legendItems;
 
     private int _currentNumberOfFrame;
+
+    private List<FrameModel>? _frameItems = new();
+
+    private FrameModel _selectedFrameItem;
+
+    private int count = 0;
     #endregion
 
     #region Public Fields
@@ -92,6 +101,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     public ReactiveCommand<Unit, Unit> SendVideoCommand { get; }
 
     public ReactiveCommand<Unit, Unit> ConnectCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> SendFolderCommand { get; }
     #endregion
 
     #region Properties
@@ -160,6 +171,26 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         get => _legendItems;
         set => this.RaiseAndSetIfChanged(ref _legendItems, value);
     }
+
+    public FrameModel SelectedFrameItem
+    {
+        get => _selectedFrameItem;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _selectedFrameItem, value);
+
+            if (value != null)
+            {
+                SetFrame(value.id);
+            }
+        }
+    }
+    public List<FrameModel>? FrameItems
+    {
+        get => _frameItems;
+        set => this.RaiseAndSetIfChanged(ref _frameItems, value);
+    }
+
     #endregion
 
     #region Constructors
@@ -193,6 +224,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         CanSwitchImages = false;
 
+        SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         ConnectCommand = ReactiveCommand.CreateFromTask(CheckHealthAsync);
         SendVideoCommand = ReactiveCommand.CreateFromTask(OpenVideoAsync);
         ImageBackCommand = ReactiveCommand.Create(PreviousFrame);
@@ -201,9 +233,43 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Command Methods
+    private async Task OpenFolderAsync()
+    {
+        Log.Information("Start sending folder");
+        LogJournalViewModel.logString += "Start sending folder\n";
+        Log.Debug("MainViewModel.OpenFolderAsync: Start");
+        LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Start\n";
+        try
+        {
+            var files = await _filesService.OpenVideoFolderAsync();
+            if (files != null)
+            {
+                foreach (var file in files)
+                {
+                    CurrentFileName = file.Name;
+                    await InitFramesAsync(file);
+                    ProgressPercentage = 0;
+                }
+                CanSwitchImages = true;
+            }
+        }
+        catch
+        {
+            ShowMessageBox("Error", "В выбранной директории отсутcтвуют изображения или пристуствуют файлы с недопустимым расширением.");
+            Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.");
+            LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.\n";
+            return;
+        }
+        finally
+        {
+            IsLoading = false;
+            ProgressPercentage = 0;
+            await _videoEventJournalViewModel.FillComboBox();
+        }
+    }
     private async Task OpenVideoAsync()
     {
-        Log.Information("Start sending video"); 
+        Log.Information("Start sending video");
         LogJournalViewModel.logString += "Start sending video\n";
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Start\n";
@@ -252,12 +318,12 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         IsLoading = true;
         var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
         var frames = await _videoService.GetFramesAsync(file);
-
+        var results = new AvaloniaList<RectItem>();
         List<FrameNDetections> frameNDetections = new List<FrameNDetections>();
         int totalFiles = frames.Count();
         for (int idx = 0; idx < totalFiles; idx++)
         {
-            var results = await GetFrameDetectionResultsAsync(frames[idx], idx + 1);
+            results = await GetFrameDetectionResultsAsync(frames[idx], idx + 1);
             itemsLists.Add(results);
             ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
             frameNDetections.Add(new FrameNDetections
@@ -267,6 +333,14 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             });
         }
 
+        FrameItems?.Add(new FrameModel
+        {
+            Name = file.Name,
+            frames = frames,
+            rectitems = itemsLists,
+            id = count++
+        });
+
         await SaveDataIntoDatabase(file, frameNDetections);
 
         _videoFile = file;
@@ -275,6 +349,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         CurrentFileName = file.Name;
         _currentNumberOfFrame = 0;
+        SelectedFrameItem = FrameItems[0];
         SetFrame();
         Log.Debug("MainViewModel.InitFramesAsync: End");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: End\n";
@@ -444,6 +519,24 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
     }
+
+    private void SetFrame(int id)
+    {
+        foreach (var Frames in FrameItems)
+        {
+            if (Frames.id == id)
+            {
+                _frames = Frames.frames;
+                _rectItemsLists = Frames.rectitems;
+                CurrentFileName = Frames.Name;
+            }
+        }
+        _currentNumberOfFrame = 0;
+
+        CurrentImage = _frames[_currentNumberOfFrame];
+        RectItems = _rectItemsLists[_currentNumberOfFrame];
+        FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
+    }
     #endregion
 
     #region Client Methods
@@ -566,7 +659,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         db.RecognitionResults.AddRange(recognitionResult);
         await db.SaveChangesAsync();
         Log.Debug("MainViewModel.SaveRecognitionResultAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Done\n"; 
+        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Done\n";
     }
     #endregion
 
@@ -581,6 +674,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandard(caption, message);
         messageBoxStandardWindow.ShowAsync();
     }
+
     #endregion
 
     #region Classes
@@ -615,6 +709,17 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         [JsonPropertyName("object_bbox")]
         public List<InferenceResult> ObjectBbox { get; set; }
+    }
+    public class FrameModel
+    {
+        public int id { get; set; }
+        public List<Bitmap> frames { get; set; }
+        public AvaloniaList<AvaloniaList<RectItem>> rectitems { get; set; } = new();
+        public string Name { get; set; }
+        public override string ToString()
+        {
+            return Name;
+        }
     }
     #endregion
 }
