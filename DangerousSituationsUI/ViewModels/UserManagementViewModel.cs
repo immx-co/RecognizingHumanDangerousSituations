@@ -9,21 +9,18 @@ using DangerousSituationsUI.Services;
 using System.Reactive;
 using System.Reactive.Linq;
 
-
 namespace DangerousSituationsUI.ViewModels
 {
-
     public class UserManagementViewModel : ReactiveObject, IRoutableViewModel
     {
-        public Interaction<Unit, Unit> ShowAddUserDialogInteraction { get; } = new();
-
         #region Private Fields
         private readonly UserService _userService;
+        private readonly DialogService _dialogService;
         private AvaloniaList<UserItemModel> _userItems = new();
         #endregion
 
 
-        #region View Model Settings
+        #region ViewModel Settings
         public IScreen HostScreen { get; }
         public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
         #endregion
@@ -44,20 +41,21 @@ namespace DangerousSituationsUI.ViewModels
         }
         #endregion
 
+
         #region Commands
         public ReactiveCommand<Unit, Unit> AddUserCommand { get; }
         public ReactiveCommand<Unit, Unit> DeleteUserCommand { get; }
         #endregion
 
-
         #region Constructor
-        public UserManagementViewModel(IScreen screen, UserService userService)
+        public UserManagementViewModel(IScreen screen, UserService userService, DialogService dialogService)
         {
             HostScreen = screen;
             _userService = userService;
+            _dialogService = dialogService;
 
             AddUserCommand = ReactiveCommand.CreateFromTask(AddUser);
-            DeleteUserCommand = ReactiveCommand.CreateFromTask(DeleteUser, 
+            DeleteUserCommand = ReactiveCommand.CreateFromTask(DeleteUser,
                 this.WhenAnyValue(x => x.SelectedUser).Select(user => user != null));
 
             LoadUsers();
@@ -96,16 +94,64 @@ namespace DangerousSituationsUI.ViewModels
             }
         }
 
+        private async Task AddUser()
+        {
+            try
+            {
+                var addUserViewModel = new AddUserViewModel();
+                var result = await _dialogService
+                    .ShowDialogAsync<AddUserViewModel, AddUserDialogResult>(addUserViewModel);
+
+                if (result != null)
+                {
+                    if (!ValidateNickname(result.Username, out var usernameError))
+                    {
+                        await ShowMessageBox("Ошибка", usernameError);
+                        return;
+                    }
+
+                    if (!ValidatePassword(result.Password, out var passwordError))
+                    {
+                        await ShowMessageBox("Ошибка", passwordError);
+                        return;
+                    }
+
+                    if (!ValidateEmail(result.Email, out var emailError))
+                    {
+                        await ShowMessageBox("Ошибка", emailError);
+                        return;
+                    }
+
+                    await _userService.AddUserAsync(
+                        result.Username,
+                        result.Email,
+                        result.Password,
+                        result.IsAdmin
+                    );
+                    LoadUsers();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Ошибка добавления пользователя");
+            }
+        }
+
+        private async Task ShowMessageBox(string caption, string message)
+        {
+            var messageBox = MsBox.Avalonia.MessageBoxManager.GetMessageBoxStandard(caption, message);
+            await messageBox.ShowAsync();
+        }
+
         #endregion
 
-
-        #region Methods
+        #region Public Methods
         public async Task UpdateUserAdminStatus(int userId, bool isAdmin)
         {
             try
             {
                 await _userService.UpdateUserAdminStatusAsync(userId, isAdmin);
-                Log.Information($"Для {userId} изменен статус администратора");
+                Log.Information($"Для пользователя {userId} изменен статус администратора");
             }
             catch (Exception ex)
             {
@@ -116,46 +162,60 @@ namespace DangerousSituationsUI.ViewModels
             }
         }
 
-        private async Task AddUser()
-        {
-            try
-            {
-                await ShowAddUserDialogInteraction.Handle(Unit.Default);
-                LoadUsers();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Ошибка добавления пользователя");
-            }
-        }
-
-
-        public async Task AddUserFromDialogAsync(AddUserWindow dialog)
-        {
-            try
-            {
-                await _userService.AddUserAsync(
-                    dialog.Username,
-                    dialog.Email,
-                    dialog.Password,
-                    dialog.IsAdmin
-                );
-
-                LoadUsers();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Ошибка при добавлении пользователя из диалога");
-            }
-        }
-
-
         public void UpdateUsersList()
         {
             LoadUsers();
         }
-        #endregion
 
+
+        public static bool ValidateNickname(string nickname, out string error)
+        {
+            if (string.IsNullOrWhiteSpace(nickname))
+            {
+                error = "Имя пользователя не может быть пустым.";
+                return false;
+            }
+            if (nickname.Length < 3)
+            {
+                error = "Имя пользователя должно быть минимум 3 символа.";
+                return false;
+            }
+            error = null;
+            return true;
+        }
+
+        public static bool ValidatePassword(string password, out string error)
+        {
+            if (string.IsNullOrWhiteSpace(password) || password.Length <= 5)
+            {
+                error = "Пароль должен содержать минимум 6 символов.";
+                return false;
+            }
+            if (!password.Any(char.IsUpper) || !password.Any(char.IsPunctuation) || !password.Any(char.IsDigit))
+            {
+                error = "Пароль должен содержать заглавные буквы, цифры и знаки препинания.";
+                return false;
+            }
+            error = null;
+            return true;
+        }
+
+        public static bool ValidateEmail(string email, out string error)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                error = null;
+                return true;
+            }
+            catch
+            {
+                error = "Некорректный адрес электронной почты.";
+                return false;
+            }
+        }
+
+        #endregion
 
         #region Classes
         public class UserItemModel : ReactiveObject
@@ -186,10 +246,13 @@ namespace DangerousSituationsUI.ViewModels
                 _user = user;
             }
         }
+
+        public record AddUserDialogResult(
+            string Username,
+            string Email,
+            string Password,
+            bool IsAdmin
+        );
         #endregion
-
     }
-
 }
-
-

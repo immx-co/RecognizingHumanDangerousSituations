@@ -78,6 +78,8 @@ namespace DangerousSituationsUI
                 servicesCollection.AddTransient<RectItemService>();
 
                 servicesCollection.AddSingleton<UserManagementViewModel>();
+                servicesCollection.AddSingleton<AddUserViewModel>();
+                servicesCollection.AddSingleton<DialogService>();
                 servicesCollection.AddTransient<UserService>();
 
                 servicesCollection.AddDbContext<ApplicationContext>(options =>

@@ -1,26 +1,15 @@
-using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+using Avalonia.ReactiveUI;
+using DangerousSituationsUI.ViewModels;
+using ReactiveUI;
 
 namespace DangerousSituationsUI;
 
-public partial class AddUserWindow : Window
+public partial class AddUserWindow : ReactiveWindow<AddUserViewModel>
 {
-    public string Username => NameBox.Text;
-    public string Email => EmailBox.Text;
-    public string Password => PasswordBox.Text;
-    public bool IsAdmin => IsAdminBox.IsChecked ?? false;
-
     public AddUserWindow()
     {
-        InitializeComponent();
-    }
-
-    private void OnSaveClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        Close(true); 
-    }
-
-    private void OnCancelClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        Close(false); 
+        this.WhenActivated(disposables => { });
+        AvaloniaXamlLoader.Load(this);
     }
 }
