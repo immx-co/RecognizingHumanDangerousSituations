@@ -206,11 +206,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
         _legendItems = new AvaloniaList<LegendItem>
         {
-            new LegendItem { ClassName = "human", Color = "Green" },
-            new LegendItem { ClassName = "wind/sup-board", Color = "Red" },
-            new LegendItem { ClassName = "bouy", Color = "Blue" },
-            new LegendItem { ClassName = "sailboat", Color = "Yellow" },
-            new LegendItem { ClassName = "kayak", Color = "Purple" }
+            new LegendItem { ClassName = "standing person", Color = "Green" },
+            new LegendItem { ClassName = "fall person", Color = "Red" }
         };
 
         SetPauseFlag(false);
@@ -379,11 +376,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
             {
                 ClassName = detection.Color switch
                 {
-                    "Green" => "human",
-                    "Red" => "wind/sup-board",
-                    "Blue" => "bouy",
-                    "Yellow" => "sailboat",
-                    "Purple" => "kayak"
+                    "Green" => "standing person",
+                    "Red" => "fall person"
                 },
                 X = detection.X,
                 Y = detection.Y,

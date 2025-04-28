@@ -51,7 +51,7 @@ public class FilesService
         var files = await Target.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions()
         {
             Title = "Open Video File",
-            FileTypeFilter = [new FilePickerFileType("Video") { Patterns = ["*.mp4"] }],
+            FileTypeFilter = [new FilePickerFileType("Video") { Patterns = ["*.mp4", "*.avi"] }],
             AllowMultiple = false
         });
 

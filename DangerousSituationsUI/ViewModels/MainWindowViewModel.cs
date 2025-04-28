@@ -184,11 +184,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         _legendItems = new AvaloniaList<LegendItem>
         {
-            new LegendItem { ClassName = "human", Color = "Green" },
-            new LegendItem { ClassName = "wind/sup-board", Color = "Red" },
-            new LegendItem { ClassName = "bouy", Color = "Blue" },
-            new LegendItem { ClassName = "sailboat", Color = "Yellow" },
-            new LegendItem { ClassName = "kayak", Color = "Purple" }
+            new LegendItem { ClassName = "standing person", Color = "Green" },
+            new LegendItem { ClassName = "fall person", Color = "Red" },
         };
 
         CanSwitchImages = false;
@@ -307,11 +304,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             {
                 ClassName = detection.Color switch
                 {
-                    "Green" => "human",
-                    "Red" => "wind/sup-board",
-                    "Blue" => "bouy",
-                    "Yellow" => "sailboat",
-                    "Purple" => "kayak"
+                    "Green" => "standing person",
+                    "Red" => "fall person",
                 },
                 X = detection.X,
                 Y = detection.Y,
@@ -382,7 +376,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
                     content.Add(imageContent, "image", $"frame{numberOfFrame}.img");
 
-                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/inference", content);
+                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/image_inference", content);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -593,6 +587,77 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         public DateTime Datetime { get; set; }
     }
 
+    public class KeypointsYoloModels
+    {
+        /// <summary>Координаты носа</summary>
+        [JsonPropertyName("nose")]
+        public List<float> Nose { get; set; }
+
+        /// <summary>Координаты левого глаза</summary>
+        [JsonPropertyName("left_eye")]
+        public List<float> LeftEye { get; set; }
+
+        /// <summary>Координаты правого глаза</summary>
+        [JsonPropertyName("right_eye")]
+        public List<float> RightEye { get; set; }
+
+        /// <summary>Координаты левого уха</summary>
+        [JsonPropertyName("left_ear")]
+        public List<float> LeftEar { get; set; }
+
+        /// <summary>Координаты правого уха</summary>
+        [JsonPropertyName("right_ear")]
+        public List<float> RightEar { get; set; }
+
+        /// <summary>Координаты левого плеча</summary>
+        [JsonPropertyName("left_shoulder")]
+        public List<float> LeftShoulder { get; set; }
+
+        /// <summary>Координаты правого плеча</summary>
+        [JsonPropertyName("right_shoulder")]
+        public List<float> RightShoulder { get; set; }
+
+        /// <summary>Координаты левого локтя</summary>
+        [JsonPropertyName("left_elbow")]
+        public List<float> LeftElbow { get; set; }
+
+        /// <summary>Координаты правого локтя</summary>
+        [JsonPropertyName("right_elbow")]
+        public List<float> RightElbow { get; set; }
+
+        /// <summary>Координаты левого запястья</summary>
+        [JsonPropertyName("left_wrist")]
+        public List<float> LeftWrist { get; set; }
+
+        /// <summary>Координаты правого запястья</summary>
+        [JsonPropertyName("right_wrist")]
+        public List<float> RightWrist { get; set; }
+
+        /// <summary>Координаты левого бедра</summary>
+        [JsonPropertyName("left_hip")]
+        public List<float> LeftHip { get; set; }
+
+        /// <summary>Координаты правого бедра</summary>
+        [JsonPropertyName("right_hip")]
+        public List<float> RightHip { get; set; }
+
+        /// <summary>Координаты левого колена</summary>
+        [JsonPropertyName("left_knee")]
+        public List<float> LeftKnee { get; set; }
+
+        /// <summary>Координаты правого колена</summary>
+        [JsonPropertyName("right_knee")]
+        public List<float> RightKnee { get; set; }
+
+        /// <summary>Координаты левой лодыжки</summary>
+        [JsonPropertyName("left_ankle")]
+        public List<float> LeftAnkle { get; set; }
+
+        /// <summary>Координаты правой лодыжки</summary>
+        [JsonPropertyName("right_ankle")]
+        public List<float> RightAnkle { get; set; }
+    }
+
     public class InferenceResult
     {
         [JsonPropertyName("class_name")]
@@ -609,6 +674,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         [JsonPropertyName("height")]
         public int Height { get; set; }
+
+        [JsonPropertyName("keypoints")]
+        public KeypointsYoloModels Keypoints { get; set; }
     }
 
     public class DetectedAndClassifiedObject
