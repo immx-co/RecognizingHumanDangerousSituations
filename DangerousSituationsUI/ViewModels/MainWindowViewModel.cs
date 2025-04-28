@@ -8,7 +8,6 @@ using ClassLibrary.Datacontracts;
 using ClassLibrary.Repository;
 using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
-using LibVLCSharp.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
 using ReactiveUI;
@@ -30,18 +29,32 @@ namespace DangerousSituationsUI.ViewModels;
 public class MainViewModel : ReactiveObject, IRoutableViewModel
 {
     #region Private Fields
+    private Bitmap? _currentImage;
+
+    private List<Bitmap?> _imageFilesBitmap = new();
+
+    private List<IStorageFile>? _imageFiles = new();
+
+    private IStorageFile? _videoFile;
+
+    private List<Bitmap?> _frames = new();
 
     private string _currentFileName;
+
+    private string _frameTitle;
 
     private FilesService _filesService;
 
     private VideoService _videoService;
 
     private RectItemService _rectItemService;
-
     private readonly ConfigurationService _configurationService;
 
     private IServiceProvider _serviceProvider;
+
+    private ISolidColorBrush _connectionStatus;
+
+    private bool _canSwitchImages;
 
     private bool _isLoading;
 
@@ -51,35 +64,20 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private bool _areConnectButtonEnabled = true;
 
+    private AvaloniaList<RectItem> _rectItems;
+
+    private AvaloniaList<AvaloniaList<RectItem>> _rectItemsLists;
+
     private AvaloniaList<LegendItem> _legendItems;
-
-    private AvaloniaList<string> _filesNames;
-
-    private AvaloniaList<IStorageFile> _files;
-
-    private LibVLC _libVLC = new LibVLC();
-
-    private MediaPlayer _mediaPlayer;
-
-    private bool _canPlay;
-
-    private bool _canPause;
-
-    private bool _canStop;
-
-    private string _playButtonColor;
-
-    private string _pauseButtonColor;
-
-    private string _stopButtonColor;
 
     private string _videoTime;
 
     private TelegramBotAPI _telegramBotApi;
+
+    private int _currentNumberOfFrame;
     #endregion
 
     #region Public Fields
-
     public VideoEventJournalViewModel _videoEventJournalViewModel;
     #endregion
 
@@ -91,26 +89,50 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Commands
-    public ReactiveCommand<Unit, Unit> SendImageCommand { get; }
+    public ReactiveCommand<Unit, Unit> ImageBackCommand { get; }
 
-    public ReactiveCommand<Unit, Unit> SendFolderCommand { get; }
+    public ReactiveCommand<Unit, Unit> ImageForwardCommand { get; }
 
     public ReactiveCommand<Unit, Unit> SendVideoCommand { get; }
 
     public ReactiveCommand<Unit, Unit> ConnectCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> PlayCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> PauseCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> StopCommand { get; }
     #endregion
 
     #region Properties
+    public AvaloniaList<RectItem> RectItems
+    {
+        get => _rectItems;
+        set => this.RaiseAndSetIfChanged(ref _rectItems, value);
+    }
+
+    public Bitmap? CurrentImage
+    {
+        get => _currentImage;
+        set => this.RaiseAndSetIfChanged(ref _currentImage, value);
+    }
+
     public string CurrentFileName
     {
         get => _currentFileName;
         set => this.RaiseAndSetIfChanged(ref _currentFileName, value);
+    }
+
+    public string FrameTitle
+    {
+        get => _frameTitle;
+        set => this.RaiseAndSetIfChanged(ref _frameTitle, value);
+    }
+
+    public ISolidColorBrush ConnectionStatus
+    {
+        get => _connectionStatus;
+        private set => this.RaiseAndSetIfChanged(ref _connectionStatus, value);
+    }
+
+    public bool CanSwitchImages
+    {
+        get => _canSwitchImages;
+        set => this.RaiseAndSetIfChanged(ref _canSwitchImages, value);
     }
 
     public bool IsLoading
@@ -142,60 +164,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         get => _legendItems;
         set => this.RaiseAndSetIfChanged(ref _legendItems, value);
     }
-
-    public MediaPlayer MediaPlayer
-    {
-        get => _mediaPlayer;
-        set => this.RaiseAndSetIfChanged(ref _mediaPlayer, value);
-    }
-
-    public AvaloniaList<string> FilesNames
-    {
-        get => _filesNames;
-        set => this.RaiseAndSetIfChanged(ref _filesNames, value);
-    }
-
-    public bool CanPlay
-    {
-        get => _canPlay;
-        set => this.RaiseAndSetIfChanged(ref _canPlay, value);
-    }
-
-    public bool CanPause
-    {
-        get => _canPause;
-        set => this.RaiseAndSetIfChanged(ref _canPause, value);
-    }
-
-    public bool CanStop
-    {
-        get => _canStop;
-        set => this.RaiseAndSetIfChanged(ref _canStop, value);
-    }
-
-    public string PlayButtonColor
-    {
-        get => _playButtonColor;
-        set => this.RaiseAndSetIfChanged(ref _playButtonColor, value);
-    }
-
-    public string StopButtonColor
-    {
-        get => _stopButtonColor;
-        set => this.RaiseAndSetIfChanged(ref _stopButtonColor, value);
-    }
-
-    public string PauseButtonColor
-    {
-        get => _pauseButtonColor;
-        set => this.RaiseAndSetIfChanged(ref _pauseButtonColor, value);
-    }
-
-    public string VideoTime
-    {
-        get => _videoTime;
-        set => this.RaiseAndSetIfChanged(ref _videoTime, value);
-    }
     #endregion
 
     #region Constructors
@@ -224,61 +192,20 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         _legendItems = new AvaloniaList<LegendItem>
         {
-            new LegendItem { ClassName = "human", Color = "Green" },
-            new LegendItem { ClassName = "wind/sup-board", Color = "Red" },
-            new LegendItem { ClassName = "bouy", Color = "Blue" },
-            new LegendItem { ClassName = "sailboat", Color = "Yellow" },
-            new LegendItem { ClassName = "kayak", Color = "Purple" }
+            new LegendItem { ClassName = "standing person", Color = "Green" },
+            new LegendItem { ClassName = "fall person", Color = "Red" },
         };
 
-        SetPauseFlag(false);
-        SetPlayFlag(false);
-        SetStopFlag(false);
-
-        VideoTime = GetVideoTimeString(0);
+        CanSwitchImages = false;
 
         ConnectCommand = ReactiveCommand.CreateFromTask(CheckHealthAsync);
-        SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         SendVideoCommand = ReactiveCommand.CreateFromTask(OpenVideoAsync);
-        PlayCommand = ReactiveCommand.Create(PlayVideo);
-        PauseCommand = ReactiveCommand.Create(PauseVideo);
-        StopCommand = ReactiveCommand.Create(StopVideo);
+        ImageBackCommand = ReactiveCommand.Create(PreviousFrame);
+        ImageForwardCommand = ReactiveCommand.Create(NextFrame);
     }
     #endregion
 
     #region Command Methods
-    private async Task OpenFolderAsync()
-    {
-        Log.Information("Start sending folder");
-        LogJournalViewModel.logString += "Start sending folder\n";
-        Log.Debug("MainViewModel.OpenFolderAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Start\n";
-        AreButtonsEnabled = false;
-        try
-        {
-            var files = await _filesService.OpenVideoFolderAsync();
-            if (files != null)
-            {
-                foreach (var file in files)
-                {
-                    CurrentFileName = file.Name;
-                    await InitFramesAsync(file);
-                    CurrentFileName = string.Empty;
-                    IsLoading = false;
-                    ProgressPercentage = 0;
-                }
-            }
-        }
-        catch
-        {
-            ShowMessageBox("Error", "В выбранной директории отсутcтвуют изображения или пристуствуют файлы с недопустимым расширением.");
-            Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.");
-            LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.\n";
-            return;
-        }
-        finally { AreButtonsEnabled = true; }
-    }
-
     private async Task OpenVideoAsync()
     {
         Log.Information("Start sending video"); 
@@ -286,65 +213,35 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Start\n";
         _videoEventJournalViewModel.EventResults = new AvaloniaList<string>();
-        AreButtonsEnabled = false;
         try
         {
             var file = await _filesService.OpenVideoFileAsync();
-
             if (file != null)
             {
                 await InitFramesAsync(file);
-                _files = [file];
-
-                await _videoEventJournalViewModel.FillComboBox();
-
-                using var media = new Media(_libVLC, _files[0].Path);
-                SetMediaPlayer(media);
+                CanSwitchImages = true;
+                FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
             }
-
+        }
+        finally
+        {
             IsLoading = false;
             ProgressPercentage = 0;
-
+            await _videoEventJournalViewModel.FillComboBox();
             Log.Information("End sending video");
             LogJournalViewModel.logString += "End sending video\n";
             Log.Debug("MainViewModel.OpenVideoAsync: Done");
             LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Done\n";
         }
-        catch
-        {
-            string message = "Возникла ошибка на этапе обработки видео.";
-            ShowMessageBox("Error", message);
-            Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: {Message}", message);
-            LogJournalViewModel.logString += ("MainViewModel.OpenFolderAsync: Error; Message: {message}\n",message);
-        }
-        finally { AreButtonsEnabled = true; }
-    }
-
-    private void PlayVideo()
-    {
-        MediaPlayer.Play();
-    }
-
-    private void PauseVideo()
-    {
-        MediaPlayer.Pause();
-    }
-
-    private void StopVideo()
-    {
-        MediaPlayer?.Stop();
-
-        VideoTime = GetVideoTimeString(0);
-
-        SetPlayFlag(true);
-        SetPauseFlag(false);
-        SetStopFlag(false);
     }
     #endregion
 
     private void ResetUI()
     {
+        RectItems = new AvaloniaList<RectItem>();
+        CurrentImage = null;
         CurrentFileName = String.Empty;
+        FrameTitle = String.Empty;
     }
 
     #region Video Methods
@@ -377,7 +274,13 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         await SaveDataIntoDatabase(file, frameNDetections);
 
+        _videoFile = file;
+        _rectItemsLists = itemsLists;
+        _frames = frames;
+
         CurrentFileName = file.Name;
+        _currentNumberOfFrame = 0;
+        SetFrame();
         Log.Debug("MainViewModel.InitFramesAsync: End");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: End\n";
     }
@@ -409,11 +312,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             {
                 ClassName = detection.Color switch
                 {
-                    "Green" => "human",
-                    "Red" => "wind/sup-board",
-                    "Blue" => "bouy",
-                    "Yellow" => "sailboat",
-                    "Purple" => "kayak"
+                    "Green" => "standing person",
+                    "Red" => "fall person",
                 },
                 X = detection.X,
                 Y = detection.Y,
@@ -438,6 +338,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Done\n";
         return addedVideo;
     }
+
     private async Task<AvaloniaList<RectItem>> GetFrameDetectionResultsAsync(Bitmap frame, int numberOfFrame)
     {
         Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Start");
@@ -483,7 +384,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
                     content.Add(imageContent, "image", $"frame{numberOfFrame}.img");
 
-                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/inference", content);
+                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/image_inference", content);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -521,60 +422,30 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += "MainViewModel.GetFrameRecognitionResultsAsync: Done\n";
         return new List<RecognitionResult>();
     }
-    #endregion
 
-    #region MediaPlayer Methods
-    public void SetMediaPlayer(Media media)
+    private void NextFrame()
     {
-        StopVideo();
+        if (_currentNumberOfFrame < _frames.Count - 1) _currentNumberOfFrame++;
+        else _currentNumberOfFrame = 0;
 
-        MediaPlayer = new(media);
-
-        MediaPlayer.Playing += (object? sender, EventArgs args) =>
-        {
-            SetPauseFlag(true);
-            SetPlayFlag(false);
-            SetStopFlag(true);
-        };
-        MediaPlayer.Paused += (object? sender, EventArgs args) =>
-        {
-            SetPauseFlag(false);
-            SetPlayFlag(true);
-            SetStopFlag(true);
-        };
-        MediaPlayer.EndReached += (object? sender, EventArgs args) =>
-        {
-            SetPauseFlag(false);
-            SetPlayFlag(false);
-            SetStopFlag(true);
-        };
-        MediaPlayer.TimeChanged += (object? sender, MediaPlayerTimeChangedEventArgs args) =>
-        {
-            VideoTime = GetVideoTimeString(args.Time);
-        };
+        SetFrame();
     }
 
-    private void SetPlayFlag(bool flag)
+    private void PreviousFrame()
     {
-        CanPlay = flag;
-        PlayButtonColor = SetButtonColor(flag);
+        if (_currentNumberOfFrame > 0) _currentNumberOfFrame--;
+        else _currentNumberOfFrame = _frames.Count - 1;
+
+        SetFrame();
     }
 
-    private void SetStopFlag(bool flag)
+    private void SetFrame()
     {
-        CanStop = flag;
-        StopButtonColor = SetButtonColor(flag);
+        CurrentImage = _frames[_currentNumberOfFrame];
+        RectItems = _rectItemsLists[_currentNumberOfFrame];
+
+        FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
     }
-
-    private void SetPauseFlag(bool flag)
-    {
-        CanPause = flag;
-        PauseButtonColor = SetButtonColor(flag);
-    }
-
-    private string SetButtonColor(bool flag) => flag ? "LightGray" : "Gray";
-
-    private string GetVideoTimeString(long ms) => TimeSpan.FromMilliseconds(ms).ToString();
     #endregion
 
     #region Client Methods
@@ -724,6 +595,77 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         public DateTime Datetime { get; set; }
     }
 
+    public class KeypointsYoloModels
+    {
+        /// <summary>Координаты носа</summary>
+        [JsonPropertyName("nose")]
+        public List<float> Nose { get; set; }
+
+        /// <summary>Координаты левого глаза</summary>
+        [JsonPropertyName("left_eye")]
+        public List<float> LeftEye { get; set; }
+
+        /// <summary>Координаты правого глаза</summary>
+        [JsonPropertyName("right_eye")]
+        public List<float> RightEye { get; set; }
+
+        /// <summary>Координаты левого уха</summary>
+        [JsonPropertyName("left_ear")]
+        public List<float> LeftEar { get; set; }
+
+        /// <summary>Координаты правого уха</summary>
+        [JsonPropertyName("right_ear")]
+        public List<float> RightEar { get; set; }
+
+        /// <summary>Координаты левого плеча</summary>
+        [JsonPropertyName("left_shoulder")]
+        public List<float> LeftShoulder { get; set; }
+
+        /// <summary>Координаты правого плеча</summary>
+        [JsonPropertyName("right_shoulder")]
+        public List<float> RightShoulder { get; set; }
+
+        /// <summary>Координаты левого локтя</summary>
+        [JsonPropertyName("left_elbow")]
+        public List<float> LeftElbow { get; set; }
+
+        /// <summary>Координаты правого локтя</summary>
+        [JsonPropertyName("right_elbow")]
+        public List<float> RightElbow { get; set; }
+
+        /// <summary>Координаты левого запястья</summary>
+        [JsonPropertyName("left_wrist")]
+        public List<float> LeftWrist { get; set; }
+
+        /// <summary>Координаты правого запястья</summary>
+        [JsonPropertyName("right_wrist")]
+        public List<float> RightWrist { get; set; }
+
+        /// <summary>Координаты левого бедра</summary>
+        [JsonPropertyName("left_hip")]
+        public List<float> LeftHip { get; set; }
+
+        /// <summary>Координаты правого бедра</summary>
+        [JsonPropertyName("right_hip")]
+        public List<float> RightHip { get; set; }
+
+        /// <summary>Координаты левого колена</summary>
+        [JsonPropertyName("left_knee")]
+        public List<float> LeftKnee { get; set; }
+
+        /// <summary>Координаты правого колена</summary>
+        [JsonPropertyName("right_knee")]
+        public List<float> RightKnee { get; set; }
+
+        /// <summary>Координаты левой лодыжки</summary>
+        [JsonPropertyName("left_ankle")]
+        public List<float> LeftAnkle { get; set; }
+
+        /// <summary>Координаты правой лодыжки</summary>
+        [JsonPropertyName("right_ankle")]
+        public List<float> RightAnkle { get; set; }
+    }
+
     public class InferenceResult
     {
         [JsonPropertyName("class_name")]
@@ -740,6 +682,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         [JsonPropertyName("height")]
         public int Height { get; set; }
+
+        [JsonPropertyName("keypoints")]
+        public KeypointsYoloModels Keypoints { get; set; }
     }
 
     public class DetectedAndClassifiedObject

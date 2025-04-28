@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System;
 using System.Linq;
 using DangerousSituationsUI.Services;
+using System.Reactive;
+using System.Reactive.Linq;
 
 
 namespace DangerousSituationsUI.ViewModels
@@ -13,6 +15,7 @@ namespace DangerousSituationsUI.ViewModels
 
     public class UserManagementViewModel : ReactiveObject, IRoutableViewModel
     {
+        public Interaction<Unit, Unit> ShowAddUserDialogInteraction { get; } = new();
 
         #region Private Fields
         private readonly UserService _userService;
@@ -32,6 +35,18 @@ namespace DangerousSituationsUI.ViewModels
             get => _userItems;
             set => this.RaiseAndSetIfChanged(ref _userItems, value);
         }
+
+        private UserItemModel _selectedUser;
+        public UserItemModel SelectedUser
+        {
+            get => _selectedUser;
+            set => this.RaiseAndSetIfChanged(ref _selectedUser, value);
+        }
+        #endregion
+
+        #region Commands
+        public ReactiveCommand<Unit, Unit> AddUserCommand { get; }
+        public ReactiveCommand<Unit, Unit> DeleteUserCommand { get; }
         #endregion
 
 
@@ -40,6 +55,11 @@ namespace DangerousSituationsUI.ViewModels
         {
             HostScreen = screen;
             _userService = userService;
+
+            AddUserCommand = ReactiveCommand.CreateFromTask(AddUser);
+            DeleteUserCommand = ReactiveCommand.CreateFromTask(DeleteUser, 
+                this.WhenAnyValue(x => x.SelectedUser).Select(user => user != null));
+
             LoadUsers();
         }
         #endregion
@@ -59,6 +79,23 @@ namespace DangerousSituationsUI.ViewModels
                 Log.Error(ex, "Ошибка загрузки пользователей");
             }
         }
+
+        private async Task DeleteUser()
+        {
+            try
+            {
+                if (SelectedUser is not null)
+                {
+                    await _userService.DeleteUserAsync(SelectedUser.UserId);
+                    LoadUsers();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Ошибка удаления пользователя");
+            }
+        }
+
         #endregion
 
 
@@ -78,6 +115,40 @@ namespace DangerousSituationsUI.ViewModels
                     user.UserAdmin = !isAdmin;
             }
         }
+
+        private async Task AddUser()
+        {
+            try
+            {
+                await ShowAddUserDialogInteraction.Handle(Unit.Default);
+                LoadUsers();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Ошибка добавления пользователя");
+            }
+        }
+
+
+        public async Task AddUserFromDialogAsync(AddUserWindow dialog)
+        {
+            try
+            {
+                await _userService.AddUserAsync(
+                    dialog.Username,
+                    dialog.Email,
+                    dialog.Password,
+                    dialog.IsAdmin
+                );
+
+                LoadUsers();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Ошибка при добавлении пользователя из диалога");
+            }
+        }
+
 
         public void UpdateUsersList()
         {
