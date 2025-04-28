@@ -128,6 +128,24 @@ public class TelegramBotAPI : IDisposable
         }
     }
 
+    public async Task SendEventData(byte[] imageBytes, string detectionInfo)
+    {
+        try
+        {
+            using var memoryStream = new MemoryStream(imageBytes);
+            await _botClient.SendPhoto(
+                chatId: _chatId,
+                photo: InputFile.FromStream(memoryStream, "image.jpg"),
+                caption: detectionInfo
+            );
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Ошибка при отправке изображения с детекцией боту: {ex.Message}");
+            _logJournalViewModel.LogString += $"Ошибка при отправке изображения с детекцией боту: {ex.Message}\n";
+        }
+    }
+
     public void Dispose()
     {
         StopBot();

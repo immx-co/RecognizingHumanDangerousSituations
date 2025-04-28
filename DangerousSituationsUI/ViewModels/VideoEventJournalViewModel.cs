@@ -122,11 +122,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
         LegendItems = new AvaloniaList<LegendItem>
         {
-            new LegendItem { ClassName = "human", Color = "Green" },
-            new LegendItem { ClassName = "wind/sup-board", Color = "Red" },
-            new LegendItem { ClassName = "bouy", Color = "Blue" },
-            new LegendItem { ClassName = "sailboat", Color = "Yellow" },
-            new LegendItem { ClassName = "kayak", Color = "Purple" }
+            new LegendItem { ClassName = "standing person", Color = "Green" },
+            new LegendItem { ClassName = "fall person", Color = "Red" }
         };
     }
     #endregion
@@ -177,11 +174,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             Height = videoEventResult.Height,
             Color = videoEventResult.Class switch
             {
-                "human" => "Green",
-                "wind/sup-board" => "Red",
-                "bouy" => "Blue",
-                "sailboat" => "Yellow",
-                "kayak" => "Purple"
+                "standing person" => "Green",
+                "fall person" => "Red"
             }
         };
         RectItems = [recognitionResult];

@@ -329,6 +329,13 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             };
 
             videoModel.Frames.Add(frame);
+
+            if (detections.Any())
+            {
+                var detectionInfo = string.Join("\n", detections.Select(det =>
+                    $"{det.ClassName} обнаружен! Координаты: X={det.X}, Y={det.Y}, Ширина={det.Width}, Высота={det.Height}"));
+                await _telegramBotApi.SendEventData(frameBytes, detectionInfo);
+            }
         }
 
         var addedVideo = await repository.AddVideoAsync(videoModel);
@@ -351,7 +358,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             try
             {
                 items.Add(_rectItemService.InitRect(det, frame));
-                await SaveRecognitionResultAsync(det);
             }
             catch (Exception ex)
             {
@@ -556,19 +562,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                 }
             }
         }
-    }
-    #endregion
-
-    #region Data Base Methods
-    private async Task SaveRecognitionResultAsync(RecognitionResult recognitionResult)
-    {
-        Log.Debug("MainViewModel.SaveRecognitionResultAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Start\n";
-        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
-        db.RecognitionResults.AddRange(recognitionResult);
-        await db.SaveChangesAsync();
-        Log.Debug("MainViewModel.SaveRecognitionResultAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Done\n"; 
     }
     #endregion
 
