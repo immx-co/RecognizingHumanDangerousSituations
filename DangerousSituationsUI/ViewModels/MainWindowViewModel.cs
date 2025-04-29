@@ -23,6 +23,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using LibVLCSharp.Shared;
+
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -71,6 +73,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private AvaloniaList<LegendItem> _legendItems;
 
     private int _currentNumberOfFrame;
+
+    private readonly VideoPlayerViewModel _videoPlayerViewModel;
     #endregion
 
     #region Public Fields
@@ -170,7 +174,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         IServiceProvider serviceProvider,
         VideoService videoService,
         RectItemService rectItemService,
-        VideoEventJournalViewModel videoEventJournalViewModel)
+        VideoEventJournalViewModel videoEventJournalViewModel,
+        VideoPlayerViewModel videoPlayerViewModel)
     {
         HostScreen = screen;
         _filesService = filesService;
@@ -179,6 +184,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _serviceProvider = serviceProvider;
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _configurationService = configurationService;
+        _videoPlayerViewModel = videoPlayerViewModel;
 
         AreButtonsEnabled = false;
 
@@ -216,6 +222,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                 await InitFramesAsync(file);
                 CanSwitchImages = true;
                 FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
+
+                var media = new Media(_videoPlayerViewModel.LibVLCInstance, file.Path.LocalPath, FromType.FromPath);
+                _videoPlayerViewModel.SetMediaPlayer(media);
             }
         }
         finally

@@ -1,28 +1,9 @@
-﻿using Avalonia.Collections;
-using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform.Storage;
-using ClassLibrary.Database;
-using ClassLibrary.Database.Models;
-using ClassLibrary.Datacontracts;
-using ClassLibrary.Repository;
-using ClassLibrary.Services;
-using DangerousSituationsUI.Services;
-using LibVLCSharp.Shared;
-using Microsoft.Extensions.DependencyInjection;
+﻿using LibVLCSharp.Shared;
 using MsBox.Avalonia;
 using ReactiveUI;
-using Serilog;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Reactive;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -31,27 +12,7 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     #region Private Fields
     private string _currentFileName;
 
-    private FilesService _filesService;
-
-    private VideoService _videoService;
-
-    private RectItemService _rectItemService;
-
-    private readonly ConfigurationService _configurationService;
-
-    private IServiceProvider _serviceProvider;
-
-    private bool _isLoading;
-
-    private int _progressPercentage;
-
     private bool _areButtonsEnabled;
-
-    private AvaloniaList<LegendItem> _legendItems;
-
-    private AvaloniaList<string> _filesNames;
-
-    private AvaloniaList<IStorageFile> _files;
 
     private LibVLC _libVLC = new LibVLC();
 
@@ -72,9 +33,11 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     private string _videoTime;
     #endregion
 
+
     #region Public Fields
     public VideoEventJournalViewModel _videoEventJournalViewModel;
     #endregion
+
 
     #region View Model Settings
     public IScreen HostScreen { get; }
@@ -84,13 +47,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     public CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     #endregion
 
+
     #region Commands
-    public ReactiveCommand<Unit, Unit> SendImageCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> SendFolderCommand { get; }
-
-    public ReactiveCommand<Unit, Unit> SendVideoCommand { get; }
-
     public ReactiveCommand<Unit, Unit> PlayCommand { get; }
 
     public ReactiveCommand<Unit, Unit> PauseCommand { get; }
@@ -98,23 +56,14 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     public ReactiveCommand<Unit, Unit> StopCommand { get; }
     #endregion
 
+
     #region Properties
+    public LibVLC LibVLCInstance => _libVLC;
+
     public string CurrentFileName
     {
         get => _currentFileName;
         set => this.RaiseAndSetIfChanged(ref _currentFileName, value);
-    }
-
-    public bool IsLoading
-    {
-        get => _isLoading;
-        set => this.RaiseAndSetIfChanged(ref _isLoading, value);
-    }
-
-    public int ProgressPercentage
-    {
-        get => _progressPercentage;
-        set => this.RaiseAndSetIfChanged(ref _progressPercentage, value);
     }
 
     public bool AreButtonsEnabled
@@ -123,22 +72,10 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         private set => this.RaiseAndSetIfChanged(ref _areButtonsEnabled, value);
     }
 
-    public AvaloniaList<LegendItem> LegendItems
-    {
-        get => _legendItems;
-        set => this.RaiseAndSetIfChanged(ref _legendItems, value);
-    }
-
     public MediaPlayer MediaPlayer
     {
         get => _mediaPlayer;
         set => this.RaiseAndSetIfChanged(ref _mediaPlayer, value);
-    }
-
-    public AvaloniaList<string> FilesNames
-    {
-        get => _filesNames;
-        set => this.RaiseAndSetIfChanged(ref _filesNames, value);
     }
 
     public bool CanPlay
@@ -184,34 +121,16 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     }
     #endregion
 
+
     #region Constructors
     public VideoPlayerViewModel(
         IScreen screen,
-        FilesService filesService,
-        ConfigurationService configurationService,
-        IServiceProvider serviceProvider,
-        VideoService videoService,
-        RectItemService rectItemService,
         VideoEventJournalViewModel videoEventJournalViewModel)
     {
         HostScreen = screen;
-        _filesService = filesService;
-        _videoService = videoService;
-        _rectItemService = rectItemService;
-        _serviceProvider = serviceProvider;
         _videoEventJournalViewModel = videoEventJournalViewModel;
-        _configurationService = configurationService;
 
         AreButtonsEnabled = false;
-
-        _legendItems = new AvaloniaList<LegendItem>
-        {
-            new LegendItem { ClassName = "human", Color = "Green" },
-            new LegendItem { ClassName = "wind/sup-board", Color = "Red" },
-            new LegendItem { ClassName = "bouy", Color = "Blue" },
-            new LegendItem { ClassName = "sailboat", Color = "Yellow" },
-            new LegendItem { ClassName = "kayak", Color = "Purple" }
-        };
 
         SetPauseFlag(false);
         SetPlayFlag(false);
@@ -219,80 +138,14 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
         VideoTime = GetVideoTimeString(0);
 
-        SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
-        SendVideoCommand = ReactiveCommand.CreateFromTask(OpenVideoAsync);
         PlayCommand = ReactiveCommand.Create(PlayVideo);
         PauseCommand = ReactiveCommand.Create(PauseVideo);
         StopCommand = ReactiveCommand.Create(StopVideo);
     }
     #endregion
 
+
     #region Command Methods
-    private async Task OpenFolderAsync()
-    {
-        Log.Information("Start sending folder");
-        Log.Debug("MainViewModel.OpenFolderAsync: Start");
-        AreButtonsEnabled = false;
-        try
-        {
-            var files = await _filesService.OpenVideoFolderAsync();
-            if (files != null)
-            {
-                foreach (var file in files)
-                {
-                    CurrentFileName = file.Name;
-                    await InitFramesAsync(file);
-                    CurrentFileName = string.Empty;
-                    IsLoading = false;
-                    ProgressPercentage = 0;
-                }
-            }
-        }
-        catch
-        {
-            ShowMessageBox("Error", "В выбранной директории отсутcтвуют изображения или пристуствуют файлы с недопустимым расширением.");
-            Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.");
-            return;
-        }
-        finally { AreButtonsEnabled = true; }
-    }
-
-    private async Task OpenVideoAsync()
-    {
-        Log.Information("Start sending video");
-        Log.Debug("MainViewModel.OpenVideoAsync: Start");
-        _videoEventJournalViewModel.EventResults = new AvaloniaList<string>();
-        AreButtonsEnabled = false;
-        try
-        {
-            var file = await _filesService.OpenVideoFileAsync();
-
-            if (file != null)
-            {
-                await InitFramesAsync(file);
-                _files = [file];
-
-                await _videoEventJournalViewModel.FillComboBox();
-
-                using var media = new Media(_libVLC, _files[0].Path);
-                SetMediaPlayer(media);
-            }
-
-            IsLoading = false;
-            ProgressPercentage = 0;
-
-            Log.Information("End sending video");
-            Log.Debug("MainViewModel.OpenVideoAsync: Done");
-        }
-        catch
-        {
-            string message = "Возникла ошибка на этапе обработки видео.";
-            ShowMessageBox("Error", message);
-            Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: {Message}", message);
-        }
-        finally { AreButtonsEnabled = true; }
-    }
-
     private void PlayVideo()
     {
         MediaPlayer.Play();
@@ -319,171 +172,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     {
         CurrentFileName = String.Empty;
     }
-
-    #region Video Methods
-    private async Task InitializeVideoEventJournalWindow()
-    {
-        await _videoEventJournalViewModel.FillComboBox();
-    }
-
-    private async Task InitFramesAsync(IStorageFile file)
-    {
-        Log.Debug("MainViewModel.InitFramesAsync: Start");
-        IsLoading = true;
-        var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
-        var frames = await _videoService.GetFramesAsync(file);
-
-        List<FrameNDetections> frameNDetections = new List<FrameNDetections>();
-        int totalFiles = frames.Count();
-        for (int idx = 0; idx < totalFiles; idx++)
-        {
-            var results = await GetFrameDetectionResultsAsync(frames[idx], idx + 1);
-            itemsLists.Add(results);
-            ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
-            frameNDetections.Add(new FrameNDetections
-            {
-                Frame = frames[idx],
-                Detections = results
-            });
-        }
-
-        await SaveDataIntoDatabase(file, frameNDetections);
-
-        CurrentFileName = file.Name;
-        Log.Debug("MainViewModel.InitFramesAsync: End");
-    }
-
-    private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
-    {
-        Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Start");
-
-        using var scope = _serviceProvider.CreateScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
-
-        // Создаем модель Video
-        var videoModel = new Video
-        {
-            VideoName = videoFile.Name,
-            FilePath = videoFile.Path.ToString(),
-            CreatedAt = DateTime.UtcNow,
-            Frames = new List<Frame>()
-        };
-
-        foreach (var frameNDetection in framesNDetections)
-        {
-            using var memoryStream = new MemoryStream();
-            frameNDetection.Frame.Save(memoryStream);
-            byte[] frameBytes = memoryStream.ToArray();
-
-            var detections = frameNDetection.Detections.Select(detection => new Detection
-            {
-                ClassName = detection.Color switch
-                {
-                    "Green" => "human",
-                    "Red" => "wind/sup-board",
-                    "Blue" => "bouy",
-                    "Yellow" => "sailboat",
-                    "Purple" => "kayak"
-                },
-                X = detection.X,
-                Y = detection.Y,
-                Width = detection.Width,
-                Height = detection.Height
-            }).ToList();
-
-            var frame = new Frame
-            {
-                FrameData = frameBytes,
-                CreatedAt = DateTime.UtcNow,
-                Detections = detections
-            };
-
-            videoModel.Frames.Add(frame);
-        }
-
-        var addedVideo = await repository.AddVideoAsync(videoModel);
-        await repository.SaveChangesAsync();
-
-        Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Done");
-        return addedVideo;
-    }
-    private async Task<AvaloniaList<RectItem>> GetFrameDetectionResultsAsync(Bitmap frame, int numberOfFrame)
-    {
-        Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Start");
-        List<RecognitionResult> detections = await GetFrameRecognitionResultsAsync(frame, numberOfFrame);
-        var items = new AvaloniaList<RectItem>();
-
-        foreach (RecognitionResult det in detections)
-        {
-            try
-            {
-                items.Add(_rectItemService.InitRect(det, frame));
-                await SaveRecognitionResultAsync(det);
-            }
-            catch (Exception ex)
-            {
-                ShowMessageBox("Error", $"Ошибка при обработке детекции: {ex.Message}");
-                Log.Warning("MainViewModel.GetFrameDetectionResultsAsync: Error; Message: {@Message}", ex.Message);
-            }
-        }
-        Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Done");
-        return items;
-    }
-
-    private async Task<List<RecognitionResult>> GetFrameRecognitionResultsAsync(Bitmap frame, int numberOfFrame)
-    {
-        Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Start");
-        string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
-        using (var client = new HttpClient())
-        {
-            try
-            {
-                using (MemoryStream imageStream = new())
-                {
-                    frame.Save(imageStream);
-                    imageStream.Seek(0, SeekOrigin.Begin);
-
-                    var content = new MultipartFormDataContent();
-                    var imageContent = new StreamContent(imageStream);
-                    imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
-                    content.Add(imageContent, "image", $"frame{numberOfFrame}.img");
-
-                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/inference", content);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var jsonResponse = await response.Content.ReadAsStringAsync();
-                        var result = JsonSerializer.Deserialize<DetectedAndClassifiedObject>(jsonResponse);
-
-                        if (result?.ObjectBbox != null)
-                        {
-                            return result.ObjectBbox.Select(bbox => new RecognitionResult
-                            {
-                                ClassName = bbox.ClassName,
-                                X = bbox.X,
-                                Y = bbox.Y,
-                                Width = bbox.Width,
-                                Height = bbox.Height
-                            }).ToList();
-                        }
-                    }
-                    else
-                    {
-                        ShowMessageBox("Error", $"Ошибка при отправке видео: {response.StatusCode}");
-                        Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", $"Ошибка при отправке видео: {response.StatusCode}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowMessageBox("Error", $"Ошибка при отправке видео: {ex.Message}");
-                Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", ex.Message);
-            }
-        }
-        Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Done");
-        return new List<RecognitionResult>();
-    }
-    #endregion
 
     #region MediaPlayer Methods
     public void SetMediaPlayer(Media media)
@@ -539,16 +227,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     private string GetVideoTimeString(long ms) => TimeSpan.FromMilliseconds(ms).ToString();
     #endregion
 
-    #region Data Base Methods
-    private async Task SaveRecognitionResultAsync(RecognitionResult recognitionResult)
-    {
-        Log.Debug("MainViewModel.SaveRecognitionResultAsync: Start");
-        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
-        db.RecognitionResults.AddRange(recognitionResult);
-        await db.SaveChangesAsync();
-        Log.Debug("MainViewModel.SaveRecognitionResultAsync: Done");
-    }
-    #endregion
 
     #region Public Methods
     /// <summary>
@@ -563,38 +241,4 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     }
     #endregion
 
-    #region Classes
-    private class HealthCheckResponse
-    {
-        [JsonPropertyName("status_code")]
-        public int StatusCode { get; set; }
-
-        [JsonPropertyName("datetime")]
-        public DateTime Datetime { get; set; }
-    }
-
-    public class InferenceResult
-    {
-        [JsonPropertyName("class_name")]
-        public string ClassName { get; set; }
-
-        [JsonPropertyName("x")]
-        public int X { get; set; }
-
-        [JsonPropertyName("y")]
-        public int Y { get; set; }
-
-        [JsonPropertyName("width")]
-        public int Width { get; set; }
-
-        [JsonPropertyName("height")]
-        public int Height { get; set; }
-    }
-
-    public class DetectedAndClassifiedObject
-    {
-        [JsonPropertyName("object_bbox")]
-        public List<InferenceResult> ObjectBbox { get; set; }
-    }
-    #endregion
 }
