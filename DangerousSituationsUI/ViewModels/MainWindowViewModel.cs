@@ -483,6 +483,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                 };
                 var contentLoadModel = new FormUrlEncodedContent(parameters);
                 var responseModelLoaded = await client.PostAsync($"{surfaceRecognitionServiceAddress}/load_model", contentLoadModel);
+                if (responseModelLoaded.IsSuccessStatusCode)
+                {
+                    NeuralPipelineIsLoaded = true;
+                }
                 Log.Information($"Neural models is loaded. responseModelLoaded status code: {responseModelLoaded.StatusCode}");
                 LogJournalViewModel.logString += $"Neural models is loaded. responseModelLoaded status code: {responseModelLoaded.StatusCode}\n";
             }
