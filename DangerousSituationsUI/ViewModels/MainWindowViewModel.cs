@@ -19,13 +19,10 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reactive;
-using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.X86;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using static DangerousSituationsUI.ViewModels.MainViewModel;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -75,7 +72,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private int _currentNumberOfFrame;
 
-    private List<FrameModel>? _frameItems = new();
+    private AvaloniaList<FrameModel>? _frameItems = new();
 
     private FrameModel _selectedFrameItem;
 
@@ -185,7 +182,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             }
         }
     }
-    public List<FrameModel>? FrameItems
+    public AvaloniaList<FrameModel>? FrameItems
     {
         get => _frameItems;
         set => this.RaiseAndSetIfChanged(ref _frameItems, value);
@@ -241,14 +238,20 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Start\n";
         try
         {
+            AreButtonsEnabled = false;
             var files = await _filesService.OpenVideoFolderAsync();
             if (files != null)
             {
+                FrameItems = new();
                 foreach (var file in files)
                 {
+                    Log.Information("Start sending video");
+                    LogJournalViewModel.logString += "Start sending video\n";
                     CurrentFileName = file.Name;
                     await InitFramesAsync(file);
                     ProgressPercentage = 0;
+                    Log.Information("End sending video");
+                    LogJournalViewModel.logString += "End sending video\n";
                 }
                 CanSwitchImages = true;
             }
@@ -262,9 +265,14 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         }
         finally
         {
+            AreButtonsEnabled = true;
             IsLoading = false;
             ProgressPercentage = 0;
             await _videoEventJournalViewModel.FillComboBox();
+            Log.Information("End sending video");
+            LogJournalViewModel.logString += "End sending video\n";
+            Log.Debug("MainViewModel.OpenFolderAsync: Done");
+            LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Done\n";
         }
     }
     private async Task OpenVideoAsync()
@@ -276,9 +284,11 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _videoEventJournalViewModel.EventResults = new AvaloniaList<string>();
         try
         {
+            AreButtonsEnabled = false;
             var file = await _filesService.OpenVideoFileAsync();
             if (file != null)
             {
+                FrameItems = new();
                 await InitFramesAsync(file);
                 CanSwitchImages = true;
                 FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
@@ -286,6 +296,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         }
         finally
         {
+            AreButtonsEnabled = true;
             IsLoading = false;
             ProgressPercentage = 0;
             await _videoEventJournalViewModel.FillComboBox();
@@ -350,7 +361,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         CurrentFileName = file.Name;
         _currentNumberOfFrame = 0;
         SelectedFrameItem = FrameItems[0];
-        SetFrame();
         Log.Debug("MainViewModel.InitFramesAsync: End");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: End\n";
     }
@@ -526,9 +536,11 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         {
             if (Frames.id == id)
             {
+
                 _frames = Frames.frames;
                 _rectItemsLists = Frames.rectitems;
                 CurrentFileName = Frames.Name;
+
             }
         }
         _currentNumberOfFrame = 0;
