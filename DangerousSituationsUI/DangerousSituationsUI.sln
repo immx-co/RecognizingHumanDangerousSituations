@@ -10,7 +10,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DangerousSituationsUI", "Da
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClassLibrary", "..\ClassLibrary\ClassLibrary.csproj", "{73BAE669-8565-45BB-9DAA-E2445E7214E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalRApplication", "..\SignalRApplication\SignalRApplication.csproj", "{B4366D69-894D-4BFD-87DC-33938D5CA285}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalRApplication", "..\SignalRApplication\SignalRApplication.csproj", "{B4366D69-894D-4BFD-87DC-33938D5CA285}"
 	ProjectSection(ProjectDependencies) = postProject
 		{73BAE669-8565-45BB-9DAA-E2445E7214E1} = {73BAE669-8565-45BB-9DAA-E2445E7214E1}
 	EndProjectSection

@@ -20,10 +20,14 @@ public class FilesService
             var files = folder?.GetItemsAsync().ToBlockingEnumerable();
             List<IStorageFile> storageFiles = new();
 
-            foreach (var file in files) if (file.Name.Split('.')[1] != "mp4") throw new Exception();
-
             foreach (var file in files)
             {
+                string fileExt = file.Name.Split('.')[1];
+                if (fileExt != "mp4" && fileExt != "avi")
+                {
+                    throw new Exception();
+                }
+
                 if (file.Path.IsFile)
                 {
                     var storageFile = await Target.StorageProvider.TryGetFileFromPathAsync(file.Path);
@@ -51,7 +55,7 @@ public class FilesService
         var files = await Target.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions()
         {
             Title = "Open Video File",
-            FileTypeFilter = [new FilePickerFileType("Video") { Patterns = ["*.mp4"] }],
+            FileTypeFilter = [new FilePickerFileType("Video") { Patterns = ["*.mp4", "*.avi"] }],
             AllowMultiple = false
         });
 

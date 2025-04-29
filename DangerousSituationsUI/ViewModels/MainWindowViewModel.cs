@@ -31,6 +31,8 @@ namespace DangerousSituationsUI.ViewModels;
 public class MainViewModel : ReactiveObject, IRoutableViewModel
 {
     #region Private Fields
+    private bool _neuralPipelineIsLoaded = false;
+
     private Bitmap? _currentImage;
 
     private List<Bitmap?> _imageFilesBitmap = new();
@@ -71,6 +73,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private AvaloniaList<AvaloniaList<RectItem>> _rectItemsLists;
 
     private AvaloniaList<LegendItem> _legendItems;
+
+    private string _videoTime;
+
+    private TelegramBotAPI _telegramBotApi;
 
     private int _currentNumberOfFrame;
 
@@ -192,6 +198,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         set => this.RaiseAndSetIfChanged(ref _frameItems, value);
     }
 
+    public bool NeuralPipelineIsLoaded { get; set; }
     #endregion
 
     #region Constructors
@@ -203,7 +210,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         VideoService videoService,
         RectItemService rectItemService,
         VideoEventJournalViewModel videoEventJournalViewModel,
-        VideoPlayerViewModel videoPlayerViewModel)
+        VideoPlayerViewModel videoPlayerViewModel,
+        TelegramBotAPI telegramBotApi)
     {
         HostScreen = screen;
         _filesService = filesService;
@@ -213,23 +221,23 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _configurationService = configurationService;
         _videoPlayerViewModel = videoPlayerViewModel;
+        _telegramBotApi = telegramBotApi;
+
+        _telegramBotApi.StartBotAsync();
 
         AreButtonsEnabled = false;
 
         _legendItems = new AvaloniaList<LegendItem>
         {
-            new LegendItem { ClassName = "human", Color = "Green" },
-            new LegendItem { ClassName = "wind/sup-board", Color = "Red" },
-            new LegendItem { ClassName = "bouy", Color = "Blue" },
-            new LegendItem { ClassName = "sailboat", Color = "Yellow" },
-            new LegendItem { ClassName = "kayak", Color = "Purple" }
+            new LegendItem { ClassName = "Standing", Color = "Green" },
+            new LegendItem { ClassName = "Lying", Color = "Red" },
         };
 
         CanSwitchImages = false;
 
-        SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         ConnectCommand = ReactiveCommand.CreateFromTask(CheckHealthAsync);
         SendVideoCommand = ReactiveCommand.CreateFromTask(OpenVideoAsync);
+        SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         ImageBackCommand = ReactiveCommand.Create(PreviousFrame);
         ImageForwardCommand = ReactiveCommand.Create(NextFrame);
     }
@@ -401,11 +409,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             {
                 ClassName = detection.Color switch
                 {
-                    "Green" => "human",
-                    "Red" => "wind/sup-board",
-                    "Blue" => "bouy",
-                    "Yellow" => "sailboat",
-                    "Purple" => "kayak"
+                    "Green" => "Standing",
+                    "Red" => "Lying",
                 },
                 X = detection.X,
                 Y = detection.Y,
@@ -421,6 +426,13 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             };
 
             videoModel.Frames.Add(frame);
+
+            if (detections.Any())
+            {
+                var detectionInfo = string.Join("\n", detections.Select(det =>
+                    $"{det.ClassName} обнаружен! Координаты: X={det.X}, Y={det.Y}, Ширина={det.Width}, Высота={det.Height}"));
+                await _telegramBotApi.SendEventData(frameBytes, detectionInfo);
+            }
         }
 
         var addedVideo = await repository.AddVideoAsync(videoModel);
@@ -443,7 +455,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             try
             {
                 items.Add(_rectItemService.InitRect(det, frame));
-                await SaveRecognitionResultAsync(det);
             }
             catch (Exception ex)
             {
@@ -464,6 +475,18 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
         using (var client = new HttpClient())
         {
+            if (!NeuralPipelineIsLoaded)
+            {
+                var parameters = new Dictionary<string, string>
+                {
+                    { "confidence", "0.25" }
+                };
+                var contentLoadModel = new FormUrlEncodedContent(parameters);
+                var responseModelLoaded = await client.PostAsync($"{surfaceRecognitionServiceAddress}/load_model", contentLoadModel);
+                Log.Information($"Neural models is loaded. responseModelLoaded status code: {responseModelLoaded.StatusCode}");
+                LogJournalViewModel.logString += $"Neural models is loaded. responseModelLoaded status code: {responseModelLoaded.StatusCode}\n";
+            }
+
             try
             {
                 using (MemoryStream imageStream = new())
@@ -476,7 +499,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
                     content.Add(imageContent, "image", $"frame{numberOfFrame}.img");
 
-                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/inference", content);
+                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/image_inference", content);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -671,19 +694,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     }
     #endregion
 
-    #region Data Base Methods
-    private async Task SaveRecognitionResultAsync(RecognitionResult recognitionResult)
-    {
-        Log.Debug("MainViewModel.SaveRecognitionResultAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Start\n";
-        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
-        db.RecognitionResults.AddRange(recognitionResult);
-        await db.SaveChangesAsync();
-        Log.Debug("MainViewModel.SaveRecognitionResultAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.SaveRecognitionResultAsync: Done\n";
-    }
-    #endregion
-
     #region Public Methods
     /// <summary>
     /// Показывает всплывающее сообщение.
@@ -708,6 +718,77 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         public DateTime Datetime { get; set; }
     }
 
+    public class KeypointsYoloModels
+    {
+        /// <summary>Координаты носа</summary>
+        [JsonPropertyName("nose")]
+        public List<float> Nose { get; set; }
+
+        /// <summary>Координаты левого глаза</summary>
+        [JsonPropertyName("left_eye")]
+        public List<float> LeftEye { get; set; }
+
+        /// <summary>Координаты правого глаза</summary>
+        [JsonPropertyName("right_eye")]
+        public List<float> RightEye { get; set; }
+
+        /// <summary>Координаты левого уха</summary>
+        [JsonPropertyName("left_ear")]
+        public List<float> LeftEar { get; set; }
+
+        /// <summary>Координаты правого уха</summary>
+        [JsonPropertyName("right_ear")]
+        public List<float> RightEar { get; set; }
+
+        /// <summary>Координаты левого плеча</summary>
+        [JsonPropertyName("left_shoulder")]
+        public List<float> LeftShoulder { get; set; }
+
+        /// <summary>Координаты правого плеча</summary>
+        [JsonPropertyName("right_shoulder")]
+        public List<float> RightShoulder { get; set; }
+
+        /// <summary>Координаты левого локтя</summary>
+        [JsonPropertyName("left_elbow")]
+        public List<float> LeftElbow { get; set; }
+
+        /// <summary>Координаты правого локтя</summary>
+        [JsonPropertyName("right_elbow")]
+        public List<float> RightElbow { get; set; }
+
+        /// <summary>Координаты левого запястья</summary>
+        [JsonPropertyName("left_wrist")]
+        public List<float> LeftWrist { get; set; }
+
+        /// <summary>Координаты правого запястья</summary>
+        [JsonPropertyName("right_wrist")]
+        public List<float> RightWrist { get; set; }
+
+        /// <summary>Координаты левого бедра</summary>
+        [JsonPropertyName("left_hip")]
+        public List<float> LeftHip { get; set; }
+
+        /// <summary>Координаты правого бедра</summary>
+        [JsonPropertyName("right_hip")]
+        public List<float> RightHip { get; set; }
+
+        /// <summary>Координаты левого колена</summary>
+        [JsonPropertyName("left_knee")]
+        public List<float> LeftKnee { get; set; }
+
+        /// <summary>Координаты правого колена</summary>
+        [JsonPropertyName("right_knee")]
+        public List<float> RightKnee { get; set; }
+
+        /// <summary>Координаты левой лодыжки</summary>
+        [JsonPropertyName("left_ankle")]
+        public List<float> LeftAnkle { get; set; }
+
+        /// <summary>Координаты правой лодыжки</summary>
+        [JsonPropertyName("right_ankle")]
+        public List<float> RightAnkle { get; set; }
+    }
+
     public class InferenceResult
     {
         [JsonPropertyName("class_name")]
@@ -724,6 +805,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         [JsonPropertyName("height")]
         public int Height { get; set; }
+
+        [JsonPropertyName("keypoints")]
+        public KeypointsYoloModels Keypoints { get; set; }
     }
 
     public class DetectedAndClassifiedObject

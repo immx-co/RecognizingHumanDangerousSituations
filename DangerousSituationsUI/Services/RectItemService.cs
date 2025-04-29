@@ -36,11 +36,8 @@ public class RectItemService
 
         string color = recognitionResult.ClassName switch
         {
-            "human" => "Green",
-            "wind/sup-board" => "Red",
-            "bouy" => "Blue",
-            "sailboat" => "Yellow",
-            "kayak" => "Purple"
+            "Standing" => "Green",
+            "Lying" => "Red"
         };
 
         return new RectItem
