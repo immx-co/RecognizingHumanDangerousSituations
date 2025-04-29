@@ -47,6 +47,7 @@ namespace DangerousSituationsUI.ViewModels
         public ReactiveCommand<Unit, Unit> DeleteUserCommand { get; }
         #endregion
 
+
         #region Constructor
         public UserManagementViewModel(IScreen screen, UserService userService, DialogService dialogService)
         {
@@ -74,7 +75,8 @@ namespace DangerousSituationsUI.ViewModels
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Ошибка загрузки пользователей");
+                Log.Error($"Ошибка загрузки пользователей: {ex}");
+                LogJournalViewModel.logString += $"Ошибка загрузки пользователей: {ex}\n";
             }
         }
 
@@ -84,13 +86,17 @@ namespace DangerousSituationsUI.ViewModels
             {
                 if (SelectedUser is not null)
                 {
+                    var name = SelectedUser.UserName;
                     await _userService.DeleteUserAsync(SelectedUser.UserId);
+                    Log.Information($"Удален пользователь {name}");
+                    LogJournalViewModel.logString += $"Удален пользователь {name}.\n";
                     LoadUsers();
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Ошибка удаления пользователя");
+                Log.Error($"Ошибка удаления пользователя: {ex}");
+                LogJournalViewModel.logString += $"Ошибка удаления пользователя: {ex}\n";
             }
         }
 
@@ -104,21 +110,12 @@ namespace DangerousSituationsUI.ViewModels
 
                 if (result != null)
                 {
-                    if (!ValidateNickname(result.Username, out var usernameError))
-                    {
-                        await ShowMessageBox("Ошибка", usernameError);
-                        return;
-                    }
+                    var (isValid, errorMessage) = await _userService
+                        .ValidateNewUserAsync(result.Username, result.Email, result.Password);
 
-                    if (!ValidatePassword(result.Password, out var passwordError))
+                    if (!isValid)
                     {
-                        await ShowMessageBox("Ошибка", passwordError);
-                        return;
-                    }
-
-                    if (!ValidateEmail(result.Email, out var emailError))
-                    {
-                        await ShowMessageBox("Ошибка", emailError);
+                        await ShowMessageBox("Ошибка", errorMessage);
                         return;
                     }
 
@@ -128,12 +125,15 @@ namespace DangerousSituationsUI.ViewModels
                         result.Password,
                         result.IsAdmin
                     );
+                    Log.Information($"Создан пользователь {result.Username}.");
+                    LogJournalViewModel.logString += $"Создан пользователь {result.Username}.\n";
                     LoadUsers();
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Ошибка добавления пользователя");
+                Log.Error($"Ошибка добавления пользователя: {ex}");
+                LogJournalViewModel.logString += $"Ошибка добавления пользователя: {ex}\n";
             }
         }
 
@@ -145,17 +145,20 @@ namespace DangerousSituationsUI.ViewModels
 
         #endregion
 
+
         #region Public Methods
         public async Task UpdateUserAdminStatus(int userId, bool isAdmin)
         {
             try
             {
                 await _userService.UpdateUserAdminStatusAsync(userId, isAdmin);
-                Log.Information($"Для пользователя {userId} изменен статус администратора");
+                Log.Information($"Для пользователя {userId} изменен статус администратора.");
+                LogJournalViewModel.logString += $"Для пользователя {userId} изменен статус администратора.\n";
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Ошибка обновления статуса администратора");
+                Log.Error($"Ошибка обновления статуса администратора: {ex}");
+                LogJournalViewModel.logString += $"Ошибка обновления статуса администратора: {ex}\n";
                 var user = UserItems.FirstOrDefault(u => u.UserId == userId);
                 if (user != null)
                     user.UserAdmin = !isAdmin;
@@ -166,56 +169,8 @@ namespace DangerousSituationsUI.ViewModels
         {
             LoadUsers();
         }
-
-
-        public static bool ValidateNickname(string nickname, out string error)
-        {
-            if (string.IsNullOrWhiteSpace(nickname))
-            {
-                error = "Имя пользователя не может быть пустым.";
-                return false;
-            }
-            if (nickname.Length < 3)
-            {
-                error = "Имя пользователя должно быть минимум 3 символа.";
-                return false;
-            }
-            error = null;
-            return true;
-        }
-
-        public static bool ValidatePassword(string password, out string error)
-        {
-            if (string.IsNullOrWhiteSpace(password) || password.Length <= 5)
-            {
-                error = "Пароль должен содержать минимум 6 символов.";
-                return false;
-            }
-            if (!password.Any(char.IsUpper) || !password.Any(char.IsPunctuation) || !password.Any(char.IsDigit))
-            {
-                error = "Пароль должен содержать заглавные буквы, цифры и знаки препинания.";
-                return false;
-            }
-            error = null;
-            return true;
-        }
-
-        public static bool ValidateEmail(string email, out string error)
-        {
-            try
-            {
-                var addr = new System.Net.Mail.MailAddress(email);
-                error = null;
-                return true;
-            }
-            catch
-            {
-                error = "Некорректный адрес электронной почты.";
-                return false;
-            }
-        }
-
         #endregion
+
 
         #region Classes
         public class UserItemModel : ReactiveObject
