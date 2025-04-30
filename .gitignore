@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 .vs/*
 ObjectsRecognitionUI/.vs/
+/DangerousSituationsUI/.env
+/DangerousSituationsUI/appsettings.json

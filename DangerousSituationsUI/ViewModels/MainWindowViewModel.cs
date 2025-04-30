@@ -28,6 +28,7 @@ using System.Collections.ObjectModel;
 using LibVLCSharp.Shared;
 using SkiaSharp;
 using System.Diagnostics;
+using static DangerousSituationsUI.ViewModels.VideoEventJournalViewModel;
 
 
 namespace DangerousSituationsUI.ViewModels;
@@ -306,7 +307,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += "Start sending video\n";
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Start\n";
-        _videoEventJournalViewModel.EventResults = new AvaloniaList<string>();
+        _videoEventJournalViewModel.EventResults = new AvaloniaList<VideoEventResult>();
         try
         {
             AreButtonsEnabled = false;

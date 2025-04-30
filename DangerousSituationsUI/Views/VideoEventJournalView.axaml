@@ -8,6 +8,7 @@
              x:DataType="vm:VideoEventJournalViewModel">
 
   <Grid>
+	  
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="600"/>
       <ColumnDefinition Width="*"/>
@@ -16,23 +17,31 @@
     <StackPanel Grid.Column="0">
       <ComboBox Width="600"
                 HorizontalAlignment="Stretch"
-                Margin="0, 13, 0, 13"
+                Margin="20, 13, 0, 13"
                 ItemsSource="{Binding VideoItems}"
                 SelectedItem="{Binding SelectedVideoItem}"/>
-      <Border Height="700"
-							Width="600">
-        <ScrollViewer HorizontalScrollBarVisibility="Auto">
-          <ListBox ItemsSource="{Binding EventResults}"
-               SelectionMode="Single"
-               SelectedItem="{Binding SelectedEventResult}">
-            <ListBox.ItemTemplate>
-              <DataTemplate>
-                <TextBlock Text="{Binding}"
-                       Margin="5" />
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
-        </ScrollViewer>
+		<DataGrid Width="600"
+			    Margin="20" 
+		        ItemsSource="{Binding EventResults}"
+			    SelectedItem="{Binding SelectedEventResult}"
+		        AutoGenerateColumns="True" 
+				IsReadOnly="True"
+		        GridLinesVisibility="All"   
+		        BorderThickness="1" 
+	            BorderBrush="Gray"
+				CanUserSortColumns="False"
+				CanUserResizeColumns="True"
+		        MaxHeight="600">
+			    <DataGrid.Styles>
+				    <Style Selector="DataGrid">
+					    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+					    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+				    </Style>
+			    </DataGrid.Styles>
+		</DataGrid>
+		<Border Height="700"
+							  Width="600">
+        
       </Border>
     </StackPanel>
 
