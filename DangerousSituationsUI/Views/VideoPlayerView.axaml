@@ -23,6 +23,18 @@
 		<StackPanel Grid.Column="1"
 						VerticalAlignment="Center"
 						HorizontalAlignment="Center">
+
+      <ComboBox Width="600"
+						HorizontalAlignment="Stretch"
+						Margin="0, 13, 0, 13"
+						ItemsSource="{Binding VideoItems}"
+						SelectedItem="{Binding SelectedVideoItem}">
+						<ComboBox.ItemTemplate>
+							<DataTemplate>
+									<TextBlock Text="{Binding Name}" />
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+      </ComboBox>
       
 			<StackPanel HorizontalAlignment="Center"
 							  Orientation="Horizontal"

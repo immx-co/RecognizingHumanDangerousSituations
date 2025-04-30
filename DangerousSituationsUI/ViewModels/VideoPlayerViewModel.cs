@@ -2,6 +2,7 @@
 using MsBox.Avalonia;
 using ReactiveUI;
 using System;
+using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Threading;
 
@@ -31,6 +32,10 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     private string _stopButtonColor;
 
     private string _videoTime;
+
+    private ObservableCollection<VideoItem> _videoItems = new();
+
+    private VideoItem _selectedVideoItem;
     #endregion
 
 
@@ -59,6 +64,27 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
     #region Properties
     public LibVLC LibVLCInstance => _libVLC;
+
+    public ObservableCollection<VideoItem> VideoItems
+    {
+        get => _videoItems;
+        set => this.RaiseAndSetIfChanged(ref _videoItems, value);
+    }
+
+    public VideoItem SelectedVideoItem
+    {
+        get => _selectedVideoItem;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _selectedVideoItem, value);
+            if (value != null)
+            {
+                var media = new Media(LibVLCInstance, value.Path, FromType.FromPath);
+                SetMediaPlayer(media);
+            }
+        }
+    }
+
 
     public string CurrentFileName
     {
@@ -238,6 +264,15 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     {
         var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandard(caption, message);
         messageBoxStandardWindow.ShowAsync();
+    }
+    #endregion
+
+
+    #region Classes
+    public class VideoItem
+    {
+        public string Name { get; set; }
+        public string Path { get; set; }
     }
     #endregion
 

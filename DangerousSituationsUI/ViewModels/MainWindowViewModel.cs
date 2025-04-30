@@ -23,7 +23,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using LibVLCSharp.Shared;
+using static DangerousSituationsUI.ViewModels.VideoPlayerViewModel;
+using System.Collections.ObjectModel;
 
 
 namespace DangerousSituationsUI.ViewModels;
@@ -257,11 +258,18 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             if (files != null)
             {
                 FrameItems = new();
+                _videoPlayerViewModel.VideoItems = new ObservableCollection<VideoItem>();
+
                 foreach (var file in files)
                 {
                     Log.Information("Start sending video");
                     LogJournalViewModel.logString += "Start sending video\n";
                     CurrentFileName = file.Name;
+                    _videoPlayerViewModel.VideoItems.Add(new VideoItem
+                    {
+                        Name = file.Name,
+                        Path = file.Path.LocalPath
+                    });
                     await InitFramesAsync(file);
                     ProgressPercentage = 0;
                     Log.Information("End sending video");
@@ -307,8 +315,15 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                 CanSwitchImages = true;
                 FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
 
-                var media = new Media(_videoPlayerViewModel.LibVLCInstance, file.Path.LocalPath, FromType.FromPath);
-                _videoPlayerViewModel.SetMediaPlayer(media);
+                _videoPlayerViewModel.VideoItems = new ObservableCollection<VideoItem>
+                {
+                    new VideoItem
+                    {
+                        Name = file.Name,
+                        Path = file.Path.LocalPath
+                    }
+                };
+                _videoPlayerViewModel.SelectedVideoItem = _videoPlayerViewModel.VideoItems.First();
             }
         }
         finally
