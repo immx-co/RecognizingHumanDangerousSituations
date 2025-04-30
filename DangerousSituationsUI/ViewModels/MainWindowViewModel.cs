@@ -25,6 +25,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LibVLCSharp.Shared;
 using SkiaSharp;
+using System.Diagnostics;
 
 
 namespace DangerousSituationsUI.ViewModels;
@@ -342,6 +343,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private async Task InitFramesAsync(IStorageFile file)
     {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
         Log.Debug("MainViewModel.InitFramesAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: Start\n";
         IsLoading = true;
@@ -370,7 +373,11 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             id = count++
         });
 
-        SaveDataIntoDatabase(file, frameNDetections);
+        _ = Task.Run(async () =>
+        {
+            await SaveDataIntoDatabase(file, frameNDetections);
+        });
+        
 
         _videoFile = file;
         _rectItemsLists = itemsLists;
@@ -381,6 +388,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         SelectedFrameItem = FrameItems[0];
         Log.Debug("MainViewModel.InitFramesAsync: End");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: End\n";
+
+        stopwatch.Stop();
+        ShowMessageBox("Inference Time", $"Время обработки файла видео: {Math.Round(stopwatch.Elapsed.TotalSeconds, 2)}\n" +
+            $"FPS: {Math.Round(totalFiles / stopwatch.Elapsed.TotalSeconds, 2)}");
     }
 
     private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
