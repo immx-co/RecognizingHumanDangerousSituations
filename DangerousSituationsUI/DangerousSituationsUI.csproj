@@ -45,8 +45,4 @@
   <ItemGroup>
     <ProjectReference Include="..\ClassLibrary\ClassLibrary.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Content Include=".env" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
 </Project>
