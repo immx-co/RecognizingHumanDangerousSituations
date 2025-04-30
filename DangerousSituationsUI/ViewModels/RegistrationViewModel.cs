@@ -26,7 +26,7 @@ public class RegistrationViewModel : ReactiveObject, IRoutableViewModel
     #region Private Properties
     private string _nickname;
 
-    private string _password;
+    private string _password = String.Empty;
 
     private string _email;
     #endregion
