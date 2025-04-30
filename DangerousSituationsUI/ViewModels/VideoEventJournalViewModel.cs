@@ -21,7 +21,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     #region Private Fields
     private IServiceProvider _serviceProvider;
 
-    private AvaloniaList<string> _eventResults;
+    private AvaloniaList<VideoEventResult> _eventResults;
 
     private AvaloniaList<RectItem> _rectItems;
 
@@ -31,7 +31,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
     private string _title;
 
-    private string _selectedEventResult;
+    private VideoEventResult _selectedEventResult;
 
     private List<VideoItemModel>? _videoItems;
 
@@ -48,13 +48,13 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Properties
-    public AvaloniaList<string> EventResults
+    public AvaloniaList<VideoEventResult> EventResults
     {
         get => _eventResults;
         set => this.RaiseAndSetIfChanged(ref _eventResults, value);
     }
 
-    public string SelectedEventResult
+    public VideoEventResult SelectedEventResult
     {
         get => _selectedEventResult;
         set
@@ -118,7 +118,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         HostScreen = screen;
         _serviceProvider = serviceProvider;
         _rectItemService = rectItemService;
-        _eventResults = new AvaloniaList<string>();
+        _eventResults = new AvaloniaList<VideoEventResult>();
 
         LegendItems = new AvaloniaList<LegendItem>
         {
@@ -135,7 +135,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += "Start render event journal image\n";
         Log.Debug("EventJournalViewModel.Render: Start");
         LogJournalViewModel.logString += "EventJournalViewModel.Render: Start\n";
-        var result = ParseSelectedVideoEventResult();
+        var result = SelectedEventResult;
         var resultVideoInitRectItem = VideoInitRectItem(result);
         if (resultVideoInitRectItem is null)
         {
@@ -183,19 +183,19 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         return (frameBitmap, dbFrame.FrameId);
     }
 
-    private VideoEventResult ParseSelectedVideoEventResult()
-    {
-        var values = SelectedEventResult.Split("; ");
-        return new VideoEventResult
-        {
-            Name = Guid.Parse(values[0].Split(": ")[1]),
-            Class = values[1].Split(": ")[1],
-            X = Convert.ToInt32(values[2].Split(": ")[1]),
-            Y = Convert.ToInt32(values[3].Split(": ")[1]),
-            Width = Convert.ToInt32(values[4].Split(": ")[1]),
-            Height = Convert.ToInt32(values[5].Split(": ")[1])
-        };
-    }
+    //private VideoEventResult ParseSelectedVideoEventResult()
+    //{
+    //    var values = SelectedEventResult.Split("; ");
+    //    return new VideoEventResult
+    //    {
+    //        Name = Guid.Parse(values[0].Split(": ")[1]),
+    //        Class = values[1].Split(": ")[1],
+    //        X = Convert.ToInt32(values[2].Split(": ")[1]),
+    //        Y = Convert.ToInt32(values[3].Split(": ")[1]),
+    //        Width = Convert.ToInt32(values[4].Split(": ")[1]),
+    //        Height = Convert.ToInt32(values[5].Split(": ")[1])
+    //    };
+    //}
 
     private void Clear()
     {
@@ -238,8 +238,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             for (int idx = 0; idx < currentDetections.Count; idx++)
             {
                 Detection det = currentDetections[idx];
-                string eventLine = $"Name: {det.FrameId}; ClassName: {det.ClassName}; x: {det.X}; y: {det.Y}; width: {det.Width}; height: {det.Height}";
-                EventResults.Add(eventLine);
+                //string eventLine = $"Name: {det.FrameId}; ClassName: {det.ClassName}; x: {det.X}; y: {det.Y}; width: {det.Width}; height: {det.Height}";
+                EventResults.Add(new VideoEventResult { Name=det.FrameId, Class=det.ClassName, X=det.X, Y=det.Y, Width=det.Width, Height=det.Height});
             }
         }
     }
@@ -290,9 +290,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     #endregion
 
     #region Classes
-    private class EventResult
+    public class EventResult
     {
-        public string Name { get; set; }
 
         public string Class { get; set; }
 
@@ -305,7 +304,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         public int Height { get; set; }
     }
 
-    private class VideoEventResult : EventResult
+    public class VideoEventResult : EventResult
     {
         public Guid Name { get; set; }
     }
