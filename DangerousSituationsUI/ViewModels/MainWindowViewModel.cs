@@ -25,6 +25,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using static DangerousSituationsUI.ViewModels.VideoPlayerViewModel;
 using System.Collections.ObjectModel;
+using LibVLCSharp.Shared;
+using SkiaSharp;
+using System.Diagnostics;
 
 
 namespace DangerousSituationsUI.ViewModels;
@@ -356,6 +359,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private async Task InitFramesAsync(IStorageFile file)
     {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
         Log.Debug("MainViewModel.InitFramesAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: Start\n";
         IsLoading = true;
@@ -384,7 +389,11 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             id = count++
         });
 
-        await SaveDataIntoDatabase(file, frameNDetections);
+        _ = Task.Run(async () =>
+        {
+            await SaveDataIntoDatabase(file, frameNDetections);
+        });
+        
 
         _videoFile = file;
         _rectItemsLists = itemsLists;
@@ -395,6 +404,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         SelectedFrameItem = FrameItems[0];
         Log.Debug("MainViewModel.InitFramesAsync: End");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: End\n";
+
+        stopwatch.Stop();
+        ShowMessageBox("Inference Time", $"Время обработки файла видео: {Math.Round(stopwatch.Elapsed.TotalSeconds, 2)}\n" +
+            $"FPS: {Math.Round(totalFiles / stopwatch.Elapsed.TotalSeconds, 2)}");
     }
 
     private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
@@ -405,7 +418,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         using var scope = _serviceProvider.CreateScope();
         var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
 
-        // Создаем модель Video
         var videoModel = new Video
         {
             VideoName = videoFile.Name,
@@ -441,13 +453,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             };
 
             videoModel.Frames.Add(frame);
-
-            if (detections.Any())
-            {
-                var detectionInfo = string.Join("\n", detections.Select(det =>
-                    $"{det.ClassName} обнаружен! Координаты: X={det.X}, Y={det.Y}, Ширина={det.Width}, Высота={det.Height}"));
-                await _telegramBotApi.SendEventData(frameBytes, detectionInfo);
-            }
         }
 
         var addedVideo = await repository.AddVideoAsync(videoModel);
@@ -469,7 +474,62 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         {
             try
             {
-                items.Add(_rectItemService.InitRect(det, frame));
+                var rectItem = _rectItemService.InitRect(det, frame);
+                items.Add(rectItem);
+
+                if (det.ClassName == "Lying")
+                {
+                    using var ms = new MemoryStream();
+                    frame.Save(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+                    using var skBitmap = SKBitmap.Decode(ms.ToArray());
+
+                    using var surface = SKSurface.Create(new SKImageInfo(skBitmap.Width, skBitmap.Height));
+                    var canvas = surface.Canvas;
+
+                    canvas.DrawBitmap(skBitmap, 0, 0);
+
+                    using var paint = new SKPaint
+                    {
+                        Color = SKColors.Red,
+                        StrokeWidth = 3,
+                        IsStroke = true,
+                        Style = SKPaintStyle.Stroke
+                    };
+
+                    float topLeftCornerX = det.X - det.Width / 2;
+                    float topLeftCornerY = det.Y - det.Height / 2;
+                    canvas.DrawRect(topLeftCornerX, topLeftCornerY, det.Width, det.Height, paint);
+
+                    using var textPaint = new SKPaint
+                    {
+                        Color = SKColors.Black,
+                        TextSize = 16,
+                        IsAntialias = true
+                    };
+                    canvas.DrawText("Lying", topLeftCornerX, topLeftCornerY - 5, textPaint);
+
+                    using var image = surface.Snapshot();
+                    using var data = image.Encode(SKEncodedImageFormat.Jpeg, 90);
+                    using var resultMs = new MemoryStream();
+                    data.SaveTo(resultMs);
+                    var frameBytes = resultMs.ToArray();
+
+                    var detectionInfo = $"Человек упал! Координаты: X={topLeftCornerX}, Y={topLeftCornerY}, " +
+                                       $"Ширина={det.Width}, Высота={det.Height}";
+
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _telegramBotApi.SendEventData(frameBytes, detectionInfo);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning("Telegram send error: {Error}", ex.Message);
+                        }
+                    });
+                }
             }
             catch (Exception ex)
             {
