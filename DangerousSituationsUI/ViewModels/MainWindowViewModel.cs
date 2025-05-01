@@ -594,7 +594,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                                 X = bbox.X,
                                 Y = bbox.Y,
                                 Width = bbox.Width,
-                                Height = bbox.Height
+                                Height = bbox.Height,
                             }).ToList();
                         }
                     }

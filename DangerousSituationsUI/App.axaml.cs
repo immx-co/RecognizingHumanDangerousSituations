@@ -106,10 +106,19 @@ namespace DangerousSituationsUI
                 servicesCollection.AddScoped<IRepository, Repository>();
 
                 string telegramBotToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
+
+                long? chatId = null;
+                string? chatIdStr = Environment.GetEnvironmentVariable("CHAT_ID");
+                if (!string.IsNullOrEmpty(chatIdStr) && long.TryParse(chatIdStr, out long tempChatId))
+                {
+                    chatId = tempChatId;
+                }
                 servicesCollection.AddSingleton<TelegramBotAPI>(provider => 
                     new TelegramBotAPI(
                         telegramBotToken,
-                        provider.GetRequiredService<LogJournalViewModel>()
+                        chatId,
+                        provider.GetRequiredService<LogJournalViewModel>(),
+                        provider.GetRequiredService<NavigationViewModel>()
                     )
                 );
 

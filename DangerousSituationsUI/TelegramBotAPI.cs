@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using DangerousSituationsUI.ViewModels;
 using System.IO;
+using Avalonia.Media;
+using Avalonia.Threading;
 
 
 namespace DangerousSituationsUI;
@@ -20,13 +22,15 @@ public class TelegramBotAPI : IDisposable
     #region Private Fields
     private static ITelegramBotClient _botClient;
 
-    private long _chatId;
+    private long? _chatId = null;
 
     private static ReceiverOptions _receiverOptions;
 
     private CancellationTokenSource _cts;
 
     private bool _isRunning;
+
+    private NavigationViewModel _navigationViewModel;
 
     private LogJournalViewModel _logJournalViewModel;
     #endregion
@@ -36,18 +40,51 @@ public class TelegramBotAPI : IDisposable
     #endregion
 
     #region Constructor
-    public TelegramBotAPI(string token, LogJournalViewModel logJournalViewModel)
+    public TelegramBotAPI(string token, long? chatId, LogJournalViewModel logJournalViewModel, NavigationViewModel navigationViewModel)
     {
+        _navigationViewModel = navigationViewModel;
         _logJournalViewModel = logJournalViewModel;
+        _chatId = chatId;
 
         if (string.IsNullOrEmpty(token))
         {
-            Log.Warning("Telegram bot token cannot be empty");
+            Log.Warning("Telegram bot token cannot be empty.");
             _logJournalViewModel.LogString += "Telegram bot token cannot be empty\n";
             throw new ArgumentException("Telegram bot token cannot be empty", nameof(token));
         }
 
         Initialize(token);
+
+        if (_chatId.HasValue)
+        {
+            try
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(1000);
+
+                    var chat = await _botClient.GetChat(_chatId.Value);
+                    string userName = chat.Username ?? chat.FirstName ?? "Пользователь";
+
+                    string welcomeImagePath = Path.Combine(AppContext.BaseDirectory, "..//..//..//Assets/welcome.jpg");
+                    await SendWelcomeMessage($"Добро пожаловать в Recognition Dangerous Situations, {userName}!", welcomeImagePath);
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        _navigationViewModel.TgBotConnectionStatus = Brushes.Green;
+                    });
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Ошибка при отправке приветственного сообщения.");
+                _logJournalViewModel.LogString += $"Ошибка при отправке приветственного сообщения.: {ex.Message}";
+                _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
+            }
+        }
+        else
+        {
+            _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
+        }
     }
     #endregion
 
@@ -183,6 +220,7 @@ public class TelegramBotAPI : IDisposable
                             _chatId = update.Message.Chat.Id;
                             string welcomeImagePath = Path.Combine(AppContext.BaseDirectory, "..//..//..//Assets/welcome.jpg");
                             await SendWelcomeMessage($"Добро пожаловать в Recognition Dangerous Situations, {update.Message.From}!", welcomeImagePath);
+                            _navigationViewModel.TgBotConnectionStatus = Brushes.Green;
                             return;
                         }
                         else
@@ -209,7 +247,8 @@ public class TelegramBotAPI : IDisposable
         catch (Exception ex)
         {
             Log.Error(ex.ToString());
-            _logJournalViewModel.LogString += $"{ex.ToString()}\n" ;
+            _logJournalViewModel.LogString += $"{ex.ToString()}\n";
+            _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
         }
     }
 

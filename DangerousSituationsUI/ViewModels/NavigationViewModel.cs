@@ -24,6 +24,8 @@ public class NavigationViewModel : ReactiveObject, IDisposable
 
     private ISolidColorBrush _connectionStatus;
 
+    private ISolidColorBrush _tgBotConnectionStatus;
+
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
     #endregion
 
@@ -49,6 +51,12 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     {
         get => _connectionStatus;
         set => this.RaiseAndSetIfChanged(ref _connectionStatus, value);
+    }
+
+    public ISolidColorBrush TgBotConnectionStatus
+    {
+        get => _tgBotConnectionStatus;
+        set => this.RaiseAndSetIfChanged(ref _tgBotConnectionStatus, value);
     }
     #endregion
 
@@ -76,6 +84,7 @@ public class NavigationViewModel : ReactiveObject, IDisposable
         _serviceProvider = serviceProvider;
 
         ConnectionStatus = Brushes.Gray;
+        TgBotConnectionStatus = Brushes.Gray;
 
         GoMainWindow = ReactiveCommand.Create(NavigateToMainWindow);
         GoConfiguration = ReactiveCommand.Create(NavigateToConfigurationWindow);
@@ -90,6 +99,7 @@ public class NavigationViewModel : ReactiveObject, IDisposable
             if (currentVm is InputApplicationViewModel)
             {
                 ConnectionStatus = Brushes.Gray;
+                TgBotConnectionStatus = Brushes.Gray;
                 IsAppButtonsEnable = false;
                 IsAdminPrivilege = false;
             }
