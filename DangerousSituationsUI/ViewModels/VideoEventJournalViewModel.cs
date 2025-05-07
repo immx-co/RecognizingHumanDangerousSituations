@@ -5,6 +5,7 @@ using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OpenCvSharp.ML;
 using ReactiveUI;
 using Serilog;
 using System;
@@ -38,6 +39,16 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     private VideoItemModel _selectedVideoItem;
 
     private AvaloniaList<LegendItem> _legendItems;
+
+    private int _box_x;
+
+    private int _box_y;
+
+    private int _box_width;
+
+    private int _box_height;
+
+    private bool _boxPositionChanged;
     #endregion
 
     #region View Model Settings
@@ -60,7 +71,13 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         set
         {
             _selectedEventResult = value;
-            if (_selectedEventResult != null) Render();
+            if (_selectedEventResult != null) { 
+                Render();
+                BoxX = _selectedEventResult.X;
+                BoxY = _selectedEventResult.Y;
+                BoxWidth = _selectedEventResult.Width;
+                BoxHeight = _selectedEventResult.Height;
+            }
             else Clear();
         }
     }
@@ -109,6 +126,35 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
+    public int BoxX
+    {
+        get => _box_x;
+        set => this.RaiseAndSetIfChanged(ref _box_x, value);
+    }
+
+    public int BoxY
+    {
+        get => _box_y;
+        set => this.RaiseAndSetIfChanged(ref _box_y, value);
+    }
+
+    public int BoxWidth
+    {
+        get => _box_width;
+        set => this.RaiseAndSetIfChanged(ref _box_width, value);
+    }
+
+    public int BoxHeight
+    {
+        get => _box_height;
+        set => this.RaiseAndSetIfChanged(ref _box_height, value);
+    }
+    public bool BoxPositionChanged
+    {
+        get => _boxPositionChanged;
+        set => this.RaiseAndSetIfChanged(ref _boxPositionChanged, value);
+    }
+
     public bool IsVideoProcessing = false;
     #endregion
 
@@ -125,6 +171,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             new LegendItem { ClassName = "Standing", Color = "Green" },
             new LegendItem { ClassName = "Lying", Color = "Red" }
         };
+
+        BoxPositionChanged = false;
     }
     #endregion
 
