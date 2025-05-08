@@ -11,4 +11,5 @@ public class RectItem
     public int Height { get; set; }
 
     public string Color { get; set; }
+
 }

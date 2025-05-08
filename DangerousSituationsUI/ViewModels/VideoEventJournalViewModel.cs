@@ -233,13 +233,25 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             using var memoryStream = new MemoryStream(dbFrame.FrameData);
             framesBitmap.Add(new Avalonia.Media.Imaging.Bitmap(memoryStream));
 
-            var currentDetections = await db.Detections.Where(d => d.FrameId == dbFrame.FrameId).ToListAsync();
+            var currentDetections = await db.Detections
+    .Where(d => d.FrameId == dbFrame.FrameId)
+    .Select(d => new
+    {
+        Detection = d,
+        FrameTime = dbFrame.FrameTime // используем время из dbFrame
+    })
+    .ToListAsync();
 
+
+
+
+            //await db.Detections.Where(d => d.FrameId == dbFrame.FrameId).ToListAsync();
             for (int idx = 0; idx < currentDetections.Count; idx++)
             {
-                Detection det = currentDetections[idx];
+                Detection det = currentDetections[idx].Detection;
+                TimeSpan timeSpan = currentDetections[idx].FrameTime;
                 //string eventLine = $"Name: {det.FrameId}; ClassName: {det.ClassName}; x: {det.X}; y: {det.Y}; width: {det.Width}; height: {det.Height}";
-                EventResults.Add(new VideoEventResult { Name=det.FrameId, Class=det.ClassName, X=det.X, Y=det.Y, Width=det.Width, Height=det.Height});
+                EventResults.Add(new VideoEventResult { Name=det.FrameId, Class=det.ClassName, X=det.X, Y=det.Y, Width=det.Width, Height=det.Height, DetectionTime = timeSpan });
             }
         }
     }
@@ -302,6 +314,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         public int Width { get; set; }
 
         public int Height { get; set; }
+        public TimeSpan DetectionTime { get; set; }
     }
 
     public class VideoEventResult : EventResult

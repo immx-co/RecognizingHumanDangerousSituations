@@ -1,16 +1,29 @@
-﻿using LibVLCSharp.Shared;
+﻿using Avalonia.Media;
+using ClassLibrary.Database;
+using ClassLibrary.Database.Models;
+using ClassLibrary.Datacontracts;
+using ClassLibrary.Services;
+using LibVLCSharp.Shared;
+using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
 using ReactiveUI;
+using Sprache;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
 using System.Reactive;
 using System.Threading;
+using static DangerousSituationsUI.ViewModels.VideoEventJournalViewModel;
 
 namespace DangerousSituationsUI.ViewModels;
 
 public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 {
     #region Private Fields
+    private IServiceProvider _serviceProvider;
+
     private string _currentFileName;
 
     private bool _areButtonsEnabled;
@@ -36,6 +49,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     private ObservableCollection<VideoItem> _videoItems = new();
 
     private VideoItem _selectedVideoItem;
+
+    private List<DetectionItem> _detections = new List<DetectionItem>();
     #endregion
 
 
@@ -45,6 +60,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
 
     #region View Model Settings
+    public ObservableCollection<RectItem> Rectangles { get; }
+        = new ObservableCollection<RectItem>();
     public IScreen HostScreen { get; }
 
     public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
@@ -80,7 +97,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
             if (value != null)
             {
                 var media = new Media(LibVLCInstance, value.Path, FromType.FromPath);
-                SetMediaPlayer(media);
+                SetMediaPlayer(media); 
+                LoadDetections(value.Name);
             }
         }
     }
@@ -150,11 +168,13 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
     #region Constructors
     public VideoPlayerViewModel(
-        IScreen screen,
+        IScreen screen, 
+        IServiceProvider serviceProvider,
         VideoEventJournalViewModel videoEventJournalViewModel)
     {
         HostScreen = screen;
         _videoEventJournalViewModel = videoEventJournalViewModel;
+        _serviceProvider = serviceProvider;
 
         AreButtonsEnabled = false;
 
@@ -184,7 +204,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
     private void StopVideo()
     {
-        MediaPlayer?.Stop();
+        MediaPlayer?.Stop(); 
+        ClearRectangles();
 
         VideoTime = GetVideoTimeString(0);
 
@@ -227,6 +248,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         MediaPlayer.TimeChanged += (object? sender, MediaPlayerTimeChangedEventArgs args) =>
         {
             VideoTime = GetVideoTimeString(args.Time);
+            var result = SelectedVideoItem;
+            UpdateRectangles(TimeSpan.FromMilliseconds(args.Time));
         };
     }
 
@@ -251,6 +274,118 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     private string SetButtonColor(bool flag) => flag ? "LightGray" : "Gray";
 
     private string GetVideoTimeString(long ms) => TimeSpan.FromMilliseconds(ms).ToString();
+
+    private void AddRectangle(string name)
+    {
+        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
+
+        var dbVideo = db.Videos.Where(video => video.VideoName == name).FirstOrDefault();
+
+        if (dbVideo is null)
+        {
+            return;
+        }
+
+        var dbFrame = db.Frames.Where(frame => frame.VideoId == dbVideo.VideoId ).ToList();
+
+        if (dbFrame is null)
+        {
+            return;
+        }
+
+        var dbDetection = new List<Detection>();
+
+
+
+        foreach (var frame in dbFrame)
+        {
+
+            dbDetection = db.Detections.Where(detection => detection.FrameId == frame.FrameId).ToList();
+
+            foreach (var detection in dbDetection)
+            {
+                Rectangles.Add(new RectItem
+                {
+                    X = detection.X,
+                    Y = detection.Y,
+                    Width = detection.Width,
+                    Height = detection.Height,
+                    Color = detection.ClassName switch
+                    {
+                        "Standing" => "Green",
+                        "Lying" => "Red",
+                    },
+
+                });
+            }
+        }
+        
+        
+       
+    }
+    private  void ClearRectangles()
+    {
+        Rectangles.Clear();
+    }
+
+    private void LoadDetections(string videoName)
+    {
+        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
+
+        var dbVideo = db.Videos.FirstOrDefault(v => v.VideoName == videoName);
+        if (dbVideo == null) return;
+
+        DateTime videoStartTime = dbVideo.CreatedAt;
+
+        _detections = db.Frames
+    .Where(f => f.VideoId == dbVideo.VideoId)
+    .Join(db.Detections,
+        frame => frame.FrameId,
+        detection => detection.FrameId,
+        (frame, detection) => new { frame, detection })
+    .AsEnumerable() 
+    .Select(x => new DetectionItem
+    {
+        Time = x.frame.FrameTime,
+        Rect = new RectItem
+        {
+            X = x.detection.X,
+            Y = x.detection.Y,
+            Width = x.detection.Width,
+            Height = x.detection.Height,
+            Color = x.detection.ClassName switch
+            {
+                "Standing" => "Green",
+                "Lying" => "Red",
+                _ => "Yellow"
+            }
+        }
+    })
+    .ToList();
+    }
+
+    private void UpdateRectangles(TimeSpan currentVideoTime)
+    {
+        ClearRectangles();
+        var test = TimeSpan.FromMilliseconds(250);
+        var nearestFrameDetections = _detections
+        .Where(d => d.Time <= currentVideoTime && currentVideoTime-d.Time <= TimeSpan.FromMilliseconds(250))
+        .GroupBy(d => d.Time)
+        .OrderByDescending(g => g.Key)
+        .FirstOrDefault();
+
+        if (nearestFrameDetections != null)
+        {
+            // Добавляем все детекции из этого кадра
+            foreach (var detection in nearestFrameDetections)
+            {
+                Rectangles.Add(detection.Rect);
+            }
+        }
+
+    }
+
+
     #endregion
 
 
@@ -273,6 +408,12 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     {
         public string Name { get; set; }
         public string Path { get; set; }
+    }
+
+    public class DetectionItem
+    {
+        public TimeSpan Time { get; set; }       // Время детекции относительно видео
+        public RectItem Rect { get; set; }       // Прямоугольник детекции
     }
     #endregion
 

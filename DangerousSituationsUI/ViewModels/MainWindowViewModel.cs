@@ -29,6 +29,7 @@ using LibVLCSharp.Shared;
 using SkiaSharp;
 using System.Diagnostics;
 using static DangerousSituationsUI.ViewModels.VideoEventJournalViewModel;
+using static DangerousSituationsUI.ViewModels.MainViewModel;
 
 
 namespace DangerousSituationsUI.ViewModels;
@@ -372,7 +373,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         int totalFiles = frames.Count();
         for (int idx = 0; idx < totalFiles; idx++)
         {
-            results = await GetFrameDetectionResultsAsync(frames[idx], idx + 1);
+            results = await GetFrameDetectionResultsAsync(frames[idx].frame, idx + 1);
             itemsLists.Add(results);
             ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
             frameNDetections.Add(new FrameNDetections
@@ -387,7 +388,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             Name = file.Name,
             frames = frames,
             rectitems = itemsLists,
-            id = count++
+            id = count++,
+           
         });
 
         _ = Task.Run(async () =>
@@ -398,7 +400,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         _videoFile = file;
         _rectItemsLists = itemsLists;
-        _frames = frames;
+        _frames = frames.Select(bm => bm.frame).ToList();
 
         CurrentFileName = file.Name;
         _currentNumberOfFrame = 0;
@@ -413,6 +415,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
     {
+        
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Start\n";
 
@@ -430,7 +433,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         foreach (var frameNDetection in framesNDetections)
         {
             using var memoryStream = new MemoryStream();
-            frameNDetection.Frame.Save(memoryStream);
+            frameNDetection.Frame.frame.Save(memoryStream);
             byte[] frameBytes = memoryStream.ToArray();
 
             var detections = frameNDetection.Detections.Select(detection => new Detection
@@ -450,7 +453,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             {
                 FrameData = frameBytes,
                 CreatedAt = DateTime.UtcNow,
-                Detections = detections
+                Detections = detections,
+                FrameTime = frameNDetection.Frame.timeSpan
             };
 
             videoModel.Frames.Add(frame);
@@ -649,7 +653,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             if (Frames.id == id)
             {
 
-                _frames = Frames.frames;
+                _frames = Frames.frames.Select(bm => bm.frame).ToList();
                 _rectItemsLists = Frames.rectitems;
                 CurrentFileName = Frames.Name;
 
@@ -900,7 +904,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         public int id { get; set; }
 
-        public List<Bitmap> frames { get; set; }
+        public List<BitmapModel> frames { get; set; }
 
         public AvaloniaList<AvaloniaList<RectItem>> rectitems { get; set; } = new();
 
@@ -911,5 +915,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             return Name;
         }
     }
+
+    
+
     #endregion
 }

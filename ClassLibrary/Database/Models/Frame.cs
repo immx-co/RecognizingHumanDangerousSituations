@@ -19,4 +19,6 @@ public class Frame
     public Video Video { get; set; }
 
     public List<Detection> Detections { get; set; } = new List<Detection>();
+
+    public TimeSpan FrameTime { get; set; }
 }

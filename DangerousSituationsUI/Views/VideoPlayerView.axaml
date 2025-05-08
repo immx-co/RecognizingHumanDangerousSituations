@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:vm="using:DangerousSituationsUI.ViewModels"
+			 xmlns:m="using:ClassLibrary.Services"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -45,15 +46,36 @@
       
 			<StackPanel HorizontalAlignment="Center"
 						Orientation="Vertical">
-        
-				<Grid Width="800"
-					  Height="400">
+
+				<Grid Width="800" Height="400">
 					<Border Background="Gainsboro">
 						<vlc:VideoView MediaPlayer="{Binding MediaPlayer}">
+							<ItemsControl ItemsSource="{Binding Rectangles}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<Canvas/>
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate>
+										<Rectangle 
+											Stroke="{Binding Color}"
+											StrokeThickness="1"
+											Height="{Binding Height}" 
+											Width="{Binding Width}"/>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+								<ItemsControl.Styles>
+									<Style Selector="ContentPresenter"  x:DataType="m:RectItem">
+										<Setter Property="Canvas.Left" Value="{Binding X}"/>
+										<Setter Property="Canvas.Top" Value="{Binding Y}"/>
+									</Style>
+								</ItemsControl.Styles>
+							</ItemsControl>
 						</vlc:VideoView>
 					</Border>
 				</Grid>
-        
+
 				<StackPanel Orientation="Horizontal">
 					<StackPanel HorizontalAlignment="Left"
 								Orientation="Horizontal">
