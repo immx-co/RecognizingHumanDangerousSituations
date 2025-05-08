@@ -21,4 +21,22 @@ public class Detection
     public int Width { get; set; }
 
     public int Height { get; set; }
+
+    public List<float> Nose { get; set; }
+    public List<float> LeftEye { get; set; }
+    public List<float> RightEye { get; set; }
+    public List<float> LeftEar { get; set; }
+    public List<float> RightEar { get; set; }
+    public List<float> LeftShoulder { get; set; }
+    public List<float> RightShoulder { get; set; }
+    public List<float> LeftElbow { get; set; }
+    public List<float> RightElbow { get; set; }
+    public List<float> LeftWrist { get; set; }
+    public List<float> RightWrist { get; set; }
+    public List<float> LeftHip { get; set; }
+    public List<float> RightHip { get; set; }
+    public List<float> LeftKnee { get; set; }
+    public List<float> RightKnee { get; set; }
+    public List<float> LeftAnkle { get; set; }
+    public List<float> RightAnkle { get; set; }
 }

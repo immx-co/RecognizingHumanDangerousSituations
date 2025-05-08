@@ -87,6 +87,7 @@ namespace DangerousSituationsUI
                 servicesCollection.AddTransient<FilesService>();
                 servicesCollection.AddTransient<VideoService>();
                 servicesCollection.AddTransient<RectItemService>();
+                servicesCollection.AddTransient<FigItemService>();
 
                 servicesCollection.AddSingleton<UserManagementViewModel>();
                 servicesCollection.AddSingleton<AddUserViewModel>();
