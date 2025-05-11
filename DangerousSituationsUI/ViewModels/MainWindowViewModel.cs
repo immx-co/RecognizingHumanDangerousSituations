@@ -391,11 +391,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         int totalFiles = frames.Count();
         for (int idx = 0; idx < totalFiles; idx++)
         {
-//<<<<<<< HEAD
-//            results = await GetFrameDetectionResultsAsync(frames[idx].frame, idx + 1);
-//=======
             (results, figResults) = await GetFrameDetectionResultsAsync(frames[idx].frame, idx + 1);
-//>>>>>>> refs/heads/_figure_drawing
             itemsLists.Add(results);
             figLists.Add(figResults);
             ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
