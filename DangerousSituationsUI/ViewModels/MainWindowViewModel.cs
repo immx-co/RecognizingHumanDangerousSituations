@@ -384,20 +384,20 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         IsLoading = true;
         var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
         var figLists = new AvaloniaList<AvaloniaList<FigItem>>();
-        var frames = await _videoService.GetFramesAsync(file);
+        var frameBitmapModels = await _videoService.GetFramesAsync(file);
         var results = new AvaloniaList<RectItem>();
         var figResults = new AvaloniaList<FigItem>();
         List<FrameNDetections> frameNDetections = new List<FrameNDetections>();
-        int totalFiles = frames.Count();
+        int totalFiles = frameBitmapModels.Count();
         for (int idx = 0; idx < totalFiles; idx++)
         {
-            (results, figResults) = await GetFrameDetectionResultsAsync(frames[idx].frame, idx + 1);
+            (results, figResults) = await GetFrameDetectionResultsAsync(frameBitmapModels[idx], idx + 1);
             itemsLists.Add(results);
             figLists.Add(figResults);
             ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
             frameNDetections.Add(new FrameNDetections
             {
-                Frame = frames[idx],
+                Frame = frameBitmapModels[idx],
                 Detections = results,
                 Figs = figResults
             });
@@ -406,7 +406,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         FrameItems?.Add(new FrameModel
         {
             Name = file.Name,
-            frames = frames,
+            frames = frameBitmapModels,
             rectitems = itemsLists,
             figitems = figLists,
             id = count++
@@ -420,7 +420,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         _videoFile = file;
         _rectItemsLists = itemsLists;
-        _frames = frames.Select(bm => bm.frame).ToList();
+        _frames = frameBitmapModels.Select(bm => bm.frame).ToList();
         _figItemsLists = figLists;
 
         CurrentFileName = file.Name;
@@ -512,11 +512,11 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         return addedVideo;
     }
 
-    private async Task<(AvaloniaList<RectItem> Rects, AvaloniaList<FigItem> Figs)> GetFrameDetectionResultsAsync(Bitmap frame, int numberOfFrame)
+    private async Task<(AvaloniaList<RectItem> Rects, AvaloniaList<FigItem> Figs)> GetFrameDetectionResultsAsync(BitmapModel frameBitmapModel, int numberOfFrame)
     {
         Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.GetFrameDetectionResultsAsync: Start\n";
-        List<RecognitionResult> detections = await GetFrameRecognitionResultsAsync(frame, numberOfFrame);
+        List<RecognitionResult> detections = await GetFrameRecognitionResultsAsync(frameBitmapModel.frame, numberOfFrame);
         var items = new AvaloniaList<RectItem>();
         var figItems = new AvaloniaList<FigItem>();
 
@@ -524,16 +524,16 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         {
             try
             {
-                var rectItem = _rectItemService.InitRect(det, frame);
+                var rectItem = _rectItemService.InitRect(det, frameBitmapModel.frame);
                 items.Add(rectItem);
 
-                var figItem = _figItemService.InitFig(det, frame.Size);
+                var figItem = _figItemService.InitFig(det, frameBitmapModel.frame.Size);
                 figItems.Add(figItem);
 
                 if (det.ClassName == "Lying")
                 {
                     using var ms = new MemoryStream();
-                    frame.Save(ms);
+                    frameBitmapModel.frame.Save(ms);
                     ms.Seek(0, SeekOrigin.Begin);
                     using var skBitmap = SKBitmap.Decode(ms.ToArray());
 
@@ -568,7 +568,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     data.SaveTo(resultMs);
                     var frameBytes = resultMs.ToArray();
 
-                    var detectionInfo = $"Человек упал! Координаты: X={topLeftCornerX}, Y={topLeftCornerY}, " +
+                    var detectionInfo = $"Человек упал {frameBitmapModel.timeSpan}! Координаты: X={topLeftCornerX}, Y={topLeftCornerY}, " +
                                        $"Ширина={det.Width}, Высота={det.Height}";
 
                     _ = Task.Run(async () =>
