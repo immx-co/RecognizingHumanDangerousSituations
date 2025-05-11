@@ -58,6 +58,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private VideoService _videoService;
 
     private RectItemService _rectItemService;
+
+    private FigItemService _figItemService;
+
     private readonly ConfigurationService _configurationService;
 
     private IServiceProvider _serviceProvider;
@@ -77,6 +80,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private AvaloniaList<RectItem> _rectItems;
 
     private AvaloniaList<AvaloniaList<RectItem>> _rectItemsLists;
+
+    private AvaloniaList<FigItem> _figItems;
+
+    private AvaloniaList<AvaloniaList<FigItem>> _figItemsLists;
 
     private AvaloniaList<LegendItem> _legendItems;
 
@@ -123,6 +130,12 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         get => _rectItems;
         set => this.RaiseAndSetIfChanged(ref _rectItems, value);
+    }
+
+    public AvaloniaList<FigItem> FigItems
+    {
+        get => _figItems;
+        set => this.RaiseAndSetIfChanged(ref _figItems, value);
     }
 
     public Bitmap? CurrentImage
@@ -215,6 +228,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         IServiceProvider serviceProvider,
         VideoService videoService,
         RectItemService rectItemService,
+        FigItemService figItemService,
         VideoEventJournalViewModel videoEventJournalViewModel,
         VideoPlayerViewModel videoPlayerViewModel,
         TelegramBotAPI telegramBotApi)
@@ -223,6 +237,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _filesService = filesService;
         _videoService = videoService;
         _rectItemService = rectItemService;
+        _figItemService = figItemService;
         _serviceProvider = serviceProvider;
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _configurationService = configurationService;
@@ -348,6 +363,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private void ResetUI()
     {
         RectItems = new AvaloniaList<RectItem>();
+        FigItems = new AvaloniaList<FigItem>();
         CurrentImage = null;
         CurrentFileName = String.Empty;
         FrameTitle = String.Empty;
@@ -367,19 +383,27 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: Start\n";
         IsLoading = true;
         var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
+        var figLists = new AvaloniaList<AvaloniaList<FigItem>>();
         var frames = await _videoService.GetFramesAsync(file);
         var results = new AvaloniaList<RectItem>();
+        var figResults = new AvaloniaList<FigItem>();
         List<FrameNDetections> frameNDetections = new List<FrameNDetections>();
         int totalFiles = frames.Count();
         for (int idx = 0; idx < totalFiles; idx++)
         {
-            results = await GetFrameDetectionResultsAsync(frames[idx].frame, idx + 1);
+//<<<<<<< HEAD
+//            results = await GetFrameDetectionResultsAsync(frames[idx].frame, idx + 1);
+//=======
+            (results, figResults) = await GetFrameDetectionResultsAsync(frames[idx].frame, idx + 1);
+//>>>>>>> refs/heads/_figure_drawing
             itemsLists.Add(results);
+            figLists.Add(figResults);
             ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
             frameNDetections.Add(new FrameNDetections
             {
                 Frame = frames[idx],
-                Detections = results
+                Detections = results,
+                Figs = figResults
             });
         }
 
@@ -388,8 +412,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             Name = file.Name,
             frames = frames,
             rectitems = itemsLists,
-            id = count++,
-           
+            figitems = figLists,
+            id = count++
         });
 
         _ = Task.Run(async () =>
@@ -401,6 +425,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _videoFile = file;
         _rectItemsLists = itemsLists;
         _frames = frames.Select(bm => bm.frame).ToList();
+        _figItemsLists = figLists;
 
         CurrentFileName = file.Name;
         _currentNumberOfFrame = 0;
@@ -436,18 +461,41 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             frameNDetection.Frame.frame.Save(memoryStream);
             byte[] frameBytes = memoryStream.ToArray();
 
-            var detections = frameNDetection.Detections.Select(detection => new Detection
+            var detections = frameNDetection.Detections.Select((rect, i) => 
             {
-                ClassName = detection.Color switch
+                var fig = frameNDetection.Figs[i];
+
+                return new Detection
                 {
-                    "Green" => "Standing",
-                    "Red" => "Lying",
-                },
-                X = detection.X,
-                Y = detection.Y,
-                Width = detection.Width,
-                Height = detection.Height
-            }).ToList();
+                    ClassName = rect.Color switch
+                    {
+                        "Green" => "Standing",
+                        "Red" => "Lying"
+                    },
+                    X = rect.X,
+                    Y = rect.Y,
+                    Width = rect.Width,
+                    Height = rect.Height,
+                    Nose = fig.Nose,
+                    LeftEye = fig.LeftEye,
+                    RightEye = fig.RightEye,
+                    LeftEar = fig.LeftEar,
+                    RightEar = fig.RightEar,
+                    LeftShoulder = fig.LeftShoulder,
+                    RightShoulder = fig.RightShoulder,
+                    LeftElbow = fig.LeftElbow,
+                    RightElbow = fig.RightElbow,
+                    LeftWrist = fig.LeftWrist,
+                    RightWrist = fig.RightWrist,
+                    LeftHip = fig.LeftHip,
+                    RightHip = fig.RightHip,
+                    LeftKnee = fig.LeftKnee,
+                    RightKnee = fig.RightKnee,
+                    LeftAnkle = fig.LeftAnkle,
+                    RightAnkle = fig.RightAnkle
+                };
+            })
+            .ToList();
 
             var frame = new Frame
             {
@@ -468,12 +516,13 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         return addedVideo;
     }
 
-    private async Task<AvaloniaList<RectItem>> GetFrameDetectionResultsAsync(Bitmap frame, int numberOfFrame)
+    private async Task<(AvaloniaList<RectItem> Rects, AvaloniaList<FigItem> Figs)> GetFrameDetectionResultsAsync(Bitmap frame, int numberOfFrame)
     {
         Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.GetFrameDetectionResultsAsync: Start\n";
         List<RecognitionResult> detections = await GetFrameRecognitionResultsAsync(frame, numberOfFrame);
         var items = new AvaloniaList<RectItem>();
+        var figItems = new AvaloniaList<FigItem>();
 
         foreach (RecognitionResult det in detections)
         {
@@ -481,6 +530,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             {
                 var rectItem = _rectItemService.InitRect(det, frame);
                 items.Add(rectItem);
+
+                var figItem = _figItemService.InitFig(det, frame.Size);
+                figItems.Add(figItem);
 
                 if (det.ClassName == "Lying")
                 {
@@ -545,7 +597,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         }
         Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Done");
         LogJournalViewModel.logString += "MainViewModel.GetFrameDetectionResultsAsync: Done\n";
-        return items;
+        return (items, figItems);
     }
 
     private async Task<List<RecognitionResult>> GetFrameRecognitionResultsAsync(Bitmap frame, int numberOfFrame)
@@ -599,6 +651,23 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                                 Y = bbox.Y,
                                 Width = bbox.Width,
                                 Height = bbox.Height,
+                                Nose = bbox.Keypoints.Nose,
+                                LeftEye = bbox.Keypoints.LeftEye,
+                                RightEye = bbox.Keypoints.RightEye,
+                                LeftEar = bbox.Keypoints.LeftEar,
+                                RightEar = bbox.Keypoints.RightEar,
+                                LeftShoulder = bbox.Keypoints.LeftShoulder,
+                                RightShoulder = bbox.Keypoints.RightShoulder,
+                                LeftElbow = bbox.Keypoints.LeftElbow,
+                                RightElbow = bbox.Keypoints.RightElbow,
+                                LeftWrist = bbox.Keypoints.LeftWrist,
+                                RightWrist = bbox.Keypoints.RightWrist,
+                                LeftHip = bbox.Keypoints.LeftHip,
+                                RightHip = bbox.Keypoints.RightHip,
+                                LeftKnee = bbox.Keypoints.LeftKnee,
+                                RightKnee = bbox.Keypoints.RightKnee,
+                                LeftAnkle = bbox.Keypoints.LeftAnkle,
+                                RightAnkle = bbox.Keypoints.RightAnkle,
                             }).ToList();
                         }
                     }
@@ -642,6 +711,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         CurrentImage = _frames[_currentNumberOfFrame];
         RectItems = _rectItemsLists[_currentNumberOfFrame];
+        FigItems = _figItemsLists[_currentNumberOfFrame];
 
         FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
     }
@@ -655,6 +725,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
                 _frames = Frames.frames.Select(bm => bm.frame).ToList();
                 _rectItemsLists = Frames.rectitems;
+                _figItemsLists = Frames.figitems;
                 CurrentFileName = Frames.Name;
 
             }
@@ -663,6 +734,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         CurrentImage = _frames[_currentNumberOfFrame];
         RectItems = _rectItemsLists[_currentNumberOfFrame];
+        FigItems = _figItemsLists[_currentNumberOfFrame];
         FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
     }
     #endregion
@@ -907,6 +979,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         public List<BitmapModel> frames { get; set; }
 
         public AvaloniaList<AvaloniaList<RectItem>> rectitems { get; set; } = new();
+
+        public AvaloniaList<AvaloniaList<FigItem>> figitems { get; set; } = new();
 
         public string Name { get; set; }
 

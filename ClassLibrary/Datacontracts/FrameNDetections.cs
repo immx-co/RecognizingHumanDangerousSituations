@@ -10,4 +10,6 @@ public class FrameNDetections
     public BitmapModel Frame { get; set; }
 
     public AvaloniaList<RectItem> Detections { get; set; }
+
+    public AvaloniaList<FigItem> Figs { get; set; }
 }
