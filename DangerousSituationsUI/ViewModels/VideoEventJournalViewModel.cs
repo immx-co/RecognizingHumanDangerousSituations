@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -58,6 +59,10 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     public CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     #endregion
 
+    #region Commands
+    public ReactiveCommand<Unit, Unit> SaveBoxPositionCommand { get; }
+    #endregion
+
     #region Properties
     public AvaloniaList<VideoEventResult> EventResults
     {
@@ -77,6 +82,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
                 BoxY = _selectedEventResult.Y;
                 BoxWidth = _selectedEventResult.Width;
                 BoxHeight = _selectedEventResult.Height;
+                BoxPositionChanged = false;
             }
             else Clear();
         }
@@ -173,6 +179,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         };
 
         BoxPositionChanged = false;
+        SaveBoxPositionCommand = ReactiveCommand.CreateFromTask(SaveBoxPosition);
     }
     #endregion
 
@@ -290,6 +297,42 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
                 EventResults.Add(new VideoEventResult { Name=det.FrameId, Class=det.ClassName, X=det.X, Y=det.Y, Width=det.Width, Height=det.Height});
             }
         }
+    }
+
+    private async Task SaveBoxPosition()
+    {
+        int oldX = SelectedEventResult.X;
+        int oldY = SelectedEventResult.Y;
+        int oldWidth = SelectedEventResult.Width;
+        int oldHeight = SelectedEventResult.Height;
+
+        if (SelectedEventResult == null)
+            return;
+        
+        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
+        var dbDetection = await db.Detections.Where(d => d.FrameId == SelectedEventResult.Name 
+            && d.X == oldX && d.Y == oldY && d.Width == oldWidth
+            && d.Height == oldHeight).FirstOrDefaultAsync();
+        
+        if (dbDetection == null)
+            return;
+
+        dbDetection.X = BoxX;
+        dbDetection.Y = BoxY;
+        dbDetection.Width = BoxWidth;
+        dbDetection.Height = BoxHeight;
+
+        await db.SaveChangesAsync();
+
+        Log.Debug($"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} (X:{oldX}->{BoxX}, " +
+            $"Y:{oldY}->{BoxY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})");
+        LogJournalViewModel.logString += $"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} " +
+            $"(X:{oldX}->{BoxX}, Y:{oldY}->{BoxY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})\n";
+
+        // Уведомляем об изменении коллекции
+        EventResults = new AvaloniaList<VideoEventResult>(EventResults);
+
+        BoxPositionChanged = false;
     }
     #endregion
 

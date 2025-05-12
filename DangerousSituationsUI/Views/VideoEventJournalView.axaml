@@ -76,8 +76,7 @@
 				<TextBox Text="{Binding BoxWidth}" AcceptsReturn="False" IsReadOnly="True" />
 			</StackPanel>
 		</Grid>
-      <Grid Width="800"
-						Height="400">
+      <Grid Width="800" Height="400">
         <Border Background="Gainsboro">
           <Image MaxWidth="800"
 								 MaxHeight="400"
@@ -94,7 +93,30 @@
 										Width="{Binding Width}"
 										Height="{Binding Height}"
 										Canvas.Left="{Binding X}"
-										Canvas.Top="{Binding Y}"/>
+										Canvas.Top="{Binding Y}"
+										Cursor="SizeAll"
+										BorderMoved="InteractiveBorder_BorderMoved"
+										BorderResized="InteractiveBorder_BorderResized">
+					  <Canvas IsVisible="{Binding $parent.IsPointerOver}"
+						Width="{Binding Width}"
+						Height="{Binding Height}">
+						  <!-- Верхний левый угол -->
+						  <Rectangle Name="TopLeft" Width="10" Height="10" Fill="{Binding Color}" Cursor="TopLeftCorner"
+									 Canvas.Left="0" Canvas.Top="0" PointerPressed="ResizeHandle_PointerPressed"/>
+
+						  <!-- Верхний правый угол -->
+						  <Rectangle Name="TopRight" Width="10" Height="10" Fill="{Binding Color}" Cursor="TopRightCorner"
+									 Canvas.Right="0" Canvas.Top="0"/>
+
+						  <!-- Нижний левый угол -->
+						  <Rectangle Name="BottomLeft" Width="10" Height="10" Fill="{Binding Color}" Cursor="BottomLeftCorner"
+									 Canvas.Left="0" Canvas.Bottom="0"/>
+
+						  <!-- Нижний правый угол -->
+						  <Rectangle Name="BottomRight" Width="10" Height="10" Fill="{Binding Color}" Cursor="BottomRightCorner"
+									 Canvas.Right="0" Canvas.Bottom="0"/>
+					  </Canvas>
+				  </services:InteractiveBorder>
               </Canvas>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
@@ -115,13 +137,14 @@
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
-		<Button HorizontalAlignment="Stretch"
-		  VerticalContentAlignment="Center"
-		  HorizontalContentAlignment="Center"
-		  Content="Сохранить изменения"
-		  IsEnabled="{Binding BoxPositionChanged}"
-		  Grid.Column="1">
-		</Button>
+		  <Button HorizontalAlignment="Stretch"
+				VerticalContentAlignment="Center"
+				HorizontalContentAlignment="Center"
+				Content="Сохранить изменения"
+				IsEnabled="{Binding BoxPositionChanged}"
+				Command="{Binding SaveBoxPositionCommand}"
+				Grid.Column="1">
+		  </Button>
       </Grid>
     </StackPanel>
   </Grid>
