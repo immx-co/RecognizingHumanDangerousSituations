@@ -285,11 +285,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     Log.Information("Start sending video");
                     LogJournalViewModel.logString += "Start sending video\n";
                     CurrentFileName = file.Name;
-                    _videoPlayerViewModel.VideoItems.Add(new VideoItem
-                    {
-                        Name = file.Name,
-                        Path = file.Path.LocalPath
-                    });
                     await InitFramesAsync(file);
                     ProgressPercentage = 0;
                     Log.Information("End sending video");
@@ -331,19 +326,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             if (file != null)
             {
                 FrameItems = new();
+                _videoPlayerViewModel.VideoItems = new ObservableCollection<VideoItem>();
                 await InitFramesAsync(file);
                 CanSwitchImages = true;
                 FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
-
-                _videoPlayerViewModel.VideoItems = new ObservableCollection<VideoItem>
-                {
-                    new VideoItem
-                    {
-                        Name = file.Name,
-                        Path = file.Path.LocalPath
-                    }
-                };
-                _videoPlayerViewModel.SelectedVideoItem = _videoPlayerViewModel.VideoItems.First();
             }
         }
         finally
@@ -506,6 +492,14 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         var addedVideo = await repository.AddVideoAsync(videoModel);
         await repository.SaveChangesAsync();
+
+        _videoPlayerViewModel.VideoItems.Add(new VideoItem
+        {
+            Guid = videoModel.VideoId,
+            Name = videoModel.VideoName,
+            Path = videoFile.Path.LocalPath
+        });
+        _videoPlayerViewModel.SelectedVideoItem = _videoPlayerViewModel.VideoItems.First();
 
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Done");
         LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Done\n";

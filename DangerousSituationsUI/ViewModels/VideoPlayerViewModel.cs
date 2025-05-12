@@ -6,6 +6,7 @@ using ClassLibrary.Services;
 using LibVLCSharp.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
+using MsBox.Avalonia.Base;
 using ReactiveUI;
 using Sprache;
 using System;
@@ -14,7 +15,9 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reactive;
+using System.Text.RegularExpressions;
 using System.Threading;
+using Telegram.Bot.Types;
 using static DangerousSituationsUI.ViewModels.VideoEventJournalViewModel;
 
 namespace DangerousSituationsUI.ViewModels;
@@ -98,7 +101,7 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
             {
                 var media = new Media(LibVLCInstance, value.Path, FromType.FromPath);
                 SetMediaPlayer(media); 
-                LoadDetections(value.Name);
+                LoadDetections(value.GetFullName());
             }
         }
     }
@@ -295,8 +298,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
         var dbDetection = new List<Detection>();
 
-
-
         foreach (var frame in dbFrame)
         {
 
@@ -319,73 +320,81 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
                 });
             }
         }
-        
-        
-       
     }
+
     private  void ClearRectangles()
     {
         Rectangles.Clear();
     }
 
-    private void LoadDetections(string videoName)
+    private void LoadDetections(string fullVideoName)
     {
+        var match = Regex.Match(fullVideoName, @"^(.*?)\s*\((.*?)\)$");
+
+        string? videoName = String.Empty;
+        string? stringGuid = String.Empty;
+        if (match.Success)
+        {
+            videoName = match.Groups[1].Value.Trim();
+            stringGuid = match.Groups[2].Value.Trim();
+        }
+        else
+        {
+            return;
+        }
+
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
-        var dbVideo = db.Videos.FirstOrDefault(v => v.VideoName == videoName);
+        var dbVideo = db.Videos.FirstOrDefault(v => v.VideoId == Guid.Parse(stringGuid));
         if (dbVideo == null) return;
 
         DateTime videoStartTime = dbVideo.CreatedAt;
 
         _detections = db.Frames
-    .Where(f => f.VideoId == dbVideo.VideoId)
-    .Join(db.Detections,
-        frame => frame.FrameId,
-        detection => detection.FrameId,
-        (frame, detection) => new { frame, detection })
-    .AsEnumerable() 
-    .Select(x => new DetectionItem
-    {
-        Time = x.frame.FrameTime,
-        Rect = new RectItem
-        {
-            X = x.detection.X,
-            Y = x.detection.Y,
-            Width = x.detection.Width,
-            Height = x.detection.Height,
-            Color = x.detection.ClassName switch
+            .Where(f => f.VideoId == dbVideo.VideoId)
+            .Join(db.Detections,
+                frame => frame.FrameId,
+                detection => detection.FrameId,
+                (frame, detection) => new { frame, detection })
+            .AsEnumerable() 
+            .Select(x => new DetectionItem
             {
-                "Standing" => "Green",
-                "Lying" => "Red",
-                _ => "Yellow"
-            }
-        }
-    })
-    .ToList();
+                Time = x.frame.FrameTime,
+                Rect = new RectItem
+                {
+                    X = x.detection.X,
+                    Y = x.detection.Y,
+                    Width = x.detection.Width,
+                    Height = x.detection.Height,
+                    Color = x.detection.ClassName switch
+                    {
+                        "Standing" => "Green",
+                        "Lying" => "Red",
+                        _ => "Yellow"
+                    }
+                }
+            })
+            .ToList();
     }
 
     private void UpdateRectangles(TimeSpan currentVideoTime)
     {
-        ClearRectangles();
-        var test = TimeSpan.FromMilliseconds(250);
         var nearestFrameDetections = _detections
-        .Where(d => d.Time <= currentVideoTime && currentVideoTime-d.Time <= TimeSpan.FromMilliseconds(250))
-        .GroupBy(d => d.Time)
-        .OrderByDescending(g => g.Key)
-        .FirstOrDefault();
+            .Where(d => d.Time <= currentVideoTime && currentVideoTime - d.Time <= TimeSpan.FromMilliseconds(250))
+            .GroupBy(d => d.Time)
+            .OrderByDescending(g => g.Key)
+            .FirstOrDefault();
 
         if (nearestFrameDetections != null)
         {
+            ClearRectangles();
             // Добавляем все детекции из этого кадра
             foreach (var detection in nearestFrameDetections)
             {
                 Rectangles.Add(detection.Rect);
             }
         }
-
     }
-
-
     #endregion
 
 
@@ -402,17 +411,25 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     }
     #endregion
 
-
     #region Classes
     public class VideoItem
     {
+        public Guid Guid { get; set; }
+
         public string Name { get; set; }
+
         public string Path { get; set; }
+
+        public string GetFullName()
+        {
+            return $"{this.Name} ({this.Guid.ToString()})";
+        }
     }
 
     public class DetectionItem
     {
         public TimeSpan Time { get; set; }       // Время детекции относительно видео
+
         public RectItem Rect { get; set; }       // Прямоугольник детекции
     }
     #endregion
