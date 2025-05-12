@@ -329,8 +329,27 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += $"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} " +
             $"(X:{oldX}->{BoxX}, Y:{oldY}->{BoxY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})\n";
 
-        // Уведомляем об изменении коллекции
-        EventResults = new AvaloniaList<VideoEventResult>(EventResults);
+        SelectedEventResult.X = BoxX;
+        SelectedEventResult.Y = BoxY;
+        SelectedEventResult.Width = BoxWidth;
+        SelectedEventResult.Height = BoxHeight;
+
+        int index = EventResults.IndexOf(SelectedEventResult);
+        if (index >= 0)
+        {
+            var updatedEventResult = new VideoEventResult
+            {
+                Name = SelectedEventResult.Name,
+                Class = SelectedEventResult.Class,
+                X = BoxX,
+                Y = BoxY,
+                Width = BoxWidth,
+                Height = BoxHeight
+            };
+
+            EventResults[index] = updatedEventResult;
+            SelectedEventResult = updatedEventResult;
+        }
 
         BoxPositionChanged = false;
     }

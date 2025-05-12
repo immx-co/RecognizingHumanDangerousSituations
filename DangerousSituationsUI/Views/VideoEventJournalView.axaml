@@ -101,7 +101,7 @@
 						Width="{Binding $parent.Width}"
 						Height="{Binding $parent.Height}">
 						  <!-- Нижний правый угол -->
-						  <Rectangle Name="BottomRight" Width="10" Height="10" Fill="{Binding Color}" Cursor="BottomRightCorner"
+						  <Rectangle Name="BottomRight" Width="15" Height="15" Fill="{Binding Color}" Cursor="BottomRightCorner"
 									 Canvas.Right="0" Canvas.Bottom="0"/>
 					  </Canvas>
 				  </services:InteractiveBorder>
