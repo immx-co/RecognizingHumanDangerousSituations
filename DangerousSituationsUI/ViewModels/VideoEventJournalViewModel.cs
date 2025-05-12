@@ -5,12 +5,14 @@ using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OpenCvSharp.ML;
 using ReactiveUI;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -38,6 +40,16 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     private VideoItemModel _selectedVideoItem;
 
     private AvaloniaList<LegendItem> _legendItems;
+
+    private int _box_x;
+
+    private int _box_y;
+
+    private int _box_width;
+
+    private int _box_height;
+
+    private bool _boxPositionChanged;
     #endregion
 
     #region View Model Settings
@@ -45,6 +57,10 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
 
     public CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+    #endregion
+
+    #region Commands
+    public ReactiveCommand<Unit, Unit> SaveBoxPositionCommand { get; }
     #endregion
 
     #region Properties
@@ -60,7 +76,14 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         set
         {
             _selectedEventResult = value;
-            if (_selectedEventResult != null) Render();
+            if (_selectedEventResult != null) { 
+                Render();
+                BoxX = _selectedEventResult.X;
+                BoxY = _selectedEventResult.Y;
+                BoxWidth = _selectedEventResult.Width;
+                BoxHeight = _selectedEventResult.Height;
+                BoxPositionChanged = false;
+            }
             else Clear();
         }
     }
@@ -109,6 +132,35 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
+    public int BoxX
+    {
+        get => _box_x;
+        set => this.RaiseAndSetIfChanged(ref _box_x, value);
+    }
+
+    public int BoxY
+    {
+        get => _box_y;
+        set => this.RaiseAndSetIfChanged(ref _box_y, value);
+    }
+
+    public int BoxWidth
+    {
+        get => _box_width;
+        set => this.RaiseAndSetIfChanged(ref _box_width, value);
+    }
+
+    public int BoxHeight
+    {
+        get => _box_height;
+        set => this.RaiseAndSetIfChanged(ref _box_height, value);
+    }
+    public bool BoxPositionChanged
+    {
+        get => _boxPositionChanged;
+        set => this.RaiseAndSetIfChanged(ref _boxPositionChanged, value);
+    }
+
     public bool IsVideoProcessing = false;
     #endregion
 
@@ -125,6 +177,9 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             new LegendItem { ClassName = "Standing", Color = "Green" },
             new LegendItem { ClassName = "Lying", Color = "Red" }
         };
+
+        BoxPositionChanged = false;
+        SaveBoxPositionCommand = ReactiveCommand.CreateFromTask(SaveBoxPosition);
     }
     #endregion
 
@@ -254,6 +309,61 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
                 EventResults.Add(new VideoEventResult { Name=det.FrameId, Class=det.ClassName, X=det.X, Y=det.Y, Width=det.Width, Height=det.Height, DetectionTime = timeSpan });
             }
         }
+    }
+
+    private async Task SaveBoxPosition()
+    {
+        int oldX = SelectedEventResult.X;
+        int oldY = SelectedEventResult.Y;
+        int oldWidth = SelectedEventResult.Width;
+        int oldHeight = SelectedEventResult.Height;
+
+        if (SelectedEventResult == null)
+            return;
+        
+        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
+        var dbDetection = await db.Detections.Where(d => d.FrameId == SelectedEventResult.Name 
+            && d.X == oldX && d.Y == oldY && d.Width == oldWidth
+            && d.Height == oldHeight).FirstOrDefaultAsync();
+        
+        if (dbDetection == null)
+            return;
+
+        dbDetection.X = BoxX;
+        dbDetection.Y = BoxY;
+        dbDetection.Width = BoxWidth;
+        dbDetection.Height = BoxHeight;
+
+        await db.SaveChangesAsync();
+
+        Log.Debug($"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} (X:{oldX}->{BoxX}, " +
+            $"Y:{oldY}->{BoxY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})");
+        LogJournalViewModel.logString += $"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} " +
+            $"(X:{oldX}->{BoxX}, Y:{oldY}->{BoxY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})\n";
+
+        SelectedEventResult.X = BoxX;
+        SelectedEventResult.Y = BoxY;
+        SelectedEventResult.Width = BoxWidth;
+        SelectedEventResult.Height = BoxHeight;
+
+        int index = EventResults.IndexOf(SelectedEventResult);
+        if (index >= 0)
+        {
+            var updatedEventResult = new VideoEventResult
+            {
+                Name = SelectedEventResult.Name,
+                Class = SelectedEventResult.Class,
+                X = BoxX,
+                Y = BoxY,
+                Width = BoxWidth,
+                Height = BoxHeight
+            };
+
+            EventResults[index] = updatedEventResult;
+            SelectedEventResult = updatedEventResult;
+        }
+
+        BoxPositionChanged = false;
     }
     #endregion
 
