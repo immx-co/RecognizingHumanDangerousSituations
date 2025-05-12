@@ -78,8 +78,8 @@ namespace DangerousSituationsUI.Services
                 var deltaX = currentPointerPosition.X - _positionInBlock.X;
                 var deltaY = currentPointerPosition.Y - _positionInBlock.Y;
 
-                double newWidth = Math.Max(10, _initialSize.X + Math.Abs(deltaX));
-                double newHeight = Math.Max(10, _initialSize.Y + Math.Abs(deltaY));
+                double newWidth = Math.Max(10, _initialSize.X + deltaX);
+                double newHeight = Math.Max(10, _initialSize.Y + deltaY);
 
                 Width = newWidth;
                 Height = newHeight;

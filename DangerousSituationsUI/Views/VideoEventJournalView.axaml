@@ -98,20 +98,8 @@
 										BorderMoved="InteractiveBorder_BorderMoved"
 										BorderResized="InteractiveBorder_BorderResized">
 					  <Canvas IsVisible="{Binding $parent.IsPointerOver}"
-						Width="{Binding Width}"
-						Height="{Binding Height}">
-						  <!-- Верхний левый угол -->
-						  <Rectangle Name="TopLeft" Width="10" Height="10" Fill="{Binding Color}" Cursor="TopLeftCorner"
-									 Canvas.Left="0" Canvas.Top="0" PointerPressed="ResizeHandle_PointerPressed"/>
-
-						  <!-- Верхний правый угол -->
-						  <Rectangle Name="TopRight" Width="10" Height="10" Fill="{Binding Color}" Cursor="TopRightCorner"
-									 Canvas.Right="0" Canvas.Top="0"/>
-
-						  <!-- Нижний левый угол -->
-						  <Rectangle Name="BottomLeft" Width="10" Height="10" Fill="{Binding Color}" Cursor="BottomLeftCorner"
-									 Canvas.Left="0" Canvas.Bottom="0"/>
-
+						Width="{Binding $parent.Width}"
+						Height="{Binding $parent.Height}">
 						  <!-- Нижний правый угол -->
 						  <Rectangle Name="BottomRight" Width="10" Height="10" Fill="{Binding Color}" Cursor="BottomRightCorner"
 									 Canvas.Right="0" Canvas.Bottom="0"/>
