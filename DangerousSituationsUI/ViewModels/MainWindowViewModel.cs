@@ -305,7 +305,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             AreButtonsEnabled = true;
             IsLoading = false;
             ProgressPercentage = 0;
-            await _videoEventJournalViewModel.FillComboBox();
+            //await _videoEventJournalViewModel.FillComboBox();
             Log.Information("End sending video");
             LogJournalViewModel.logString += "End sending video\n";
             Log.Debug("MainViewModel.OpenFolderAsync: Done");
@@ -318,7 +318,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += "Start sending video\n";
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Start\n";
-        _videoEventJournalViewModel.EventResults = new AvaloniaList<VideoEventResult>();
+        //_videoEventJournalViewModel.EventResults = new AvaloniaList<VideoEventResult>();
         try
         {
             AreButtonsEnabled = false;
@@ -337,7 +337,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             AreButtonsEnabled = true;
             IsLoading = false;
             ProgressPercentage = 0;
-            await _videoEventJournalViewModel.FillComboBox();
+            //await _videoEventJournalViewModel.FillComboBox();
             Log.Information("End sending video");
             LogJournalViewModel.logString += "End sending video\n";
             Log.Debug("MainViewModel.OpenVideoAsync: Done");
@@ -500,6 +500,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             Path = videoFile.Path.LocalPath
         });
         _videoPlayerViewModel.SelectedVideoItem = _videoPlayerViewModel.VideoItems.First();
+
+        await _videoEventJournalViewModel.FillComboBox();
 
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Done");
         LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Done\n";
