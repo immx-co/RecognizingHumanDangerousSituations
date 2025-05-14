@@ -13,6 +13,9 @@ using DangerousSituationsUI.ViewModels;
 using System.IO;
 using Avalonia.Media;
 using Avalonia.Threading;
+using OpenCvSharp.Dnn;
+using SkiaSharp;
+using ClassLibrary.Database.Models;
 
 
 namespace DangerousSituationsUI;
@@ -165,24 +168,6 @@ public class TelegramBotAPI : IDisposable
         }
     }
 
-    public async Task SendEventData(byte[] imageBytes, string detectionInfo)
-    {
-        try
-        {
-            using var memoryStream = new MemoryStream(imageBytes);
-            await _botClient.SendPhoto(
-                chatId: _chatId,
-                photo: InputFile.FromStream(memoryStream, "image.jpg"),
-                caption: detectionInfo
-            );
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"Ошибка при отправке изображения с детекцией боту: {ex.Message}");
-            _logJournalViewModel.LogString += $"Ошибка при отправке изображения с детекцией боту: {ex.Message}\n";
-        }
-    }
-
     public void Dispose()
     {
         StopBot();
@@ -265,6 +250,115 @@ public class TelegramBotAPI : IDisposable
         Log.Error(ErrorMessage);
         _logJournalViewModel.LogString += $"{ErrorMessage}\n";
         return Task.CompletedTask;
+    }
+
+    private async Task SendEventDataAsync(byte[] imageBytes, string detectionInfo)
+    {
+        try
+        {
+            using var memoryStream = new MemoryStream(imageBytes);
+            await _botClient.SendPhoto(
+                chatId: _chatId,
+                photo: InputFile.FromStream(memoryStream, "image.jpg"),
+                caption: detectionInfo
+            );
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Ошибка при отправке изображения с детекцией боту: {ex.Message}");
+            _logJournalViewModel.LogString += $"Ошибка при отправке изображения с детекцией боту: {ex.Message}\n";
+        }
+    }
+    #endregion
+
+    #region Public Methods
+    public async Task SendEventDataWrapperAsync(BitmapModel frameBitmapModel, RecognitionResult det)
+    {
+        using var ms = new MemoryStream();
+        frameBitmapModel.frame.Save(ms);
+        ms.Seek(0, SeekOrigin.Begin);
+        using var skBitmap = SKBitmap.Decode(ms.ToArray());
+
+        using var surface = SKSurface.Create(new SKImageInfo(skBitmap.Width, skBitmap.Height));
+        var canvas = surface.Canvas;
+
+        canvas.DrawBitmap(skBitmap, 0, 0);
+
+        using var detPaint = new SKPaint
+        {
+            Color = SKColors.Red,
+            StrokeWidth = 3,
+            IsStroke = true,
+            Style = SKPaintStyle.Stroke
+        };
+
+        float topLeftCornerX = det.X - det.Width / 2;
+        float topLeftCornerY = det.Y - det.Height / 2;
+        canvas.DrawRect(topLeftCornerX, topLeftCornerY, det.Width, det.Height, detPaint);
+
+        using var classNamePaint = new SKPaint
+        {
+            Color = SKColors.Black,
+            TextSize = 16,
+            IsAntialias = true
+        };
+        canvas.DrawText("Lying", topLeftCornerX, topLeftCornerY - 5, classNamePaint);
+
+        using var skeletonPaint = new SKPaint
+        {
+            Color = SKColors.Gray,
+            StrokeWidth = 2,
+            IsStroke = true,
+            Style = SKPaintStyle.Stroke
+        };
+
+        using var skeletonPointPaint = new SKPaint
+        {
+            Color = SKColors.Red,
+            StrokeWidth = 4,
+            IsStroke = true,
+            Style = SKPaintStyle.Fill
+        };
+
+        canvas.DrawCircle(det.Nose[0], det.Nose[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.LeftEye[0], det.LeftEye[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.RightEye[0], det.RightEye[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.LeftEar[0], det.LeftEar[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.RightEar[0], det.RightEar[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.LeftShoulder[0], det.LeftShoulder[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.RightShoulder[0], det.RightShoulder[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.LeftElbow[0], det.LeftElbow[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.RightElbow[0], det.RightElbow[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.LeftWrist[0], det.LeftWrist[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.RightWrist[0], det.RightWrist[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.LeftHip[0], det.LeftHip[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.RightHip[0], det.RightHip[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.LeftKnee[0], det.LeftKnee[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.RightKnee[0], det.RightKnee[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.LeftAnkle[0], det.LeftAnkle[1], 3, skeletonPointPaint);
+        canvas.DrawCircle(det.RightAnkle[0], det.RightAnkle[1], 3, skeletonPointPaint);
+
+        canvas.DrawLine(det.LeftShoulder[0], det.LeftShoulder[1], det.RightShoulder[0], det.RightShoulder[1], skeletonPaint);
+        canvas.DrawLine(det.LeftShoulder[0], det.LeftShoulder[1], det.LeftElbow[0], det.LeftElbow[1], skeletonPaint);
+        canvas.DrawLine(det.RightShoulder[0], det.RightShoulder[1], det.RightElbow[0], det.RightElbow[1], skeletonPaint);
+        canvas.DrawLine(det.LeftElbow[0], det.LeftElbow[1], det.LeftWrist[0], det.LeftWrist[1], skeletonPaint);
+        canvas.DrawCircle(det.RightElbow[0], det.RightElbow[1], 3, skeletonPointPaint);
+        canvas.DrawLine(det.RightElbow[0], det.RightElbow[1], det.RightWrist[0], det.RightWrist[1], skeletonPaint);
+        canvas.DrawLine(det.LeftHip[0], det.LeftHip[1], det.RightHip[0], det.RightHip[1], skeletonPaint);
+        canvas.DrawLine(det.LeftHip[0], det.LeftHip[1], det.LeftKnee[0], det.LeftKnee[1], skeletonPaint);
+        canvas.DrawLine(det.RightHip[0], det.RightHip[1], det.RightKnee[0], det.RightKnee[1], skeletonPaint);
+        canvas.DrawLine(det.LeftKnee[0], det.LeftKnee[1], det.LeftAnkle[0], det.LeftAnkle[1], skeletonPaint);
+        canvas.DrawLine(det.RightKnee[0], det.RightKnee[1], det.RightAnkle[0], det.RightAnkle[1], skeletonPaint);
+
+        using var image = surface.Snapshot();
+        using var data = image.Encode(SKEncodedImageFormat.Jpeg, 90);
+        using var resultMs = new MemoryStream();
+        data.SaveTo(resultMs);
+        var frameBytes = resultMs.ToArray();
+
+        var detectionInfo = $"Человек упал {frameBitmapModel.timeSpan}! Координаты: X={topLeftCornerX}, Y={topLeftCornerY}, " +
+                           $"Ширина={det.Width}, Высота={det.Height}";
+        await SendEventDataAsync(frameBytes, detectionInfo);
     }
     #endregion
 }

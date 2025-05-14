@@ -305,7 +305,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             AreButtonsEnabled = true;
             IsLoading = false;
             ProgressPercentage = 0;
-            //await _videoEventJournalViewModel.FillComboBox();
             Log.Information("End sending video");
             LogJournalViewModel.logString += "End sending video\n";
             Log.Debug("MainViewModel.OpenFolderAsync: Done");
@@ -318,7 +317,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += "Start sending video\n";
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Start\n";
-        //_videoEventJournalViewModel.EventResults = new AvaloniaList<VideoEventResult>();
         try
         {
             AreButtonsEnabled = false;
@@ -337,7 +335,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             AreButtonsEnabled = true;
             IsLoading = false;
             ProgressPercentage = 0;
-            //await _videoEventJournalViewModel.FillComboBox();
             Log.Information("End sending video");
             LogJournalViewModel.logString += "End sending video\n";
             Log.Debug("MainViewModel.OpenVideoAsync: Done");
@@ -528,50 +525,11 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
                 if (det.ClassName == "Lying")
                 {
-                    using var ms = new MemoryStream();
-                    frameBitmapModel.frame.Save(ms);
-                    ms.Seek(0, SeekOrigin.Begin);
-                    using var skBitmap = SKBitmap.Decode(ms.ToArray());
-
-                    using var surface = SKSurface.Create(new SKImageInfo(skBitmap.Width, skBitmap.Height));
-                    var canvas = surface.Canvas;
-
-                    canvas.DrawBitmap(skBitmap, 0, 0);
-
-                    using var paint = new SKPaint
-                    {
-                        Color = SKColors.Red,
-                        StrokeWidth = 3,
-                        IsStroke = true,
-                        Style = SKPaintStyle.Stroke
-                    };
-
-                    float topLeftCornerX = det.X - det.Width / 2;
-                    float topLeftCornerY = det.Y - det.Height / 2;
-                    canvas.DrawRect(topLeftCornerX, topLeftCornerY, det.Width, det.Height, paint);
-
-                    using var textPaint = new SKPaint
-                    {
-                        Color = SKColors.Black,
-                        TextSize = 16,
-                        IsAntialias = true
-                    };
-                    canvas.DrawText("Lying", topLeftCornerX, topLeftCornerY - 5, textPaint);
-
-                    using var image = surface.Snapshot();
-                    using var data = image.Encode(SKEncodedImageFormat.Jpeg, 90);
-                    using var resultMs = new MemoryStream();
-                    data.SaveTo(resultMs);
-                    var frameBytes = resultMs.ToArray();
-
-                    var detectionInfo = $"Человек упал {frameBitmapModel.timeSpan}! Координаты: X={topLeftCornerX}, Y={topLeftCornerY}, " +
-                                       $"Ширина={det.Width}, Высота={det.Height}";
-
                     _ = Task.Run(async () =>
                     {
                         try
                         {
-                            await _telegramBotApi.SendEventData(frameBytes, detectionInfo);
+                            await _telegramBotApi.SendEventDataWrapperAsync(frameBitmapModel, det);
                         }
                         catch (Exception ex)
                         {

@@ -30,7 +30,7 @@ public class RecognitionResult
     public required List<float> RightShoulder { get; set; }
     public required List<float> LeftElbow { get; set; }
     public required List<float> RightElbow { get; set; }
-    public required List<float>  LeftWrist { get; set; }
+    public required List<float> LeftWrist { get; set; }
     public required List<float> RightWrist { get; set; }
     public required List<float> LeftHip { get; set; }
     public required List<float> RightHip { get; set; }
@@ -38,5 +38,4 @@ public class RecognitionResult
     public required List<float> RightKnee { get; set; }
     public required List<float> LeftAnkle { get; set; }
     public required List<float> RightAnkle { get; set; }
-
 }
