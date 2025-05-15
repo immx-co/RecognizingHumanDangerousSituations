@@ -423,6 +423,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Start\n";
 
+        _videoPlayerViewModel.IsVideoLoading = true;
         using var scope = _serviceProvider.CreateScope();
         var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
 
@@ -499,6 +500,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _videoPlayerViewModel.SelectedVideoItem = _videoPlayerViewModel.VideoItems.First();
 
         await _videoEventJournalViewModel.FillComboBox();
+        _videoPlayerViewModel.IsVideoLoading = false;
 
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Done");
         LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Done\n";

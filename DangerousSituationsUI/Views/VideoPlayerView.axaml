@@ -22,14 +22,14 @@
 		</Grid.ColumnDefinitions>
 
 		<StackPanel Grid.Column="1"
-						VerticalAlignment="Center"
-						HorizontalAlignment="Center">
+								VerticalAlignment="Center"
+								HorizontalAlignment="Center">
 
       <ComboBox Width="600"
-						HorizontalAlignment="Stretch"
-						Margin="0, 13, 0, 13"
-						ItemsSource="{Binding VideoItems}"
-						SelectedItem="{Binding SelectedVideoItem}">
+								HorizontalAlignment="Stretch"
+								Margin="0, 13, 0, 13"
+								ItemsSource="{Binding VideoItems}"
+								SelectedItem="{Binding SelectedVideoItem}">
 						<ComboBox.ItemTemplate>
 							<DataTemplate>
 									<TextBlock Text="{Binding Name}" />
@@ -38,17 +38,18 @@
       </ComboBox>
       
 			<StackPanel HorizontalAlignment="Center"
-							  Orientation="Horizontal"
-							  Margin="0 0 0 10">
+									Orientation="Horizontal"
+									Margin="0 0 0 10">
 				<TextBlock Text="{Binding CurrentFileName}"
 								   Margin="0 0 10 0"/>
 			</StackPanel>
       
 			<StackPanel HorizontalAlignment="Center"
-						Orientation="Vertical">
+									Orientation="Vertical">
 
 				<Grid Width="800" Height="400">
-					<Border Background="Gainsboro">
+					<Border Background="Gainsboro"
+                  IsVisible="{Binding !IsVideoLoading}">
 						<vlc:VideoView MediaPlayer="{Binding MediaPlayer}">
 							<ItemsControl ItemsSource="{Binding Rectangles}">
 								<ItemsControl.ItemsPanel>
@@ -74,6 +75,22 @@
 							</ItemsControl>
 						</vlc:VideoView>
 					</Border>
+
+          <Border Background="#80000000"
+                  IsVisible="{Binding IsVideoLoading}">
+            <StackPanel Orientation="Horizontal"
+												HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="10">
+              <ProgressBar IsIndeterminate="True"
+													 Width="100"
+													 Height="10"
+													 Foreground="White"/>
+              <TextBlock Text="Идет загрузка видео..."
+                         Foreground="White"
+                         FontSize="16"/>
+            </StackPanel>
+          </Border>
 				</Grid>
 
 				<StackPanel Orientation="Horizontal">

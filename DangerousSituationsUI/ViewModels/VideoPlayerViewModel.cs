@@ -49,6 +49,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
     private string _videoTime;
 
+    private bool _isVideoLoading;
+
     private ObservableCollection<VideoItem> _videoItems = new();
 
     private VideoItem _selectedVideoItem;
@@ -89,6 +91,12 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     {
         get => _videoItems;
         set => this.RaiseAndSetIfChanged(ref _videoItems, value);
+    }
+
+    public bool IsVideoLoading
+    {
+        get => _isVideoLoading;
+        set => this.RaiseAndSetIfChanged(ref _isVideoLoading, value);
     }
 
     public VideoItem SelectedVideoItem
