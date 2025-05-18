@@ -1,6 +1,7 @@
 ﻿using ClassLibrary;
 using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
+using ClassLibrary.Repository;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
 using ReactiveUI;
@@ -8,6 +9,7 @@ using System;
 using System.Linq;
 using System.Reactive;
 using System.Threading;
+using Telegram.Bot.Types;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -18,6 +20,10 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
     PasswordHasher _hasher;
 
     UserManagementViewModel _userManagmentViewModel;
+
+    TelegramBotAPI _telegramBotApi;
+
+    private IRepository _repository;
 
     #region View Model Settings
     public IScreen HostScreen { get; }
@@ -63,13 +69,17 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
         IServiceProvider serviceProvider, 
         PasswordHasher hasher, 
         UserManagementViewModel userManagmentViewModel,
-        NavigationViewModel navigationViewModel)
+        NavigationViewModel navigationViewModel,
+        TelegramBotAPI telegramBotApi,
+        IRepository repository)
     {
         HostScreen = screen;
 
         _serviceProvider = serviceProvider;
         _hasher = hasher;
         _userManagmentViewModel = userManagmentViewModel;
+        _telegramBotApi = telegramBotApi;
+        _repository = repository;
 
         LoginCommand = ReactiveCommand.Create(Login);
         BackCommand = ReactiveCommand.Create(() =>
@@ -86,7 +96,7 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
     {
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
-        User? dbUser = db.Users.SingleOrDefault(user => user.Name == Nickname);
+        ClassLibrary.Database.Models.User? dbUser = db.Users.SingleOrDefault(user => user.Name == Nickname);
         if (dbUser is null)
         {
             ShowMessageBox("Invalid Username", $"Имени пользователя {Nickname} не существует");
@@ -101,6 +111,18 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
             Password = string.Empty;
             ShowMessageBox("Invalid Password", "Неверный пароль! Попробуйте еще раз.");
             return;
+        }
+
+        if (_telegramBotApi.ChatId != null && dbUser.TgChatId == null)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
+            repository.UpdateChatIdOnUser(_telegramBotApi.ChatId, dbUser);
+        }
+
+        if (_telegramBotApi.ChatId == null && dbUser.TgChatId != null)
+        {
+            _telegramBotApi.UpdateChatId(dbUser.TgChatId);
         }
 
         ActiveUsername = Nickname;

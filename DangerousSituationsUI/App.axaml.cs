@@ -105,6 +105,7 @@ namespace DangerousSituationsUI
                 servicesCollection.AddSingleton<PasswordHasher>();
 
                 servicesCollection.AddScoped<IRepository, Repository>();
+                //servicesCollection.AddSingleton
 
                 string telegramBotToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
 
@@ -114,10 +115,11 @@ namespace DangerousSituationsUI
                 {
                     chatId = tempChatId;
                 }
-                servicesCollection.AddSingleton<TelegramBotAPI>(provider => 
+                servicesCollection.AddSingleton<TelegramBotAPI>(provider =>
                     new TelegramBotAPI(
                         telegramBotToken,
                         chatId,
+                        provider.GetRequiredService<IServiceProvider>(),
                         provider.GetRequiredService<LogJournalViewModel>(),
                         provider.GetRequiredService<NavigationViewModel>()
                     )
@@ -125,7 +127,13 @@ namespace DangerousSituationsUI
 
                 ServiceProvider servicesProvider = servicesCollection.BuildServiceProvider();
 
-                servicesProvider.GetRequiredService<HubConnectionWrapper>().Start();
+                using (var scope = servicesProvider.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
+
+                }
+
+                    servicesProvider.GetRequiredService<HubConnectionWrapper>().Start();
                 Log.Logger.Information("Оформлено подключение к хабу.");
                 LogJournalViewModel.logString += "Оформлено подключение к хабу.\n";
                 desktop.MainWindow = new NavigationWindow

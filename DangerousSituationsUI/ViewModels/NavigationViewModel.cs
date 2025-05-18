@@ -164,6 +164,17 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     #endregion
 
     #region Public Methods
+    public string GetParsedUserName()
+    {
+        if (string.IsNullOrEmpty(CurrentUser))
+            return string.Empty;
+
+        string[] parts = CurrentUser.Split(':');
+        return parts.Length > 1
+            ? parts[1].Trim()
+            : string.Empty;
+    }
+
     public void Dispose()
     {
         _disposables?.Dispose();

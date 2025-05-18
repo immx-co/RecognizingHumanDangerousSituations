@@ -11,4 +11,6 @@ public class User
     public string? Email { get; set; }
 
     public bool IsAdmin { get; set; } = false;
+
+    public long? TgChatId { get; set; } = null;
 }

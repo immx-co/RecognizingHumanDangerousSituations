@@ -16,6 +16,9 @@ using Avalonia.Threading;
 using OpenCvSharp.Dnn;
 using SkiaSharp;
 using ClassLibrary.Database.Models;
+using ClassLibrary.Database;
+using Microsoft.Extensions.DependencyInjection;
+using ClassLibrary.Repository;
 
 
 namespace DangerousSituationsUI;
@@ -36,15 +39,20 @@ public class TelegramBotAPI : IDisposable
     private NavigationViewModel _navigationViewModel;
 
     private LogJournalViewModel _logJournalViewModel;
+
+    private IServiceProvider _serviceProvider;
     #endregion
 
     #region Properties
     public bool IsRunning => _isRunning;
+
+    public long? ChatId => _chatId;
     #endregion
 
     #region Constructor
-    public TelegramBotAPI(string token, long? chatId, LogJournalViewModel logJournalViewModel, NavigationViewModel navigationViewModel)
+    public TelegramBotAPI(string token, long? chatId, IServiceProvider serviceProvider, LogJournalViewModel logJournalViewModel, NavigationViewModel navigationViewModel)
     {
+        _serviceProvider = serviceProvider;
         _navigationViewModel = navigationViewModel;
         _logJournalViewModel = logJournalViewModel;
         _chatId = chatId;
@@ -58,36 +66,7 @@ public class TelegramBotAPI : IDisposable
 
         Initialize(token);
 
-        if (_chatId.HasValue)
-        {
-            try
-            {
-                _ = Task.Run(async () =>
-                {
-                    await Task.Delay(1000);
-
-                    var chat = await _botClient.GetChat(_chatId.Value);
-                    string userName = chat.Username ?? chat.FirstName ?? "Пользователь";
-
-                    string welcomeImagePath = Path.Combine(AppContext.BaseDirectory, "..//..//..//Assets/welcome.jpg");
-                    await SendWelcomeMessage($"Добро пожаловать в Recognition Dangerous Situations, {userName}!", welcomeImagePath);
-                    await Dispatcher.UIThread.InvokeAsync(() =>
-                    {
-                        _navigationViewModel.TgBotConnectionStatus = Brushes.Green;
-                    });
-                });
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Ошибка при отправке приветственного сообщения.");
-                _logJournalViewModel.LogString += $"Ошибка при отправке приветственного сообщения.: {ex.Message}";
-                _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
-            }
-        }
-        else
-        {
-            _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
-        }
+        UpdateChatId(chatId);
     }
     #endregion
 
@@ -168,110 +147,67 @@ public class TelegramBotAPI : IDisposable
         }
     }
 
+    public async Task SendFarewellMessage(string farewellText, string imagePath)
+    {
+        try
+        {
+            await using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
+            await _botClient.SendPhoto(
+                chatId: _chatId,
+                photo: InputFile.FromStream(fileStream, "farewell.jpg"),
+                caption: farewellText);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Ошибка при отправке прощания: {ex.Message}");
+            _logJournalViewModel.LogString += $"Ошибка при отправке прощания: {ex.Message}\n";
+        }
+    }
+
+    public void UpdateChatId(long? chatId)
+    {
+        _chatId = chatId;
+
+        if (_chatId.HasValue)
+        {
+            try
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(1000);
+
+                    var chat = await _botClient.GetChat(_chatId.Value);
+                    string userName = chat.Username ?? chat.FirstName ?? "Пользователь";
+
+                    string welcomeImagePath = Path.Combine(AppContext.BaseDirectory, "..//..//..//Assets/welcome.jpg");
+                    await SendWelcomeMessage($"Добро пожаловать в Recognition Dangerous Situations, {userName}!", welcomeImagePath);
+                    _logJournalViewModel.LogString += $"Обновлен ChatId у телеграм бота, chatId == {ChatId}";
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        _navigationViewModel.TgBotConnectionStatus = Brushes.Green;
+                    });
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Ошибка при отправке приветственного сообщения.");
+                _logJournalViewModel.LogString += $"Ошибка при отправке приветственного сообщения.: {ex.Message}";
+                _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
+            }
+        }
+        else
+        {
+            _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
+        }
+    }
+
     public void Dispose()
     {
         StopBot();
         _cts?.Dispose();
         _botClient = null;
     }
-    #endregion
 
-    #region Private Methods
-    private void Initialize(string token)
-    {
-        _botClient = new TelegramBotClient(token);
-        _receiverOptions = new ReceiverOptions
-        {
-            AllowedUpdates = new[]
-           {
-                UpdateType.Message,
-            },
-            DropPendingUpdates = true,
-        };
-        _cts = new CancellationTokenSource();
-        _isRunning = false;
-    }
-
-    private async Task UpdateHandler(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
-    {
-        try
-        {
-            switch (update.Type)
-            {
-                case UpdateType.Message:
-                    {
-                        if (update.Message.Text == "/start")
-                        {
-                            _chatId = update.Message.Chat.Id;
-                            string welcomeImagePath = Path.Combine(AppContext.BaseDirectory, "..//..//..//Assets/welcome.jpg");
-                            await SendWelcomeMessage($"Добро пожаловать в Recognition Dangerous Situations, {update.Message.From}!", welcomeImagePath);
-                            _navigationViewModel.TgBotConnectionStatus = Brushes.Green;
-                            return;
-                        }
-                        else
-                        {
-                            var message = update.Message;
-                            _chatId = message.Chat.Id;
-                            var user = message.From;
-                            Debug.Write($"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}");
-                            Log.Information($"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}");
-                            _logJournalViewModel.LogString += $"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}\n";
-
-                            var chat = message.Chat;
-                            await botClient.SendMessage(
-                                chat.Id,
-                                message.Text,
-                                replyParameters: message.MessageId
-                                );
-
-                            return;
-                        }
-                    }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex.ToString());
-            _logJournalViewModel.LogString += $"{ex.ToString()}\n";
-            _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
-        }
-    }
-
-    private Task ErrorHandler(ITelegramBotClient botClient, Exception error, CancellationToken cancellationToken)
-    {
-        var ErrorMessage = error switch
-        {
-            ApiRequestException apiRequestException
-                => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-            _ => error.ToString()
-        };
-
-        Debug.Write(ErrorMessage);
-        Log.Error(ErrorMessage);
-        _logJournalViewModel.LogString += $"{ErrorMessage}\n";
-        return Task.CompletedTask;
-    }
-
-    private async Task SendEventDataAsync(byte[] imageBytes, string detectionInfo)
-    {
-        try
-        {
-            using var memoryStream = new MemoryStream(imageBytes);
-            await _botClient.SendPhoto(
-                chatId: _chatId,
-                photo: InputFile.FromStream(memoryStream, "image.jpg"),
-                caption: detectionInfo
-            );
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"Ошибка при отправке изображения с детекцией боту: {ex.Message}");
-            _logJournalViewModel.LogString += $"Ошибка при отправке изображения с детекцией боту: {ex.Message}\n";
-        }
-    }
-    #endregion
-
-    #region Public Methods
     public async Task SendEventDataWrapperAsync(BitmapModel frameBitmapModel, RecognitionResult det)
     {
         using var ms = new MemoryStream();
@@ -359,6 +295,122 @@ public class TelegramBotAPI : IDisposable
         var detectionInfo = $"Человек упал {frameBitmapModel.timeSpan}! Координаты: X={topLeftCornerX}, Y={topLeftCornerY}, " +
                            $"Ширина={det.Width}, Высота={det.Height}";
         await SendEventDataAsync(frameBytes, detectionInfo);
+    }
+    #endregion
+
+    #region Private Methods
+    private void Initialize(string token)
+    {
+        _botClient = new TelegramBotClient(token);
+        _receiverOptions = new ReceiverOptions
+        {
+            AllowedUpdates = new[]
+           {
+                UpdateType.Message,
+            },
+            DropPendingUpdates = true,
+        };
+        _cts = new CancellationTokenSource();
+        _isRunning = false;
+    }
+
+    private async Task UpdateHandler(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    {
+        try
+        {
+            switch (update.Type)
+            {
+                case UpdateType.Message:
+                    {
+                        string? userMessage = update.Message.Text;
+                        using var scope = _serviceProvider.CreateScope();
+                        var repository = scope.ServiceProvider.GetRequiredService<IRepository>();
+                        if (userMessage == "/start")
+                        {
+                            _chatId = update.Message.Chat.Id;
+                            ClassLibrary.Database.Models.User? dbUser = repository.GetUserByNickname(_navigationViewModel.GetParsedUserName());
+                            if (dbUser != null)
+                            {
+                                repository.UpdateChatIdOnUser(_chatId, dbUser);
+                            }
+                            string welcomeImagePath = Path.Combine(AppContext.BaseDirectory, "..//..//..//Assets/welcome.jpg");
+                            await SendWelcomeMessage($"Добро пожаловать в Recognition Dangerous Situations, {update.Message.From}!", welcomeImagePath);
+                            _navigationViewModel.TgBotConnectionStatus = Brushes.Green;
+                            return;
+                        }
+                        else if (userMessage == "/stop")
+                        {
+                            ClassLibrary.Database.Models.User? dbUser = repository.GetUserByNickname(_navigationViewModel.GetParsedUserName());
+                            if (dbUser != null)
+                            {
+                                repository.UpdateChatIdOnUser(null, dbUser);
+                            }
+                            string farewellImagePath = Path.Combine(AppContext.BaseDirectory, "..//..//..//Assets/farewell.jpg");
+                            await SendFarewellMessage($"Досвидания, {update.Message.From}!", farewellImagePath);
+                            _chatId = null;
+                            _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
+                            return;
+                        }
+                        else
+                        {
+                            var message = update.Message;
+                            _chatId = message.Chat.Id;
+                            var user = message.From;
+                            Debug.Write($"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}");
+                            Log.Information($"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}");
+                            _logJournalViewModel.LogString += $"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}\n";
+
+                            var chat = message.Chat;
+                            await botClient.SendMessage(
+                                chat.Id,
+                                message.Text,
+                                replyParameters: message.MessageId
+                                );
+
+                            return;
+                        }
+                    }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex.ToString());
+            _logJournalViewModel.LogString += $"{ex.ToString()}\n";
+            _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
+        }
+    }
+
+    private Task ErrorHandler(ITelegramBotClient botClient, Exception error, CancellationToken cancellationToken)
+    {
+        var ErrorMessage = error switch
+        {
+            ApiRequestException apiRequestException
+                => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+            _ => error.ToString()
+        };
+
+        Debug.Write(ErrorMessage);
+        Log.Error(ErrorMessage);
+        _logJournalViewModel.LogString += $"{ErrorMessage}\n";
+        return Task.CompletedTask;
+    }
+
+    private async Task SendEventDataAsync(byte[] imageBytes, string detectionInfo)
+    {
+        try
+        {
+            using var memoryStream = new MemoryStream(imageBytes);
+            await _botClient.SendPhoto(
+                chatId: _chatId,
+                photo: InputFile.FromStream(memoryStream, "image.jpg"),
+                caption: detectionInfo
+            );
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Ошибка при отправке изображения с детекцией боту: {ex.Message}");
+            _logJournalViewModel.LogString += $"Ошибка при отправке изображения с детекцией боту: {ex.Message}\n";
+        }
     }
     #endregion
 }

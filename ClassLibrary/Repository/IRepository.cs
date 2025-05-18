@@ -11,4 +11,8 @@ public interface IRepository
     Task AddDetectionsAsync(IEnumerable<Detection> detections);
 
     Task SaveChangesAsync();
+
+    User? GetUserByNickname(string nickname);
+
+    void UpdateChatIdOnUser(long? chatId, User user);
 }

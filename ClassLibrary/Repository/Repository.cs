@@ -32,4 +32,16 @@ public class Repository : IRepository
     {
         await _dbContext.SaveChangesAsync();
     }
+
+    public User? GetUserByNickname(string nickname)
+    {
+        User? dbUser = _dbContext.Users.SingleOrDefault(user => user.Name == nickname);
+        return dbUser;
+    }
+
+    public async void UpdateChatIdOnUser(long? chatId, User user)
+    {
+        user.TgChatId = chatId;
+        await _dbContext.SaveChangesAsync();
+    }
 }
