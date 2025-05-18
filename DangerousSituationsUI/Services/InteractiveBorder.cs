@@ -107,7 +107,6 @@ namespace DangerousSituationsUI.Services
                 {
                     OffsetX = TopLeft.X + _transform.X,
                     OffsetY = TopLeft.Y + _transform.Y,
-                    ImageOffset = _image_offset
                 });
             }
 
@@ -123,21 +122,78 @@ namespace DangerousSituationsUI.Services
 
             if (_isResizing)
             {
-                var currentPointerPosition = e.GetPosition(this);
+                var parent = Parent as Canvas;
+                var pointerOnCanvas = e.GetPosition(parent);
+                var handle = e.Source as Rectangle;
 
-                var deltaX = currentPointerPosition.X - _positionInBlock.X;
-                var deltaY = currentPointerPosition.Y - _positionInBlock.Y;
+                double minWidth = 20;
+                double minHeight = 20;
 
-                double newWidth = Math.Max(20, _initialSize.X + deltaX);
-                double newHeight = Math.Max(20, _initialSize.Y + deltaY);
+                double left = Canvas.GetLeft(this);
+                double top = Canvas.GetTop(this);
+                double right = left + Width;
+                double bottom = top + Height;
 
-                Width = newWidth;
-                Height = newHeight;
+                double newLeft = left, newTop = top, newRight = right, newBottom = bottom;
+
+                if (handle?.Name == "BottomRight")
+                {
+                    newRight = Math.Min(pointerOnCanvas.X, ImageOffset + ImageWidth);
+                    newBottom = Math.Min(pointerOnCanvas.Y, ImageHeight);
+                }
+                else if (handle?.Name == "BottomLeft")
+                {
+                    newLeft = Math.Max(pointerOnCanvas.X, ImageOffset);
+                    newBottom = Math.Min(pointerOnCanvas.Y, ImageHeight);
+                }
+                else if (handle?.Name == "TopRight")
+                {
+                    newRight = Math.Min(pointerOnCanvas.X, ImageOffset + ImageWidth);
+                    newTop = Math.Max(pointerOnCanvas.Y, 0);
+                }
+                else if (handle?.Name == "TopLeft")
+                {
+                    newLeft = Math.Max(pointerOnCanvas.X, ImageOffset);
+                    newTop = Math.Max(pointerOnCanvas.Y, 0);
+                }
+
+                double width = Math.Max(minWidth, newRight - newLeft);
+                double height = Math.Max(minHeight, newBottom - newTop);
+
+                if (width == minWidth)
+                {
+                    if (handle?.Name == "TopLeft" || handle?.Name == "BottomLeft")
+                        newLeft = newRight - minWidth;
+                    else
+                        newRight = newLeft + minWidth;
+                }
+                if (height == minHeight)
+                {
+                    if (handle?.Name == "TopLeft" || handle?.Name == "TopRight")
+                        newTop = newBottom - minHeight;
+                    else
+                        newBottom = newTop + minHeight;
+                }
+
+                newLeft = Math.Max(newLeft, ImageOffset);
+                newTop = Math.Max(newTop, 0);
+                newRight = Math.Min(newRight, ImageOffset + ImageWidth);
+                newBottom = Math.Min(newBottom, ImageHeight);
+
+                Canvas.SetLeft(this, newLeft);
+                Canvas.SetTop(this, newTop);
+                Width = Math.Abs(newRight - newLeft);
+                Height = Math.Abs(newBottom - newTop);
 
                 BorderResized?.Invoke(this, new BorderResizedEventArgs
                 {
-                    NewWidth = newWidth,
-                    NewHeight = newHeight
+                    NewWidth = width,
+                    NewHeight = height
+                });
+                BorderMoved?.Invoke(this, new BorderMovedEventArgs
+                {
+                    OffsetX = newLeft,
+                    OffsetY = newTop
                 });
             }
             if (_isDragging)
@@ -180,7 +236,6 @@ namespace DangerousSituationsUI.Services
     {
         public double OffsetX { get; set; }
         public double OffsetY { get; set; }
-        public double ImageOffset { get; set; }
     }
     public class BorderResizedEventArgs : EventArgs
     {

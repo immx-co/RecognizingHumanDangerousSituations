@@ -57,7 +57,7 @@ public partial class VideoEventJournalView : ReactiveUserControl<VideoEventJourn
 
                 border.ImageHeight = viewModel.ImageHeight;
                 border.ImageWidth = viewModel.ImageWidth;
-                border.ImageOffset = (viewModel.ImageHeight - viewModel.ImageWidth) / 2;
+                border.ImageOffset = (800 - viewModel.ImageWidth) / 2;
             }
         }
     }
