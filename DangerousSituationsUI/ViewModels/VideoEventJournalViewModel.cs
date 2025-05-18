@@ -5,7 +5,6 @@ using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using OpenCvSharp.ML;
 using ReactiveUI;
 using Serilog;
 using System;
@@ -41,15 +40,20 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
     private AvaloniaList<LegendItem> _legendItems;
 
-    private int _box_x;
-
-    private int _box_y;
+    private int _box_tl_x;
+    
+    private int _box_tl_y;
 
     private int _box_width;
-
+    
     private int _box_height;
 
+    private int _image_width;
+
+    private int _image_height;
+
     private bool _boxPositionChanged;
+
     #endregion
 
     #region View Model Settings
@@ -61,6 +65,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
     #region Commands
     public ReactiveCommand<Unit, Unit> SaveBoxPositionCommand { get; }
+    public ReactiveCommand<Unit, Unit> AddNewDetectionCommand { get; }
     #endregion
 
     #region Properties
@@ -78,8 +83,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             _selectedEventResult = value;
             if (_selectedEventResult != null) { 
                 Render();
-                BoxX = _selectedEventResult.X;
-                BoxY = _selectedEventResult.Y;
+                BoxTopLeftX = _selectedEventResult.X;
+                BoxTopLeftY = _selectedEventResult.Y;
                 BoxWidth = _selectedEventResult.Width;
                 BoxHeight = _selectedEventResult.Height;
                 BoxPositionChanged = false;
@@ -131,17 +136,16 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             }
         }
     }
-
-    public int BoxX
+    public int BoxTopLeftX
     {
-        get => _box_x;
-        set => this.RaiseAndSetIfChanged(ref _box_x, value);
+        get => _box_tl_x;
+        set => this.RaiseAndSetIfChanged(ref _box_tl_x, value);
     }
 
-    public int BoxY
+    public int BoxTopLeftY
     {
-        get => _box_y;
-        set => this.RaiseAndSetIfChanged(ref _box_y, value);
+        get => _box_tl_y;
+        set => this.RaiseAndSetIfChanged(ref _box_tl_y, value);
     }
 
     public int BoxWidth
@@ -155,11 +159,25 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         get => _box_height;
         set => this.RaiseAndSetIfChanged(ref _box_height, value);
     }
+
+    public int ImageWidth
+    {
+        get => _image_width;
+        set => this.RaiseAndSetIfChanged(ref _image_width, value);
+    }
+
+    public int ImageHeight
+    {
+        get => _image_height;
+        set => this.RaiseAndSetIfChanged(ref _image_height, value);
+    }
+
     public bool BoxPositionChanged
     {
         get => _boxPositionChanged;
         set => this.RaiseAndSetIfChanged(ref _boxPositionChanged, value);
     }
+
 
     public bool IsVideoProcessing = false;
     #endregion
@@ -179,6 +197,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         };
 
         BoxPositionChanged = false;
+
         SaveBoxPositionCommand = ReactiveCommand.CreateFromTask(SaveBoxPosition);
     }
     #endregion
@@ -317,20 +336,20 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         if (dbDetection == null)
             return;
 
-        dbDetection.X = BoxX;
-        dbDetection.Y = BoxY;
+        dbDetection.X = BoxTopLeftX;
+        dbDetection.Y = BoxTopLeftY;
         dbDetection.Width = BoxWidth;
         dbDetection.Height = BoxHeight;
 
         await db.SaveChangesAsync();
 
-        Log.Debug($"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} (X:{oldX}->{BoxX}, " +
-            $"Y:{oldY}->{BoxY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})");
+        Log.Debug($"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} (X:{oldX}->{BoxTopLeftX}, " +
+            $"Y:{oldY}->{BoxTopLeftY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})");
         LogJournalViewModel.logString += $"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} " +
-            $"(X:{oldX}->{BoxX}, Y:{oldY}->{BoxY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})\n";
+            $"(X:{oldX}->{BoxTopLeftX}, Y:{oldY}->{BoxTopLeftY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})\n";
 
-        SelectedEventResult.X = BoxX;
-        SelectedEventResult.Y = BoxY;
+        SelectedEventResult.X = BoxTopLeftX;
+        SelectedEventResult.Y = BoxTopLeftY;
         SelectedEventResult.Width = BoxWidth;
         SelectedEventResult.Height = BoxHeight;
 
@@ -341,8 +360,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             {
                 Name = SelectedEventResult.Name,
                 Class = SelectedEventResult.Class,
-                X = BoxX,
-                Y = BoxY,
+                X = BoxTopLeftX,
+                Y = BoxTopLeftY,
                 Width = BoxWidth,
                 Height = BoxHeight
             };
