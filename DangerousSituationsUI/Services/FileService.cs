@@ -3,6 +3,9 @@ using Avalonia.Platform.Storage;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.IO;
+using System.Linq;
+
 
 namespace DangerousSituationsUI.Services;
 
@@ -14,32 +17,33 @@ public class FilesService
 
     public async Task<List<IStorageFile>?> OpenVideoFolderAsync()
     {
-        var folder = await OpenFolederAsync();
-        if (folder != null)
+        var folder = await OpenFolderAsync();
+        if (folder == null)
+            return null;
+
+        var storageFiles = new List<IStorageFile>();
+        var supportedExtensions = new[] { ".mp4", ".avi" };
+
+        await foreach (var item in folder.GetItemsAsync())
         {
-            var files = folder?.GetItemsAsync().ToBlockingEnumerable();
-            List<IStorageFile> storageFiles = new();
+            if (item is not IStorageFile file)
+                continue;
 
-            foreach (var file in files)
+            var ext = Path.GetExtension(file.Name);
+            if (!supportedExtensions.Contains(ext))
+                continue;
+
+            var storageFile = await Target.StorageProvider.TryGetFileFromPathAsync(file.Path);
+            if (storageFile != null)
             {
-                string fileExt = file.Name.Split('.')[1];
-                if (fileExt != "mp4" && fileExt != "avi")
-                {
-                    throw new Exception();
-                }
-
-                if (file.Path.IsFile)
-                {
-                    var storageFile = await Target.StorageProvider.TryGetFileFromPathAsync(file.Path);
-                    storageFiles.Add(storageFile);
-                }
+                storageFiles.Add(storageFile);
             }
-            return storageFiles;
         }
-        else return null;
+
+        return storageFiles;
     }
 
-    private async Task<IStorageFolder?> OpenFolederAsync()
+    private async Task<IStorageFolder?> OpenFolderAsync()
     {
         var folders = await Target.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions()
         {

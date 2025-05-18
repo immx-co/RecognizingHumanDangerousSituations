@@ -2,7 +2,6 @@
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
 using ClassLibrary.Datacontracts;
 using ClassLibrary.Repository;
@@ -25,11 +24,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using static DangerousSituationsUI.ViewModels.VideoPlayerViewModel;
 using System.Collections.ObjectModel;
-using LibVLCSharp.Shared;
 using SkiaSharp;
 using System.Diagnostics;
-using static DangerousSituationsUI.ViewModels.VideoEventJournalViewModel;
-using static DangerousSituationsUI.ViewModels.MainViewModel;
+using FFMpegCore.Enums;
 
 
 namespace DangerousSituationsUI.ViewModels;
@@ -60,6 +57,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private RectItemService _rectItemService;
 
     private FigItemService _figItemService;
+
+    private ExportService _exportService;
 
     private readonly ConfigurationService _configurationService;
 
@@ -231,7 +230,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         FigItemService figItemService,
         VideoEventJournalViewModel videoEventJournalViewModel,
         VideoPlayerViewModel videoPlayerViewModel,
-        TelegramBotAPI telegramBotApi)
+        TelegramBotAPI telegramBotApi,
+        ExportService exportService)
     {
         HostScreen = screen;
         _filesService = filesService;
@@ -243,6 +243,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _configurationService = configurationService;
         _videoPlayerViewModel = videoPlayerViewModel;
         _telegramBotApi = telegramBotApi;
+        _exportService = exportService;
 
         _telegramBotApi.StartBotAsync();
 
@@ -261,6 +262,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         ImageBackCommand = ReactiveCommand.Create(PreviousFrame);
         ImageForwardCommand = ReactiveCommand.Create(NextFrame);
+        _exportService = exportService;
     }
     #endregion
 
@@ -271,47 +273,64 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         LogJournalViewModel.logString += "Start sending folder\n";
         Log.Debug("MainViewModel.OpenFolderAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Start\n";
+
         try
         {
             AreButtonsEnabled = false;
             var files = await _filesService.OpenVideoFolderAsync();
-            if (files != null)
-            {
-                FrameItems = new();
-                _videoPlayerViewModel.VideoItems = new ObservableCollection<VideoItem>();
 
-                foreach (var file in files)
-                {
-                    Log.Information("Start sending video");
-                    LogJournalViewModel.logString += "Start sending video\n";
-                    CurrentFileName = file.Name;
-                    await InitFramesAsync(file);
-                    ProgressPercentage = 0;
-                    Log.Information("End sending video");
-                    LogJournalViewModel.logString += "End sending video\n";
-                }
-                CanSwitchImages = true;
+            if (files == null || !files.Any())
+            {
+                ShowMessageBox("Error", "В папке нет видеофайлов с допустимыми расширениями.");
+                return;
             }
+
+            FrameItems = new();
+            _videoPlayerViewModel.VideoItems = new ObservableCollection<VideoItem>();
+
+            foreach (var file in files)
+            {
+                try
+                {
+                    Log.Information($"Start sending video: {file.Name}");
+                    LogJournalViewModel.logString += $"Start sending video: {file.Name}\n";
+                    CurrentFileName = file.Name;
+
+                    await InitFramesAsync(file);
+
+                    ProgressPercentage = 0;
+
+                    Log.Information($"End sending video: {file.Name}");
+                    LogJournalViewModel.logString += $"End sending video: {file.Name}\n";
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error processing video file {file.Name}: {ex.Message}");
+                    LogJournalViewModel.logString += $"Error processing video file {file.Name}: {ex.Message}\n";
+                }
+            }
+
+            CanSwitchImages = true;
         }
-        catch
+        catch (Exception ex)
         {
-            ShowMessageBox("Error", "В выбранной директории отсутcтвуют изображения или пристуствуют файлы с недопустимым расширением.");
-            Log.Warning("MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.");
-            LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Error; Message: В выбранной директории отсутcnвуют изображения или пристуствуют файлы с недопустимым расширением.\n";
-            return;
+            ShowMessageBox("Error", "В выбранной директории отсутствуют изображения или присутствуют файлы с недопустимым расширением.");
+            Log.Warning($"MainViewModel.OpenFolderAsync: Error; Message: {ex.Message}");
+            LogJournalViewModel.logString += $"MainViewModel.OpenFolderAsync: Error; Message: {ex.Message}\n";
         }
         finally
         {
             AreButtonsEnabled = true;
             IsLoading = false;
             ProgressPercentage = 0;
-            //await _videoEventJournalViewModel.FillComboBox();
-            Log.Information("End sending video");
-            LogJournalViewModel.logString += "End sending video\n";
+            Log.Information("End sending folder");
+            LogJournalViewModel.logString += "End sending folder\n";
             Log.Debug("MainViewModel.OpenFolderAsync: Done");
             LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Done\n";
         }
     }
+
+
     private async Task OpenVideoAsync()
     {
         Log.Information("Start sending video");
@@ -363,50 +382,107 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private async Task InitFramesAsync(IStorageFile file)
     {
-        Stopwatch stopwatch = Stopwatch.StartNew();
-
         Log.Debug("MainViewModel.InitFramesAsync: Start");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: Start\n";
         IsLoading = true;
         var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
         var figLists = new AvaloniaList<AvaloniaList<FigItem>>();
-        var frameBitmapModels = await _videoService.GetFramesAsync(file);
+        List<FrameNDetections> frameNDetections = new List<FrameNDetections>();
+        List<BitmapModel> frameBitmapModels = null;
+
         var results = new AvaloniaList<RectItem>();
         var figResults = new AvaloniaList<FigItem>();
-        List<FrameNDetections> frameNDetections = new List<FrameNDetections>();
-        int totalFiles = frameBitmapModels.Count();
-        for (int idx = 0; idx < totalFiles; idx++)
+
+        string jsonPath = Path.ChangeExtension(file.Path.LocalPath, ".json");
+
+        if (File.Exists(jsonPath))
         {
-            (results, figResults) = await GetFrameDetectionResultsAsync(frameBitmapModels[idx], idx + 1);
-            itemsLists.Add(results);
-            figLists.Add(figResults);
-            ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
-            frameNDetections.Add(new FrameNDetections
+            Log.Debug("Loading from JSON file");
+            LogJournalViewModel.logString += "Loading from JSON file\n";
+            var json = await File.ReadAllTextAsync(jsonPath);
+            var jsonItems = JsonSerializer.Deserialize<List<JsonItem>>(json);
+            frameBitmapModels = await _exportService.GetFramesForDetectionsAsync(file.Name, jsonItems);
+
+            foreach (var item in jsonItems)
             {
-                Frame = frameBitmapModels[idx],
-                Detections = results,
-                Figs = figResults
+                var matchingFrame = frameBitmapModels.FirstOrDefault(b => b.timeSpan == item.FrameTime);
+                if (matchingFrame == null) continue;
+
+                itemsLists.Add(item.RectItems);
+                figLists.Add(item.FigItems);
+
+                frameNDetections.Add(new FrameNDetections
+                {
+                    Frame = matchingFrame,
+                    Detections = item.RectItems,
+                    Figs = item.FigItems
+                });
+            }
+
+            FrameItems?.Add(new FrameModel
+            {
+                Name = file.Name,
+                frames = frameBitmapModels,
+                rectitems = itemsLists,
+                figitems = figLists,
+                id = count++
             });
+
+            var videoId = await _exportService.GetVideoIdByNameAsync(file.Name);
+
+            _videoPlayerViewModel.VideoItems.Add(new VideoItem
+            {
+                Guid = videoId.Value,
+                Name = file.Name,
+                Path = file.Path.LocalPath
+            });
+
+
         }
 
-        FrameItems?.Add(new FrameModel
+        else
         {
-            Name = file.Name,
-            frames = frameBitmapModels,
-            rectitems = itemsLists,
-            figitems = figLists,
-            id = count++
-        });
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
-        _ = Task.Run(async () =>
-        {
-            await SaveDataIntoDatabase(file, frameNDetections);
-        });
-        
+            frameBitmapModels = await _videoService.GetFramesAsync(file);
+            int totalFiles = frameBitmapModels.Count();
+            for (int idx = 0; idx < totalFiles; idx++)
+            {
+                (results, figResults) = await GetFrameDetectionResultsAsync(frameBitmapModels[idx], idx + 1);
+                itemsLists.Add(results);
+                figLists.Add(figResults);
+                ProgressPercentage = (int)((idx + 1) / (double)totalFiles * 100);
+                frameNDetections.Add(new FrameNDetections
+                {
+                    Frame = frameBitmapModels[idx],
+                    Detections = results,
+                    Figs = figResults
+                });
+            }
 
+            FrameItems?.Add(new FrameModel
+            {
+                Name = file.Name,
+                frames = frameBitmapModels,
+                rectitems = itemsLists,
+                figitems = figLists,
+                id = count++
+            });
+
+            _ = Task.Run(async () =>
+            {
+                await SaveDataIntoDatabase(file, frameNDetections);
+            });
+
+
+            stopwatch.Stop();
+            ShowMessageBox("Inference Time", $"Время обработки файла видео: {Math.Round(stopwatch.Elapsed.TotalSeconds, 2)}\n" +
+                $"FPS: {Math.Round(totalFiles / stopwatch.Elapsed.TotalSeconds, 2)}");
+        }
+
+        _frames = frameBitmapModels.Select(bm => bm.frame).ToList();
         _videoFile = file;
         _rectItemsLists = itemsLists;
-        _frames = frameBitmapModels.Select(bm => bm.frame).ToList();
         _figItemsLists = figLists;
 
         CurrentFileName = file.Name;
@@ -415,9 +491,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         Log.Debug("MainViewModel.InitFramesAsync: End");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: End\n";
 
-        stopwatch.Stop();
-        ShowMessageBox("Inference Time", $"Время обработки файла видео: {Math.Round(stopwatch.Elapsed.TotalSeconds, 2)}\n" +
-            $"FPS: {Math.Round(totalFiles / stopwatch.Elapsed.TotalSeconds, 2)}");
     }
 
     private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)

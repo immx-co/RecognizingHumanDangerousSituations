@@ -3,6 +3,7 @@ using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
 using ClassLibrary.Datacontracts;
 using ClassLibrary.Services;
+using DangerousSituationsUI.Services;
 using LibVLCSharp.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
@@ -17,6 +18,7 @@ using System.Linq;
 using System.Reactive;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using static DangerousSituationsUI.ViewModels.VideoEventJournalViewModel;
 
@@ -54,6 +56,12 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     private VideoItem _selectedVideoItem;
 
     private List<DetectionItem> _detections = new List<DetectionItem>();
+
+    private TimeSpan _clipStartTime;
+
+    private TimeSpan _clipEndTime;
+
+    private ExportService _exportService;
     #endregion
 
 
@@ -79,6 +87,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     public ReactiveCommand<Unit, Unit> PauseCommand { get; }
 
     public ReactiveCommand<Unit, Unit> StopCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> ExportClipCommand { get; }
     #endregion
 
 
@@ -105,7 +115,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
             }
         }
     }
-
 
     public string CurrentFileName
     {
@@ -166,6 +175,38 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         get => _videoTime;
         set => this.RaiseAndSetIfChanged(ref _videoTime, value);
     }
+
+    public TimeSpan ClipStartTime
+    {
+        get => _clipStartTime;
+        set => this.RaiseAndSetIfChanged(ref _clipStartTime, value);
+    }
+
+    public TimeSpan ClipEndTime
+    {
+        get => _clipEndTime;
+        set => this.RaiseAndSetIfChanged(ref _clipEndTime, value);
+    }
+
+    public string ClipStartTimeString
+    {
+        get => ClipStartTime.ToString(@"hh\:mm\:ss");
+        set
+        {
+            if (TimeSpan.TryParse(value, out var ts))
+                ClipStartTime = ts;
+        }
+    }
+
+    public string ClipEndTimeString
+    {
+        get => ClipEndTime.ToString(@"hh\:mm\:ss");
+        set
+        {
+            if (TimeSpan.TryParse(value, out var ts))
+                ClipEndTime = ts;
+        }
+    }
     #endregion
 
 
@@ -173,11 +214,13 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     public VideoPlayerViewModel(
         IScreen screen, 
         IServiceProvider serviceProvider,
-        VideoEventJournalViewModel videoEventJournalViewModel)
+        VideoEventJournalViewModel videoEventJournalViewModel,
+        ExportService exportService)
     {
         HostScreen = screen;
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _serviceProvider = serviceProvider;
+        _exportService = exportService;
 
         AreButtonsEnabled = false;
 
@@ -190,6 +233,7 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         PlayCommand = ReactiveCommand.Create(PlayVideo);
         PauseCommand = ReactiveCommand.Create(PauseVideo);
         StopCommand = ReactiveCommand.Create(StopVideo);
+        ExportClipCommand = ReactiveCommand.CreateFromTask(ExportClipAsync);
     }
     #endregion
 
@@ -216,6 +260,46 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         SetPauseFlag(false);
         SetStopFlag(false);
     }
+
+    private async Task ExportClipAsync()
+    {
+        if (SelectedVideoItem == null)
+        {
+            ShowMessageBox("Error", "Видео не выбрано.");
+            return;
+        }
+
+        if (ClipEndTime <= ClipStartTime)
+        {
+            ShowMessageBox("Error", "Время начала превышает время конца.");
+            return;
+        }
+
+        var videoDuration = await GetVideoDurationAsync(SelectedVideoItem.Path);
+
+        if (ClipEndTime > videoDuration)
+        {
+            ShowMessageBox("Error", $"Время конца превышает длину видео: {videoDuration}");
+            return;
+        }
+
+        try
+        {
+            var (clipPath, jsonPath) = await _exportService.ExportClipAndDetectionsAsync(
+                SelectedVideoItem.Guid,
+                SelectedVideoItem.Path,
+                ClipStartTime,
+                ClipEndTime
+            );
+
+            ShowMessageBox("Success", $"Видео сохранено:\n{clipPath}\nДетекции сохранены:\n{jsonPath}");
+        }
+        catch (Exception ex)
+        {
+            ShowMessageBox("Error", $"Ошибка экспорта: {ex.Message}");
+        }
+    }
+
     #endregion
 
     private void ResetUI()
@@ -395,6 +479,19 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
             }
         }
     }
+
+    public async Task<TimeSpan?> GetVideoDurationAsync(string videoPath)
+    {
+        using var media = new Media(LibVLCInstance, videoPath, FromType.FromPath);
+
+        await media.Parse(MediaParseOptions.ParseLocal);
+
+        if (media.Duration > 0)
+            return TimeSpan.FromMilliseconds(media.Duration);
+        else
+            return null;
+    }
+
     #endregion
 
 

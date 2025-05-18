@@ -12,8 +12,13 @@
       <DataGrid ItemsSource="{Binding UserItems}" 
                 SelectedItem="{Binding SelectedUser}" 
                 AutoGenerateColumns="False"
-                Width="400"
-                Margin="20">
+                Width="500"
+                Margin="20"
+                MaxHeight="600"
+                GridLinesVisibility="All"   
+		            BorderThickness="1" 
+	              BorderBrush="Gray"
+                VerticalAlignment="Top">
         <DataGrid.Columns>
           <DataGridTextColumn Header="Пользователь" Binding="{Binding UserName}" Width="*" IsReadOnly="True"/>
           <DataGridTemplateColumn Header="Администратор" Width="*">

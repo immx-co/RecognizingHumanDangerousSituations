@@ -108,6 +108,27 @@
 				</StackPanel>
 			</StackPanel>
       
+      <StackPanel Orientation="Horizontal" Margin="0 10 0 10" 
+										HorizontalAlignment="Center">
+				<StackPanel Margin="10" Orientation="Horizontal">
+							<TextBlock Text="Начало (hh:mm:ss) "
+                         VerticalAlignment="Center"/>
+							<MaskedTextBox Mask="00:00:00" 
+                             Width="100" Text="{Binding ClipStartTimeString}" />
+					</StackPanel>
+					<StackPanel Margin="10" Orientation="Horizontal">
+							<TextBlock Text="Конец (hh:mm:ss) " 
+                         VerticalAlignment="Center"/>
+							<MaskedTextBox Mask="00:00:00" 
+                             Width="100" Text="{Binding ClipEndTimeString}" />
+				</StackPanel>
+				<Button Content="Сохранить"
+								Command="{Binding ExportClipCommand}"
+								VerticalAlignment="Center"
+								Margin="10"/>
+			</StackPanel>
+
+      
 			<Grid VerticalAlignment="Bottom"
 						HorizontalAlignment="Center"
 						Margin="0 0 0 20">
