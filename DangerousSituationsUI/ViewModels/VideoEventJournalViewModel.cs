@@ -291,16 +291,13 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             framesBitmap.Add(new Avalonia.Media.Imaging.Bitmap(memoryStream));
 
             var currentDetections = await db.Detections
-    .Where(d => d.FrameId == dbFrame.FrameId)
-    .Select(d => new
-    {
-        Detection = d,
-        FrameTime = dbFrame.FrameTime // используем время из dbFrame
-    })
-    .ToListAsync();
-
-
-
+            .Where(d => d.FrameId == dbFrame.FrameId)
+            .Select(d => new
+            {
+                Detection = d,
+                FrameTime = dbFrame.FrameTime // используем время из dbFrame
+            })
+            .ToListAsync();
 
             //await db.Detections.Where(d => d.FrameId == dbFrame.FrameId).ToListAsync();
             for (int idx = 0; idx < currentDetections.Count; idx++)
@@ -419,7 +416,6 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     #region Classes
     public class EventResult
     {
-
         public string Class { get; set; }
 
         public int X { get; set; }
@@ -429,11 +425,12 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         public int Width { get; set; }
 
         public int Height { get; set; }
-        public TimeSpan DetectionTime { get; set; }
     }
 
     public class VideoEventResult : EventResult
     {
+        public TimeSpan DetectionTime { get; set; }
+        
         public Guid Name { get; set; }
     }
 
