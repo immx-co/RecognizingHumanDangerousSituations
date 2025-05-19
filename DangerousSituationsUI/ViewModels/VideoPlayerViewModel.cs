@@ -62,6 +62,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     private TimeSpan _clipEndTime;
 
     private ExportService _exportService;
+
+    private FilesService _filesService;
     #endregion
 
 
@@ -215,12 +217,14 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         IScreen screen, 
         IServiceProvider serviceProvider,
         VideoEventJournalViewModel videoEventJournalViewModel,
-        ExportService exportService)
+        ExportService exportService,
+        FilesService filesService)
     {
         HostScreen = screen;
         _videoEventJournalViewModel = videoEventJournalViewModel;
         _serviceProvider = serviceProvider;
         _exportService = exportService;
+        _filesService = filesService;
 
         AreButtonsEnabled = false;
 
@@ -234,6 +238,7 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         PauseCommand = ReactiveCommand.Create(PauseVideo);
         StopCommand = ReactiveCommand.Create(StopVideo);
         ExportClipCommand = ReactiveCommand.CreateFromTask(ExportClipAsync);
+        _filesService = filesService;
     }
     #endregion
 
@@ -285,13 +290,20 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
         try
         {
-            var (clipPath, jsonPath) = await _exportService.ExportClipAndDetectionsAsync(
+            var result = await _exportService.ExportClipAndDetectionsAsync(
                 SelectedVideoItem.Guid,
                 SelectedVideoItem.Path,
                 ClipStartTime,
-                ClipEndTime
+                ClipEndTime,
+                _filesService
             );
 
+            if (result is null)
+            {
+                return;
+            }
+
+            var (clipPath, jsonPath) = result.Value;
             ShowMessageBox("Success", $"Видео сохранено:\n{clipPath}\nДетекции сохранены:\n{jsonPath}");
         }
         catch (Exception ex)

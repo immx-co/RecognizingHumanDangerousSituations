@@ -24,21 +24,30 @@ namespace DangerousSituationsUI.Services
 
         public ExportService(IServiceProvider serviceProvider) => _serviceProvider = serviceProvider;
 
-        public async Task<(string, string)> ExportClipAndDetectionsAsync(Guid videoId, string originalVideoPath, 
-            TimeSpan startTime, TimeSpan endTime)
+        public async Task<(string, string)?> ExportClipAndDetectionsAsync(
+            Guid videoId,
+            string originalVideoPath,
+            TimeSpan startTime,
+            TimeSpan endTime,
+            FilesService filesService)
         {
-            string clipPath = await CutClipAsync(originalVideoPath, startTime, endTime);
-            List<JsonItem> detections = await GetClipDetectionsAsync(videoId, originalVideoPath, startTime, endTime);
-            string jsonPath = Path.ChangeExtension(originalVideoPath, ".json");
+            string suggestedName = $"event_{Path.GetFileNameWithoutExtension(originalVideoPath)}.avi";
+            string? outputPath = await filesService.PickExportPathAsync(suggestedName);
 
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true
-            };
+            if (string.IsNullOrEmpty(outputPath))
+                return null;
+
+            string clipPath = await CutClipAsync(originalVideoPath, outputPath, startTime, endTime);
+            var detections = await GetClipDetectionsAsync(videoId, startTime, endTime);
+
+            string jsonPath = Path.ChangeExtension(clipPath, ".json");
+
+            var options = new JsonSerializerOptions { WriteIndented = true };
             await File.WriteAllTextAsync(jsonPath, JsonSerializer.Serialize(detections, options));
 
             return (clipPath, jsonPath);
         }
+
 
         public async Task<Guid?> GetVideoIdByNameAsync(string videoName)
         {
@@ -50,7 +59,7 @@ namespace DangerousSituationsUI.Services
                 .FirstOrDefaultAsync();
         }
 
-        private async Task<string> CutClipAsync(string originalPath, TimeSpan startTime, TimeSpan endTime)
+        private async Task<string> CutClipAsync(string originalPath, string outputPath, TimeSpan startTime, TimeSpan endTime)
         {
             string ffmpegFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FFMpeg");
 
@@ -59,18 +68,13 @@ namespace DangerousSituationsUI.Services
                 BinaryFolder = ffmpegFolder
             });
 
-            string inputDirectory = Path.GetDirectoryName(originalPath);
-            string inputFileName = Path.GetFileNameWithoutExtension(originalPath);
-            string outputFileName = $"event_{inputFileName}.avi";
-
-            string outputPath = Path.Combine(inputDirectory, outputFileName);
-
             await FFMpeg.SubVideoAsync(originalPath, outputPath, startTime, endTime);
 
             return outputPath;
         }
 
-        private async Task<List<JsonItem>> GetClipDetectionsAsync(Guid videoId, string videoName, TimeSpan startTime, TimeSpan endTime)
+
+        private async Task<List<JsonItem>> GetClipDetectionsAsync(Guid videoId, TimeSpan startTime, TimeSpan endTime)
         {
             using var db = _serviceProvider.GetRequiredService<ApplicationContext>();
 

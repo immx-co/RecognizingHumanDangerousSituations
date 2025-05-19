@@ -65,4 +65,26 @@ public class FilesService
 
         return files.Count >= 1 ? files[0] : null;
     }
+
+    public async Task<string?> PickExportPathAsync(string suggestedName = "event")
+    {
+        if (Target is null)
+            return null;
+
+        var file = await Target.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Сохранить отрезок видео",
+            SuggestedFileName = suggestedName,
+            FileTypeChoices = new[]
+            {
+                new FilePickerFileType("Видео")
+                {
+                    Patterns = ["*.mp4", "*.avi"]
+                }
+            }
+        });
+
+        return file?.Path.LocalPath;
+    }
+
 }
