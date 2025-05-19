@@ -32,7 +32,6 @@
 				BorderBrush="Gray"
 				CanUserSortColumns="False"
 				CanUserResizeColumns="True"
-				SelectionChanged="DataGrid_SelectionChanged"
 				MaxHeight="600">
 				<DataGrid.Styles>
 					<Style Selector="DataGrid">
@@ -103,17 +102,25 @@
 						Width="{Binding $parent.Width}"
 						Height="{Binding $parent.Height}">
 						  <!-- Верхний левый угол -->
-						  <Rectangle Name="TopLeft" Width="15" Height="15" Fill="{Binding Color}" Cursor="TopLeftCorner"
-									 Canvas.Left="0" Canvas.Top="0"/>
+						  <Rectangle Name="TopLeft" Width="15" Height="15"
+									 Fill="{Binding Color}" Cursor="TopLeftCorner"
+									 Canvas.Left="0" Canvas.Top="0"
+									 PointerPressed="ResizeHandle_PointerPressed" />
 						  <!-- Нижний левый угол -->
-						  <Rectangle Name="BottomLeft" Width="15" Height="15" Fill="{Binding Color}" Cursor="BottomLeftCorner"
-									 Canvas.Left="0" Canvas.Bottom="0"/>
+						  <Rectangle Name="BottomLeft" Width="15" Height="15" 
+									 Fill="{Binding Color}" Cursor="BottomLeftCorner"
+									 Canvas.Left="0" Canvas.Bottom="0"
+									 PointerPressed="ResizeHandle_PointerPressed" />
 						  <!-- Верхний верхний угол -->
-						  <Rectangle Name="TopRight" Width="15" Height="15" Fill="{Binding Color}" Cursor="TopRightCorner"
-									 Canvas.Right="0" Canvas.Top="0"/>
+						  <Rectangle Name="TopRight" Width="15" Height="15"
+									 Fill="{Binding Color}" Cursor="TopRightCorner"
+									 Canvas.Right="0" Canvas.Top="0"
+									 PointerPressed="ResizeHandle_PointerPressed" />
 						  <!-- Нижний правый угол -->
-						  <Rectangle Name="BottomRight" Width="15" Height="15" Fill="{Binding Color}" Cursor="BottomRightCorner"
-									 Canvas.Right="0" Canvas.Bottom="0"/>
+						  <Rectangle Name="BottomRight" Width="15" Height="15"
+									 Fill="{Binding Color}" Cursor="BottomRightCorner"
+									 Canvas.Right="0" Canvas.Bottom="0"
+									 PointerPressed="ResizeHandle_PointerPressed" />
 					  </Canvas>
 				  </services:InteractiveBorder>
 			  </Canvas>

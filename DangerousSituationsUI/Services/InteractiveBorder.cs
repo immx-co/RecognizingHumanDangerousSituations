@@ -13,11 +13,8 @@ namespace DangerousSituationsUI.Services
         private bool _isResizing;
         private bool _isDragging;
         private Point _topLeft;
-        private Point _topRight;
-        private Point _bottomLeft;
-        private Point _bottomRight;
-        private Point _initialSize; // Начальный размер границы
-        private Point _positionInBlock; // Позиция указателя внутри границы
+        private Point _initialSize;
+        private Point _positionInBlock;
         private int _image_height;
         private int _image_width;
         private int _image_offset;
@@ -40,21 +37,6 @@ namespace DangerousSituationsUI.Services
                 Canvas.SetTop(this, value.Y);
             }
         }
-        public Point TopRight
-        {
-            get => _topRight;
-            set => _topRight = value;
-        }
-        public Point BottomLeft
-        {
-            get => _bottomLeft;
-            set => _bottomLeft = value;
-        }
-        public Point BottomRight
-        {
-            get => _bottomRight;
-            set => _bottomRight = value;
-        }
         public int ImageHeight
         {
             get => _image_height;
@@ -74,10 +56,6 @@ namespace DangerousSituationsUI.Services
         protected override void OnPointerPressed(PointerPressedEventArgs e)
         {
             IsPressed = true;
-
-            BottomLeft = new Point(TopLeft.X, TopLeft.Y + this.Height);
-            BottomRight = new Point(TopLeft.X + this.Width, TopLeft.Y + this.Height);
-            TopRight = new Point(TopLeft.X + this.Width, TopLeft.Y + this.Height);
 
             var parent = Parent as Canvas;
             if (parent != null)
@@ -126,8 +104,8 @@ namespace DangerousSituationsUI.Services
                 var pointerOnCanvas = e.GetPosition(parent);
                 var handle = e.Source as Rectangle;
 
-                double minWidth = 20;
-                double minHeight = 20;
+                const int minWidth = 20;
+                const int minHeight = 20;
 
                 double left = Canvas.GetLeft(this);
                 double top = Canvas.GetTop(this);
@@ -136,66 +114,63 @@ namespace DangerousSituationsUI.Services
 
                 double newLeft = left, newTop = top, newRight = right, newBottom = bottom;
 
-                if (handle?.Name == "BottomRight")
+                switch (handle.Name)
                 {
-                    newRight = Math.Min(pointerOnCanvas.X, ImageOffset + ImageWidth);
-                    newBottom = Math.Min(pointerOnCanvas.Y, ImageHeight);
-                }
-                else if (handle?.Name == "BottomLeft")
-                {
-                    newLeft = Math.Max(pointerOnCanvas.X, ImageOffset);
-                    newBottom = Math.Min(pointerOnCanvas.Y, ImageHeight);
-                }
-                else if (handle?.Name == "TopRight")
-                {
-                    newRight = Math.Min(pointerOnCanvas.X, ImageOffset + ImageWidth);
-                    newTop = Math.Max(pointerOnCanvas.Y, 0);
-                }
-                else if (handle?.Name == "TopLeft")
-                {
-                    newLeft = Math.Max(pointerOnCanvas.X, ImageOffset);
-                    newTop = Math.Max(pointerOnCanvas.Y, 0);
+                    case "BottomRight":
+                        newRight = Math.Min(pointerOnCanvas.X, ImageOffset + ImageWidth);
+                        newBottom = Math.Min(pointerOnCanvas.Y, ImageHeight);
+                        break;
+                    case "BottomLeft":
+                        newLeft = Math.Max(pointerOnCanvas.X, ImageOffset);
+                        newBottom = Math.Min(pointerOnCanvas.Y, ImageHeight);
+                        break;
+                    case "TopRight":
+                        newRight = Math.Min(pointerOnCanvas.X, ImageOffset + ImageWidth);
+                        newTop = Math.Max(pointerOnCanvas.Y, 0);
+                        break;
+                    case "TopLeft":
+                        newLeft = Math.Max(pointerOnCanvas.X, ImageOffset);
+                        newTop = Math.Max(pointerOnCanvas.Y, 0);
+                        break;
                 }
 
-                double width = Math.Max(minWidth, newRight - newLeft);
-                double height = Math.Max(minHeight, newBottom - newTop);
-
-                if (width == minWidth)
+                if (newRight - newLeft < minWidth)
                 {
-                    if (handle?.Name == "TopLeft" || handle?.Name == "BottomLeft")
+                    if (handle.Name == "TopLeft" || handle.Name == "BottomLeft")
                         newLeft = newRight - minWidth;
                     else
                         newRight = newLeft + minWidth;
                 }
-                if (height == minHeight)
+                if (newBottom - newTop < minHeight)
                 {
-                    if (handle?.Name == "TopLeft" || handle?.Name == "TopRight")
+                    if (handle.Name == "TopLeft" || handle.Name == "TopRight")
                         newTop = newBottom - minHeight;
                     else
                         newBottom = newTop + minHeight;
                 }
 
                 newLeft = Math.Max(newLeft, ImageOffset);
-                newTop = Math.Max(newTop, 0);
                 newRight = Math.Min(newRight, ImageOffset + ImageWidth);
+                newTop = Math.Max(newTop, 0);
                 newBottom = Math.Min(newBottom, ImageHeight);
+
+                double width = newRight - newLeft;
+                double height = newBottom - newTop;
 
                 Canvas.SetLeft(this, newLeft);
                 Canvas.SetTop(this, newTop);
-                Width = Math.Abs(newRight - newLeft);
-                Height = Math.Abs(newBottom - newTop);
+                Width = width;
+                Height = height;
 
                 BorderResized?.Invoke(this, new BorderResizedEventArgs
                 {
                     NewWidth = width,
-                    NewHeight = height
-                });
-                BorderMoved?.Invoke(this, new BorderMovedEventArgs
-                {
-                    OffsetX = newLeft,
-                    OffsetY = newTop
+                    NewHeight = height,
+                    NewX = newLeft,
+                    NewY = newTop
                 });
             }
+
             if (_isDragging)
             {
                 var parent = Parent as Canvas;
@@ -222,15 +197,6 @@ namespace DangerousSituationsUI.Services
 
             base.OnPointerMoved(e);
         }
-        public Point GetCurrentOffset()
-        {
-            return _transform != null ? new Point(TopLeft.X + _transform.X, TopLeft.Y + _transform.Y) : TopLeft;
-        }
-        public void ResetTransform()
-        {
-            _transform = new TranslateTransform(0, 0);
-            RenderTransform = _transform;
-        }
     }
     public class BorderMovedEventArgs : EventArgs
     {
@@ -241,5 +207,7 @@ namespace DangerousSituationsUI.Services
     {
         public double NewWidth { get; set; }
         public double NewHeight { get; set; }
+        public double NewX { get; set; }
+        public double NewY { get; set; }
     }
 }

@@ -48,10 +48,6 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     
     private int _box_height;
 
-    private int _image_width;
-
-    private int _image_height;
-
     private bool _boxPositionChanged;
 
     #endregion
@@ -160,24 +156,11 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         set => this.RaiseAndSetIfChanged(ref _box_height, value);
     }
 
-    public int ImageWidth
-    {
-        get => _image_width;
-        set => this.RaiseAndSetIfChanged(ref _image_width, value);
-    }
-
-    public int ImageHeight
-    {
-        get => _image_height;
-        set => this.RaiseAndSetIfChanged(ref _image_height, value);
-    }
-
     public bool BoxPositionChanged
     {
         get => _boxPositionChanged;
         set => this.RaiseAndSetIfChanged(ref _boxPositionChanged, value);
     }
-
 
     public bool IsVideoProcessing = false;
     #endregion

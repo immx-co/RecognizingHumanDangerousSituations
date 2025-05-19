@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
+using Avalonia.LogicalTree;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
 using ClassLibrary.Services;
@@ -34,10 +35,6 @@ public partial class VideoEventJournalView : ReactiveUserControl<VideoEventJourn
             {
                 rect.X = (int)e.OffsetX;
                 rect.Y = (int)e.OffsetY;
-                
-                border.ImageHeight = viewModel.ImageHeight;
-                border.ImageWidth = viewModel.ImageWidth;
-                border.ImageOffset = (800 - viewModel.ImageWidth) / 2;
             }
         }
     }
@@ -47,17 +44,17 @@ public partial class VideoEventJournalView : ReactiveUserControl<VideoEventJourn
         {
             viewModel.BoxWidth = (int)e.NewWidth;
             viewModel.BoxHeight = (int)e.NewHeight;
-
-            viewModel.BoxPositionChanged = true;
+            viewModel.BoxTopLeftX = (int)e.NewX;
+            viewModel.BoxTopLeftY = (int)e.NewY;
             
+            viewModel.BoxPositionChanged = true;
+
             if (sender is InteractiveBorder border && border.DataContext is RectItem rect)
             {
                 rect.Width = (int)e.NewWidth;
                 rect.Height = (int)e.NewHeight;
-
-                border.ImageHeight = viewModel.ImageHeight;
-                border.ImageWidth = viewModel.ImageWidth;
-                border.ImageOffset = (800 - viewModel.ImageWidth) / 2;
+                rect.X = (int)e.NewX;
+                rect.Y = (int)e.NewY;
             }
         }
     }
@@ -67,15 +64,11 @@ public partial class VideoEventJournalView : ReactiveUserControl<VideoEventJourn
         if (sender is Rectangle resizeHandle && DataContext is VideoEventJournalViewModel viewModel)
         {
             viewModel.BoxPositionChanged = true;
-        }
-    }
-
-    private void DataGrid_SelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (sender is DataGrid dataGrid && DataContext is VideoEventJournalViewModel viewModel)
-        {
-            viewModel.ImageHeight = 400;
-            viewModel.ImageWidth = (int)((400 * viewModel.CurrentImage.Size.Width) / viewModel.CurrentImage.Size.Height);
+            var border = resizeHandle.Parent.GetLogicalParent() as InteractiveBorder;
+            
+            border.ImageHeight = 400;
+            border.ImageWidth = (int)((400 * viewModel.CurrentImage.Size.Width) / viewModel.CurrentImage.Size.Height);
+            border.ImageOffset = (800 - border.ImageWidth) / 2;
         }
     }
 }
