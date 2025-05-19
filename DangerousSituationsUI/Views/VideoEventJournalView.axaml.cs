@@ -35,6 +35,10 @@ public partial class VideoEventJournalView : ReactiveUserControl<VideoEventJourn
             {
                 rect.X = (int)e.OffsetX;
                 rect.Y = (int)e.OffsetY;
+
+                border.ImageHeight = 400;
+                border.ImageWidth = (int)((400 * viewModel.CurrentImage.Size.Width) / viewModel.CurrentImage.Size.Height);
+                border.ImageOffset = (800 - border.ImageWidth) / 2;
             }
         }
     }
@@ -55,6 +59,10 @@ public partial class VideoEventJournalView : ReactiveUserControl<VideoEventJourn
                 rect.Height = (int)e.NewHeight;
                 rect.X = (int)e.NewX;
                 rect.Y = (int)e.NewY;
+
+                border.ImageHeight = 400;
+                border.ImageWidth = (int)((400 * viewModel.CurrentImage.Size.Width) / viewModel.CurrentImage.Size.Height);
+                border.ImageOffset = (800 - border.ImageWidth) / 2;
             }
         }
     }
