@@ -317,6 +317,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         int oldY = SelectedEventResult.Y;
         int oldWidth = SelectedEventResult.Width;
         int oldHeight = SelectedEventResult.Height;
+        TimeSpan timeSpan = SelectedEventResult.DetectionTime;
 
         if (SelectedEventResult == null)
             return;
@@ -345,6 +346,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         SelectedEventResult.Y = BoxY;
         SelectedEventResult.Width = BoxWidth;
         SelectedEventResult.Height = BoxHeight;
+        SelectedEventResult.DetectionTime = timeSpan;
 
         int index = EventResults.IndexOf(SelectedEventResult);
         if (index >= 0)
@@ -356,7 +358,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
                 X = BoxX,
                 Y = BoxY,
                 Width = BoxWidth,
-                Height = BoxHeight
+                Height = BoxHeight,
+                DetectionTime = timeSpan
             };
 
             EventResults[index] = updatedEventResult;

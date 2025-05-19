@@ -1,8 +1,11 @@
-﻿using Avalonia.Media;
+﻿using Avalonia.Collections;
+using Avalonia.Media;
 using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
 using ClassLibrary.Datacontracts;
 using ClassLibrary.Services;
+using DotNetEnv;
+using DynamicData.Kernel;
 using LibVLCSharp.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
@@ -56,6 +59,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     private VideoItem _selectedVideoItem;
 
     private List<DetectionItem> _detections = new List<DetectionItem>();
+
+    private AvaloniaList<FigItem> _figItems = new();
     #endregion
 
 
@@ -109,7 +114,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
             {
                 var media = new Media(LibVLCInstance, value.Path, FromType.FromPath);
                 SetMediaPlayer(media); 
-                LoadDetections(value.GetFullName());
             }
         }
     }
@@ -174,6 +178,11 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         get => _videoTime;
         set => this.RaiseAndSetIfChanged(ref _videoTime, value);
     }
+    public AvaloniaList<FigItem> FigItems
+    {
+        get => _figItems;
+        set => this.RaiseAndSetIfChanged(ref _figItems, value);
+    }
     #endregion
 
 
@@ -205,6 +214,7 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     #region Command Methods
     private void PlayVideo()
     {
+        LoadDetections(SelectedVideoItem.GetFullName());
         MediaPlayer.Play();
     }
 
@@ -215,8 +225,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
     private void StopVideo()
     {
-        MediaPlayer?.Stop(); 
-        ClearRectangles();
+        MediaPlayer?.Stop();
+        ClearDetections();
 
         VideoTime = GetVideoTimeString(0);
 
@@ -286,56 +296,57 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
     private string GetVideoTimeString(long ms) => TimeSpan.FromMilliseconds(ms).ToString();
 
-    private void AddRectangle(string name)
-    {
-        using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
+    //private void AddRectangle(string name)
+    //{
+    //    using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
-        var dbVideo = db.Videos.Where(video => video.VideoName == name).FirstOrDefault();
+    //    var dbVideo = db.Videos.Where(video => video.VideoName == name).FirstOrDefault();
 
-        if (dbVideo is null)
-        {
-            return;
-        }
+    //    if (dbVideo is null)
+    //    {
+    //        return;
+    //    }
 
-        var dbFrame = db.Frames.Where(frame => frame.VideoId == dbVideo.VideoId ).ToList();
+    //    var dbFrame = db.Frames.Where(frame => frame.VideoId == dbVideo.VideoId ).ToList();
 
-        if (dbFrame is null)
-        {
-            return;
-        }
+    //    if (dbFrame is null)
+    //    {
+    //        return;
+    //    }
 
-        var dbDetection = new List<Detection>();
+    //    var dbDetection = new List<Detection>();
 
-        foreach (var frame in dbFrame)
-        {
+    //    foreach (var frame in dbFrame)
+    //    {
 
-            dbDetection = db.Detections.Where(detection => detection.FrameId == frame.FrameId).ToList();
+    //        dbDetection = db.Detections.Where(detection => detection.FrameId == frame.FrameId).ToList();
 
-            foreach (var detection in dbDetection)
-            {
-                Rectangles.Add(new RectItem
-                {
-                    X = detection.X,
-                    Y = detection.Y,
-                    Width = detection.Width,
-                    Height = detection.Height,
-                    Color = detection.ClassName switch
-                    {
-                        "Standing" => "Green",
-                        "Lying" => "Red",
-                    },
+    //        foreach (var detection in dbDetection)
+    //        {
+    //            Rectangles.Add(new RectItem
+    //            {
+    //                X = detection.X,
+    //                Y = detection.Y,
+    //                Width = detection.Width,
+    //                Height = detection.Height,
+    //                Color = detection.ClassName switch
+    //                {
+    //                    "Standing" => "Green",
+    //                    "Lying" => "Red",
+    //                },
 
-                });
-            }
-        }
-    }
+    //            });
+    //        }
+    //    }
+    //}
 
-    private  void ClearRectangles()
+    private  void ClearDetections()
     {
         Rectangles.Clear();
+        FigItems.Clear();
     }
 
-    private void LoadDetections(string fullVideoName)
+    public void LoadDetections(string fullVideoName)
     {
         var match = Regex.Match(fullVideoName, @"^(.*?)\s*\((.*?)\)$");
 
@@ -380,26 +391,57 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
                         "Lying" => "Red",
                         _ => "Yellow"
                     }
-                }
-            })
+                    
+                },
+                Fig = new FigItem {
+                    Color = x.detection.ClassName switch
+                    {
+                        "Standing" => "Green",
+                        "Lying" => "Red",
+                        _ => "Yellow"
+                    },
+                    Nose = x.detection.Nose,
+                    LeftEye = x.detection.LeftEye,
+                    RightEye = x.detection.RightEye,
+                    LeftEar = x.detection.LeftEar,
+                    RightEar = x.detection.RightEar,
+                    LeftShoulder = x.detection.LeftShoulder,
+                    RightShoulder = x.detection.RightShoulder,
+                    LeftElbow = x.detection.LeftElbow,
+                    RightElbow = x.detection.RightElbow,
+                    LeftWrist = x.detection.LeftWrist,
+                    RightWrist = x.detection.RightWrist,
+                    LeftHip = x.detection.LeftHip,
+                    RightHip = x.detection.RightHip,
+                    LeftKnee = x.detection.LeftKnee,
+                    RightKnee = x.detection.RightKnee,
+                    LeftAnkle = x.detection.LeftAnkle,
+                    RightAnkle = x.detection.RightAnkle}
+                })
             .ToList();
     }
 
     private void UpdateRectangles(TimeSpan currentVideoTime)
     {
+        ClearDetections();
+
+        TimeSpan secondMinDetectionTime = _detections
+            .Select(d => d.Time)
+            .OrderBy(time => time)       
+            .FirstOrDefault();  
+
         var nearestFrameDetections = _detections
-            .Where(d => d.Time <= currentVideoTime && currentVideoTime - d.Time <= TimeSpan.FromMilliseconds(250))
+            .Where(d => d.Time <= currentVideoTime && ((currentVideoTime - d.Time) <= secondMinDetectionTime))
             .GroupBy(d => d.Time)
             .OrderByDescending(g => g.Key)
             .FirstOrDefault();
-
+        
         if (nearestFrameDetections != null)
         {
-            ClearRectangles();
-            // Добавляем все детекции из этого кадра
             foreach (var detection in nearestFrameDetections)
             {
                 Rectangles.Add(detection.Rect);
+                FigItems.Add(detection.Fig);
             }
         }
     }
@@ -439,6 +481,8 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         public TimeSpan Time { get; set; }       // Время детекции относительно видео
 
         public RectItem Rect { get; set; }       // Прямоугольник детекции
+
+        public FigItem Fig { get; set; }
     }
     #endregion
 

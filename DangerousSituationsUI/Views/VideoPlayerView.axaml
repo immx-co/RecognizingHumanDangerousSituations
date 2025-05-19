@@ -51,6 +51,7 @@
 					<Border Background="Gainsboro"
                   IsVisible="{Binding !IsVideoLoading}">
 						<vlc:VideoView MediaPlayer="{Binding MediaPlayer}">
+							<Grid>
 							<ItemsControl ItemsSource="{Binding Rectangles}">
 								<ItemsControl.ItemsPanel>
 									<ItemsPanelTemplate>
@@ -73,6 +74,109 @@
 									</Style>
 								</ItemsControl.Styles>
 							</ItemsControl>
+								<ItemsControl ItemsSource="{Binding FigItems}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<Canvas>
+												<Ellipse Width="2" Height="2"
+														 Canvas.Left="{Binding Nose[0]}"
+														 Canvas.Top="{Binding Nose[1]}"
+														 Fill="{Binding Color}" />
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding LeftEye[0]}"
+																				   Canvas.Top="{Binding LeftEye[1]}"
+																				   Fill="{Binding Color}" />
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding RightEye[0]}"
+																				   Canvas.Top="{Binding RightEye[1]}"
+																				   Fill="{Binding Color}" />
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding LeftEar[0]}"
+																				   Canvas.Top="{Binding LeftEar[1]}"
+																				   Fill="{Binding Color}" />
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding RightEar[0]}"
+																				   Canvas.Top="{Binding RightEar[1]}"
+																				   Fill="{Binding Color}" />
+
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding LeftShoulder[0]}"
+																				   Canvas.Top="{Binding LeftShoulder[1]}"
+																				   Fill="{Binding Color}" />
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding RightShoulder[0]}"
+																				   Canvas.Top="{Binding RightShoulder[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding LeftShoulderPoint}" EndPoint="{Binding RightShoulderPoint}"
+													  Stroke="Gray" StrokeThickness="1"/>
+
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding LeftElbow[0]}"
+																				   Canvas.Top="{Binding LeftElbow[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding LeftShoulderPoint}" EndPoint="{Binding LeftElbowPoint}"
+													  Stroke="Gray" StrokeThickness="1"/>
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding RightElbow[0]}"
+																				   Canvas.Top="{Binding RightElbow[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding RightShoulderPoint}" EndPoint="{Binding RightElbowPoint}"
+									Stroke="Gray" StrokeThickness="1"/>
+
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding LeftWrist[0]}"
+																				   Canvas.Top="{Binding LeftWrist[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding LeftElbowPoint}" EndPoint="{Binding LeftWristPoint}"
+													  Stroke="Gray" StrokeThickness="1"/>
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding RightWrist[0]}"
+																				   Canvas.Top="{Binding RightWrist[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding RightElbowPoint}" EndPoint="{Binding RightWristPoint}"
+													  Stroke="Gray" StrokeThickness="1"/>
+
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding LeftHip[0]}"
+																				   Canvas.Top="{Binding LeftHip[1]}"
+																				   Fill="{Binding Color}" />
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding RightHip[0]}"
+																				   Canvas.Top="{Binding RightHip[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding LeftHipPoint}" EndPoint="{Binding RightHipPoint}"
+									Stroke="Gray" StrokeThickness="1"/>
+
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding LeftKnee[0]}"
+																				   Canvas.Top="{Binding LeftKnee[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding LeftHipPoint}" EndPoint="{Binding LeftKneePoint}"
+													   Stroke="Gray" StrokeThickness="1"/>
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding RightKnee[0]}"
+																				   Canvas.Top="{Binding RightKnee[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding RightHipPoint}" EndPoint="{Binding RightKneePoint}"
+									Stroke="Gray" StrokeThickness="1"/>
+
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding LeftAnkle[0]}"
+																				   Canvas.Top="{Binding LeftAnkle[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding LeftKneePoint}" EndPoint="{Binding LeftAnklePoint}"
+									Stroke="Gray" StrokeThickness="1"/>
+												<Ellipse Width="2" Height="2"
+																				   Canvas.Left="{Binding RightAnkle[0]}"
+																				   Canvas.Top="{Binding RightAnkle[1]}"
+																				   Fill="{Binding Color}" />
+												<Line StartPoint="{Binding RightKneePoint}" EndPoint="{Binding RightAnklePoint}"
+													Stroke="Gray" StrokeThickness="1"/>
+											</Canvas>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</Grid>
 						</vlc:VideoView>
 					</Border>
 
