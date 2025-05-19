@@ -1,55 +1,55 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:vm="using:DangerousSituationsUI.ViewModels"
+			 xmlns:vm="using:DangerousSituationsUI.ViewModels"
 			 xmlns:services="using:DangerousSituationsUI.Services"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="DangerousSituationsUI.Views.VideoEventJournalView"
-             x:DataType="vm:VideoEventJournalViewModel">
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:Class="DangerousSituationsUI.Views.VideoEventJournalView"
+			 x:DataType="vm:VideoEventJournalViewModel">
 
   <Grid>
 	  
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="600"/>
-      <ColumnDefinition Width="*"/>
-    </Grid.ColumnDefinitions>
+	<Grid.ColumnDefinitions>
+	  <ColumnDefinition Width="600"/>
+	  <ColumnDefinition Width="*"/>
+	</Grid.ColumnDefinitions>
 
-    <StackPanel Grid.Column="0">
-      <ComboBox Width="600"
-                HorizontalAlignment="Stretch"
-                Margin="20, 13, 0, 13"
-                ItemsSource="{Binding VideoItems}"
-                SelectedItem="{Binding SelectedVideoItem}"/>
+	<StackPanel Grid.Column="0">
+	  <ComboBox Width="600"
+				HorizontalAlignment="Stretch"
+				Margin="20, 13, 0, 13"
+				ItemsSource="{Binding VideoItems}"
+				SelectedItem="{Binding SelectedVideoItem}"/>
 		<DataGrid Width="600"
-			    Margin="20" 
-		        ItemsSource="{Binding EventResults}"
-			    SelectedItem="{Binding SelectedEventResult}"
-		        AutoGenerateColumns="True" 
+				Margin="20" 
+				ItemsSource="{Binding EventResults}"
+				SelectedItem="{Binding SelectedEventResult}"
+				AutoGenerateColumns="True" 
 				IsReadOnly="True"
-		        GridLinesVisibility="All"   
-		        BorderThickness="1" 
-	            BorderBrush="Gray"
+				GridLinesVisibility="All"   
+				BorderThickness="1" 
+				BorderBrush="Gray"
 				CanUserSortColumns="False"
 				CanUserResizeColumns="True"
-		        MaxHeight="600">
-			    <DataGrid.Styles>
-				    <Style Selector="DataGrid">
-					    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
-					    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
-				    </Style>
-			    </DataGrid.Styles>
+				MaxHeight="600">
+				<DataGrid.Styles>
+					<Style Selector="DataGrid">
+						<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+						<Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+					</Style>
+				</DataGrid.Styles>
 		</DataGrid>
 		<Border Height="700"
 							  Width="600">
-        
-      </Border>
-    </StackPanel>
+		
+	  </Border>
+	</StackPanel>
 
-    <StackPanel Grid.Column="1"
+	<StackPanel Grid.Column="1"
 								VerticalAlignment="Center"
 								HorizontalAlignment="Center">
-      <TextBlock Text="{Binding Title}"
+	  <TextBlock Text="{Binding Title}"
 								 Margin="0 0 0 10"/>
 		<Grid Margin="0 0 0 10">
 			<Grid.ColumnDefinitions>
@@ -61,80 +61,99 @@
 
 			<StackPanel Grid.Column="0" Margin="0 0 5 0">
 				<Label>X:</Label>
-				<TextBox Text="{Binding BoxX}" AcceptsReturn="False" IsReadOnly="True" />
+				<TextBox Text="{Binding BoxTopLeftX}" AcceptsReturn="False" IsReadOnly="True" IsEnabled="false"/>
 			</StackPanel>
 			<StackPanel Grid.Column="1" Margin="0 0 5 0">
 				<Label>Y:</Label>
-				<TextBox Text="{Binding BoxY}" AcceptsReturn="False" IsReadOnly="True" />
+				<TextBox Text="{Binding BoxTopLeftY}" AcceptsReturn="False" IsReadOnly="True" IsEnabled="false"/>
 			</StackPanel>
 			<StackPanel Grid.Column="2" Margin="0 0 5 0">
 				<Label>Высота:</Label>
-				<TextBox Text="{Binding BoxHeight}" AcceptsReturn="False" IsReadOnly="True" />
+				<TextBox Text="{Binding BoxHeight}" AcceptsReturn="False" IsReadOnly="True" IsEnabled="false"/>
 			</StackPanel>
 			<StackPanel Grid.Column="3">
 				<Label>Ширина:</Label>
-				<TextBox Text="{Binding BoxWidth}" AcceptsReturn="False" IsReadOnly="True" />
+				<TextBox Text="{Binding BoxWidth}" AcceptsReturn="False" IsReadOnly="True" IsEnabled="false"/>
 			</StackPanel>
 		</Grid>
-      <Grid Width="800" Height="400">
-        <Border Background="Gainsboro">
-          <Image MaxWidth="800"
-								 MaxHeight="400"
-								 Source="{Binding CurrentImage}"
-								 RenderOptions.BitmapInterpolationMode="HighQuality">
-          </Image>
-        </Border>
-        <ItemsControl ItemsSource="{Binding RectItems}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <Canvas>
-				  <services:InteractiveBorder BorderBrush="{Binding Color}"
+	  <Grid Width="800" Height="400">
+		<Border Background="Gainsboro">
+		  <Image
+				MaxWidth="800"
+				MaxHeight="400"
+				Source="{Binding CurrentImage}"
+				RenderOptions.BitmapInterpolationMode="HighQuality">
+		  </Image>
+		</Border>
+		<ItemsControl ItemsSource="{Binding RectItems}">
+		  <ItemsControl.ItemTemplate>
+			<DataTemplate>
+			  <Canvas Background="Blue">
+				  <services:InteractiveBorder Cursor="SizeAll"
+										BorderBrush="{Binding Color}"
 										BorderThickness="2"
 										Width="{Binding Width}"
 										Height="{Binding Height}"
 										Canvas.Left="{Binding X}"
 										Canvas.Top="{Binding Y}"
-										Cursor="SizeAll"
 										BorderMoved="InteractiveBorder_BorderMoved"
 										BorderResized="InteractiveBorder_BorderResized">
 					  <Canvas IsVisible="{Binding $parent.IsPointerOver}"
 						Width="{Binding $parent.Width}"
 						Height="{Binding $parent.Height}">
+						  <!-- Верхний левый угол -->
+						  <Rectangle Name="TopLeft" Width="15" Height="15"
+									 Fill="{Binding Color}" Cursor="TopLeftCorner"
+									 Canvas.Left="0" Canvas.Top="0"
+									 PointerPressed="ResizeHandle_PointerPressed" />
+						  <!-- Нижний левый угол -->
+						  <Rectangle Name="BottomLeft" Width="15" Height="15" 
+									 Fill="{Binding Color}" Cursor="BottomLeftCorner"
+									 Canvas.Left="0" Canvas.Bottom="0"
+									 PointerPressed="ResizeHandle_PointerPressed" />
+						  <!-- Верхний верхний угол -->
+						  <Rectangle Name="TopRight" Width="15" Height="15"
+									 Fill="{Binding Color}" Cursor="TopRightCorner"
+									 Canvas.Right="0" Canvas.Top="0"
+									 PointerPressed="ResizeHandle_PointerPressed" />
 						  <!-- Нижний правый угол -->
-						  <Rectangle Name="BottomRight" Width="15" Height="15" Fill="{Binding Color}" Cursor="BottomRightCorner"
-									 Canvas.Right="0" Canvas.Bottom="0"/>
+						  <Rectangle Name="BottomRight" Width="15" Height="15"
+									 Fill="{Binding Color}" Cursor="BottomRightCorner"
+									 Canvas.Right="0" Canvas.Bottom="0"
+									 PointerPressed="ResizeHandle_PointerPressed" />
 					  </Canvas>
 				  </services:InteractiveBorder>
-              </Canvas>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </Grid>
-      <Grid Margin="0 10 0 0">
+			  </Canvas>
+			</DataTemplate>
+		  </ItemsControl.ItemTemplate>
+		</ItemsControl>
+	  </Grid>
+	  <Grid Margin="0 10 0 0">
 		  <Grid.ColumnDefinitions>
 			  <ColumnDefinition Width="0.3*"/>
-			  <ColumnDefinition Width="0.7*"/>
+			  <ColumnDefinition Width="0.5*"/>
+			  <ColumnDefinition Width="0.2*"/>
 		  </Grid.ColumnDefinitions>
-        <ListBox ItemsSource="{Binding LegendItems}" MaxWidth="200" Grid.Column="0">
-          <ListBox.ItemTemplate>
-            <DataTemplate>
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Ellipse Width="15" Height="15" Fill="{Binding Color}"/>
-                <TextBlock Text="{Binding ClassName}"/>
-              </StackPanel>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-		  <Button HorizontalAlignment="Stretch"
+		<ListBox ItemsSource="{Binding LegendItems}" MaxWidth="200" Grid.Column="0">
+		  <ListBox.ItemTemplate>
+			<DataTemplate>
+			  <StackPanel Orientation="Horizontal" Spacing="5">
+				<Ellipse Width="15" Height="15" Fill="{Binding Color}"/>
+				<TextBlock Text="{Binding ClassName}"/>
+			  </StackPanel>
+			</DataTemplate>
+		  </ListBox.ItemTemplate>
+		</ListBox>
+		  <StackPanel Grid.Column="1">
+			  <Button HorizontalAlignment="Stretch"
 				VerticalContentAlignment="Center"
 				HorizontalContentAlignment="Center"
 				Content="Сохранить изменения"
 				IsEnabled="{Binding BoxPositionChanged}"
-				Command="{Binding SaveBoxPositionCommand}"
-				Grid.Column="1">
-		  </Button>
-      </Grid>
-    </StackPanel>
+				Command="{Binding SaveBoxPositionCommand}" />
+		  </StackPanel>
+	  </Grid>
+	</StackPanel>
   </Grid>
   
 </UserControl>

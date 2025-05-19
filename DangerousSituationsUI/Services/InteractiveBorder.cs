@@ -12,11 +12,14 @@ namespace DangerousSituationsUI.Services
         private bool _isPressed;
         private bool _isResizing;
         private bool _isDragging;
-        private Point _initialPosition; // Начальная позиция относительно контейнера
-        private Point _initialSize; // Начальный размер границы
-        private Point _positionInBlock; // Позиция указателя внутри границы
+        private Point _topLeft;
+        private Point _initialSize;
+        private Point _positionInBlock;
+        private int _image_height;
+        private int _image_width;
+        private int _image_offset;
         private TranslateTransform _transform = null!;
-        
+
         public event EventHandler<BorderMovedEventArgs> BorderMoved;
         public event EventHandler<BorderResizedEventArgs> BorderResized;
         public bool IsPressed
@@ -24,28 +27,52 @@ namespace DangerousSituationsUI.Services
             get => _isPressed;
             set => _isPressed = value;
         }
+        public Point TopLeft
+        {
+            get => _topLeft;
+            set
+            {
+                _topLeft = value;
+                Canvas.SetLeft(this, value.X);
+                Canvas.SetTop(this, value.Y);
+            }
+        }
+        public int ImageHeight
+        {
+            get => _image_height;
+            set => _image_height = value;
+        }
+        public int ImageWidth
+        {
+            get => _image_width;
+            set => _image_width = value;
+        }
+        public int ImageOffset
+        {
+            get => _image_offset;
+            set => _image_offset = value;
+        }
 
         protected override void OnPointerPressed(PointerPressedEventArgs e)
         {
             IsPressed = true;
 
-            // Сохраняем начальную позицию границы относительно контейнера
-            _initialPosition = new Point(Canvas.GetLeft(this), Canvas.GetTop(this));
-            _positionInBlock = e.GetPosition(this);
+            var parent = Parent as Canvas;
+            if (parent != null)
+                _positionInBlock = e.GetPosition(parent) - new Point(Canvas.GetLeft(this), Canvas.GetTop(this));
 
-            if (e.Source is Rectangle rect) // Если нажали на "ручку"
+            if (e.Source is Rectangle rect)
             {
                 _isResizing = true;
                 _initialSize = new Point(Width, Height);
             }
-            else // Если нажали на саму границу
+            else
             {
                 _isDragging = true;
             }
 
             base.OnPointerPressed(e);
         }
-
         protected override void OnPointerReleased(PointerReleasedEventArgs e)
         {
             IsPressed = false;
@@ -56,14 +83,13 @@ namespace DangerousSituationsUI.Services
             {
                 BorderMoved(this, new BorderMovedEventArgs
                 {
-                    OffsetX = _initialPosition.X + _transform.X,
-                    OffsetY = _initialPosition.Y + _transform.Y
+                    OffsetX = TopLeft.X + _transform.X,
+                    OffsetY = TopLeft.Y + _transform.Y,
                 });
             }
 
             base.OnPointerReleased(e);
         }
-
         protected override void OnPointerMoved(PointerEventArgs e)
         {
             if (!IsPressed)
@@ -74,62 +100,114 @@ namespace DangerousSituationsUI.Services
 
             if (_isResizing)
             {
-                var currentPointerPosition = e.GetPosition(this);
-                var deltaX = currentPointerPosition.X - _positionInBlock.X;
-                var deltaY = currentPointerPosition.Y - _positionInBlock.Y;
+                var parent = Parent as Canvas;
+                var pointerOnCanvas = e.GetPosition(parent);
+                var handle = e.Source as Rectangle;
 
-                double newWidth = Math.Max(10, _initialSize.X + deltaX);
-                double newHeight = Math.Max(10, _initialSize.Y + deltaY);
+                const int minWidth = 20;
+                const int minHeight = 20;
 
-                Width = newWidth;
-                Height = newHeight;
+                double left = Canvas.GetLeft(this);
+                double top = Canvas.GetTop(this);
+                double right = left + Width;
+                double bottom = top + Height;
+
+                double newLeft = left, newTop = top, newRight = right, newBottom = bottom;
+
+                switch (handle.Name)
+                {
+                    case "BottomRight":
+                        newRight = Math.Min(pointerOnCanvas.X, ImageOffset + ImageWidth);
+                        newBottom = Math.Min(pointerOnCanvas.Y, ImageHeight);
+                        break;
+                    case "BottomLeft":
+                        newLeft = Math.Max(pointerOnCanvas.X, ImageOffset);
+                        newBottom = Math.Min(pointerOnCanvas.Y, ImageHeight);
+                        break;
+                    case "TopRight":
+                        newRight = Math.Min(pointerOnCanvas.X, ImageOffset + ImageWidth);
+                        newTop = Math.Max(pointerOnCanvas.Y, 0);
+                        break;
+                    case "TopLeft":
+                        newLeft = Math.Max(pointerOnCanvas.X, ImageOffset);
+                        newTop = Math.Max(pointerOnCanvas.Y, 0);
+                        break;
+                }
+
+                if (newRight - newLeft < minWidth)
+                {
+                    if (handle.Name == "TopLeft" || handle.Name == "BottomLeft")
+                        newLeft = newRight - minWidth;
+                    else
+                        newRight = newLeft + minWidth;
+                }
+                if (newBottom - newTop < minHeight)
+                {
+                    if (handle.Name == "TopLeft" || handle.Name == "TopRight")
+                        newTop = newBottom - minHeight;
+                    else
+                        newBottom = newTop + minHeight;
+                }
+
+                newLeft = Math.Max(newLeft, ImageOffset);
+                newRight = Math.Min(newRight, ImageOffset + ImageWidth);
+                newTop = Math.Max(newTop, 0);
+                newBottom = Math.Min(newBottom, ImageHeight);
+
+                double width = newRight - newLeft;
+                double height = newBottom - newTop;
+
+                Canvas.SetLeft(this, newLeft);
+                Canvas.SetTop(this, newTop);
+                Width = width;
+                Height = height;
 
                 BorderResized?.Invoke(this, new BorderResizedEventArgs
                 {
-                    NewWidth = newWidth,
-                    NewHeight = newHeight
+                    NewWidth = width,
+                    NewHeight = height,
+                    NewX = newLeft,
+                    NewY = newTop
                 });
             }
-            else if (_isDragging)
+
+            if (_isDragging)
             {
-                var currentPointerPosition = e.GetPosition((Visual?)Parent);
+                var parent = Parent as Canvas;
+                var pointerOnCanvas = e.GetPosition(parent);
 
-                var deltaX = currentPointerPosition.X - _initialPosition.X;
-                var deltaY = currentPointerPosition.Y - _initialPosition.Y;
+                double offsetX = _positionInBlock.X;
+                double offsetY = _positionInBlock.Y;
 
-                _transform = new TranslateTransform(deltaX, deltaY);
-                RenderTransform = _transform;
+                double newLeft = pointerOnCanvas.X - offsetX;
+                double newTop = pointerOnCanvas.Y - offsetY;
+
+                newLeft = Math.Max(ImageOffset, Math.Min(newLeft, ImageOffset + ImageWidth - Width));
+                newTop = Math.Max(0, Math.Min(newTop, ImageHeight - Height));
+
+                Canvas.SetLeft(this, newLeft);
+                Canvas.SetTop(this, newTop);
 
                 BorderMoved?.Invoke(this, new BorderMovedEventArgs
                 {
-                    OffsetX = _initialPosition.X + deltaX,
-                    OffsetY = _initialPosition.Y + deltaY
+                    OffsetX = newLeft,
+                    OffsetY = newTop
                 });
             }
+
             base.OnPointerMoved(e);
         }
-
-        public Point GetCurrentOffset()
-        {
-            return _transform != null ? new Point(_initialPosition.X + _transform.X, _initialPosition.Y + _transform.Y) : _initialPosition;
-        }
-
-        public void ResetTransform()
-        {
-            _transform = new TranslateTransform(0, 0);
-            RenderTransform = _transform;
-        }
     }
-
     public class BorderMovedEventArgs : EventArgs
     {
         public double OffsetX { get; set; }
         public double OffsetY { get; set; }
     }
-
     public class BorderResizedEventArgs : EventArgs
     {
         public double NewWidth { get; set; }
         public double NewHeight { get; set; }
+        public double NewX { get; set; }
+        public double NewY { get; set; }
     }
 }
