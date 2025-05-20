@@ -445,7 +445,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
         public override string ToString()
         {
-            return VideoName;
+            return $"{VideoName} ({VideoId.ToString()})";
         }
     }
     #endregion
