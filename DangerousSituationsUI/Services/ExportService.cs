@@ -11,9 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Reactive.Linq;
 using Avalonia.Collections;
 using System.Collections.Generic;
-using ClassLibrary.Database.Models;
-using Avalonia.Media.Imaging;
-using SkiaSharp;
 
 
 namespace DangerousSituationsUI.Services
@@ -21,24 +18,29 @@ namespace DangerousSituationsUI.Services
     public class ExportService
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly FilesService _filesService;
 
-        public ExportService(IServiceProvider serviceProvider) => _serviceProvider = serviceProvider;
+        public ExportService(IServiceProvider serviceProvider, FilesService filesService)
+        {
+            _serviceProvider = serviceProvider;
+            _filesService = filesService;
+        }
 
         public async Task<(string, string)?> ExportClipAndDetectionsAsync(
             Guid videoId,
             string originalVideoPath,
             TimeSpan startTime,
-            TimeSpan endTime,
-            FilesService filesService)
+            TimeSpan endTime)
         {
             string suggestedName = $"event_{Path.GetFileNameWithoutExtension(originalVideoPath)}.avi";
-            string? outputPath = await filesService.PickExportPathAsync(suggestedName);
+            string? outputPath = await _filesService.PickExportPathAsync(suggestedName);
 
             if (string.IsNullOrEmpty(outputPath))
                 return null;
 
             string clipPath = await CutClipAsync(originalVideoPath, outputPath, startTime, endTime);
-            var detections = await GetClipDetectionsAsync(videoId, startTime, endTime);
+
+            var detections = await GetClipDetectionsAsync(videoId, startTime, endTime, normalizeToClip: true);
 
             string jsonPath = Path.ChangeExtension(clipPath, ".json");
 
@@ -48,16 +50,6 @@ namespace DangerousSituationsUI.Services
             return (clipPath, jsonPath);
         }
 
-
-        public async Task<Guid?> GetVideoIdByNameAsync(string videoName)
-        {
-            using var db = _serviceProvider.GetRequiredService<ApplicationContext>();
-
-            return await db.Videos
-                .Where(v => v.VideoName == videoName)
-                .Select(v => (Guid?)v.VideoId)
-                .FirstOrDefaultAsync();
-        }
 
         private async Task<string> CutClipAsync(string originalPath, string outputPath, TimeSpan startTime, TimeSpan endTime)
         {
@@ -73,8 +65,11 @@ namespace DangerousSituationsUI.Services
             return outputPath;
         }
 
-
-        private async Task<List<JsonItem>> GetClipDetectionsAsync(Guid videoId, TimeSpan startTime, TimeSpan endTime)
+        private async Task<VideoExportItem> GetClipDetectionsAsync(
+            Guid videoId,
+            TimeSpan startTime,
+            TimeSpan endTime,
+            bool normalizeToClip)
         {
             using var db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
@@ -98,7 +93,6 @@ namespace DangerousSituationsUI.Services
                 .ToListAsync();
 
             var grouped = detections.GroupBy(d => d.FrameId);
-
             var jsonItems = new List<JsonItem>();
 
             foreach (var group in grouped)
@@ -156,44 +150,20 @@ namespace DangerousSituationsUI.Services
 
                 jsonItems.Add(new JsonItem
                 {
-                    FrameTime = frameTime,
+                    FrameTime = normalizeToClip ? frameTime - startTime : frameTime,
                     RectItems = rectItems,
                     FigItems = figItems
                 });
             }
 
-            return jsonItems.OrderBy(j => j.FrameTime).ToList();
-        }
-
-        public async Task<List<BitmapModel>> GetFramesForDetectionsAsync(string videoName, List<JsonItem> jsonItems)
-        {
-            using var db = _serviceProvider.GetRequiredService<ApplicationContext>();
-            var videoId = await GetVideoIdByNameAsync(videoName);
-            if (videoId == null) return new List<BitmapModel>();
-
-            var jsonFrameTimes = jsonItems.Select(j => j.FrameTime).ToList();
-
-            var allFrames = await db.Frames
-                .Where(f => f.VideoId == videoId.Value)
-                .ToListAsync();
-
-            var matchedFrames = jsonFrameTimes
-                .Select(time => allFrames.FirstOrDefault(f => f.FrameTime== time))
-                .Where(f => f != null)
-                .Distinct()
-                .ToList();
-
-            var bitmapModels = matchedFrames.Select(f =>
+            jsonItems = jsonItems.OrderBy(j => j.FrameTime).ToList();
+            var videoExportItem = new VideoExportItem
             {
-                using var ms = new MemoryStream(f.FrameData);
-                return new BitmapModel
-                {
-                    frame = new Bitmap(ms),
-                    timeSpan = f.FrameTime
-                };
-            }).ToList();
+                ClipStart = startTime,
+                Items = jsonItems
+            };
 
-            return bitmapModels;
+            return videoExportItem;
         }
 
     }

@@ -348,9 +348,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                 _videoPlayerViewModel.VideoItems = new ObservableCollection<VideoItem>();
                 await InitFramesAsync(file);
                 CanSwitchImages = true;
-                FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
+                    FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
+                }
             }
-        }
         finally
         {
             AreButtonsEnabled = true;
@@ -397,47 +397,55 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         if (File.Exists(jsonPath))
         {
-            Log.Debug("Loading from JSON file");
-            LogJournalViewModel.logString += "Loading from JSON file\n";
-            var json = await File.ReadAllTextAsync(jsonPath);
-            var jsonItems = JsonSerializer.Deserialize<List<JsonItem>>(json);
-            frameBitmapModels = await _exportService.GetFramesForDetectionsAsync(file.Name, jsonItems);
-
-            foreach (var item in jsonItems)
+            try
             {
-                var matchingFrame = frameBitmapModels.FirstOrDefault(b => b.timeSpan == item.FrameTime);
-                if (matchingFrame == null) continue;
+                Log.Debug("Loading from JSON file.");
+                LogJournalViewModel.logString += $"Loading from JSON file {jsonPath}.\n";
 
-                itemsLists.Add(item.RectItems);
-                figLists.Add(item.FigItems);
+                var json = await File.ReadAllTextAsync(jsonPath);
+                if (string.IsNullOrWhiteSpace(json))
+                    throw new Exception("JSON file is empty.");
 
-                frameNDetections.Add(new FrameNDetections
+                var videoExportItem = JsonSerializer.Deserialize<VideoExportItem>(json);
+                if (videoExportItem == null)
+                    throw new Exception("Deserialized VideoExportItem is null.");
+
+                var jsonItems = videoExportItem.Items ?? throw new Exception("No detection items found in JSON.");
+
+                frameBitmapModels = await _videoService.GetFramesFromClipAndJsonAsync(file.Path.LocalPath, videoExportItem);
+
+                foreach (var item in jsonItems)
                 {
-                    Frame = matchingFrame,
-                    Detections = item.RectItems,
-                    Figs = item.FigItems
+                    var matchingFrame = frameBitmapModels.FirstOrDefault(b => b.timeSpan == item.FrameTime);
+                    if (matchingFrame == null) continue;
+
+                    itemsLists.Add(item.RectItems);
+                    figLists.Add(item.FigItems);
+
+                    frameNDetections.Add(new FrameNDetections
+                    {
+                        Frame = matchingFrame,
+                        Detections = item.RectItems,
+                        Figs = item.FigItems
+                    });
+                }
+
+                FrameItems?.Add(new FrameModel
+                {
+                    Name = file.Name,
+                    frames = frameBitmapModels,
+                    rectitems = itemsLists,
+                    figitems = figLists,
+                    id = count++
                 });
+
             }
-
-            FrameItems?.Add(new FrameModel
+            catch (Exception ex)
             {
-                Name = file.Name,
-                frames = frameBitmapModels,
-                rectitems = itemsLists,
-                figitems = figLists,
-                id = count++
-            });
-
-            var videoId = await _exportService.GetVideoIdByNameAsync(file.Name);
-
-            _videoPlayerViewModel.VideoItems.Add(new VideoItem
-            {
-                Guid = videoId.Value,
-                Name = file.Name,
-                Path = file.Path.LocalPath
-            });
-
-
+                Log.Error(ex, "Error loading JSON detections");
+                LogJournalViewModel.logString += $"Exception: {ex.Message}\n";
+                ShowMessageBox("Error", $"Ошибка загрузки из JSON.\n{ex.Message}");
+            }
         }
 
         else
@@ -469,25 +477,42 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                 id = count++
             });
 
-            _ = Task.Run(async () =>
-            {
-                await SaveDataIntoDatabase(file, frameNDetections);
-            });
-
-
             stopwatch.Stop();
             ShowMessageBox("Inference Time", $"Время обработки файла видео: {Math.Round(stopwatch.Elapsed.TotalSeconds, 2)}\n" +
                 $"FPS: {Math.Round(totalFiles / stopwatch.Elapsed.TotalSeconds, 2)}");
         }
 
-        _frames = frameBitmapModels.Select(bm => bm.frame).ToList();
+        _ = Task.Run(async () =>
+        {
+            await SaveDataIntoDatabase(file, frameNDetections);
+        });
+
+        if (frameBitmapModels != null)
+        {
+            _frames = frameBitmapModels.Select(bm => bm.frame).ToList();
+        }
+        else
+        {
+            Log.Error("No frame bitmaps were loaded.");
+            LogJournalViewModel.logString += "Error: No frame bitmaps were loaded.\n";
+            return;
+        }
+
         _videoFile = file;
         _rectItemsLists = itemsLists;
         _figItemsLists = figLists;
-
         CurrentFileName = file.Name;
-        _currentNumberOfFrame = 0;
-        SelectedFrameItem = FrameItems[0];
+
+        if (FrameItems != null && FrameItems.Count > 0)
+        {
+            SelectedFrameItem = FrameItems[0];
+            _currentNumberOfFrame = 0;
+        }
+        else
+        {
+            Log.Error("No frames were loaded.");
+            LogJournalViewModel.logString += "Error: No frames were loaded.\n";
+        }
         Log.Debug("MainViewModel.InitFramesAsync: End");
         LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: End\n";
 

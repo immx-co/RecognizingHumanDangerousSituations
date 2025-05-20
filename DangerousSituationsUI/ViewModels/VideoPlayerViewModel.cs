@@ -238,7 +238,6 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         PauseCommand = ReactiveCommand.Create(PauseVideo);
         StopCommand = ReactiveCommand.Create(StopVideo);
         ExportClipCommand = ReactiveCommand.CreateFromTask(ExportClipAsync);
-        _filesService = filesService;
     }
     #endregion
 
@@ -276,7 +275,7 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
 
         if (ClipEndTime <= ClipStartTime)
         {
-            ShowMessageBox("Error", "Время начала превышает время конца.");
+            ShowMessageBox("Error", "Время начала должно быть меньше времени конца.");
             return;
         }
 
@@ -294,8 +293,7 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
                 SelectedVideoItem.Guid,
                 SelectedVideoItem.Path,
                 ClipStartTime,
-                ClipEndTime,
-                _filesService
+                ClipEndTime
             );
 
             if (result is null)
