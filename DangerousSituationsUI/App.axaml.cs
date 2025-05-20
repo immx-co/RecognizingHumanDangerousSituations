@@ -131,10 +131,9 @@ namespace DangerousSituationsUI
                 using (var scope = servicesProvider.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
-
                 }
 
-                    servicesProvider.GetRequiredService<HubConnectionWrapper>().Start();
+                servicesProvider.GetRequiredService<HubConnectionWrapper>().Start();
                 Log.Logger.Information("Оформлено подключение к хабу.");
                 LogJournalViewModel.logString += "Оформлено подключение к хабу.\n";
                 desktop.MainWindow = new NavigationWindow
