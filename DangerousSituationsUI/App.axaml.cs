@@ -82,6 +82,7 @@ namespace DangerousSituationsUI
                 servicesCollection.AddSingleton<AuthorizationViewModel>();
                 servicesCollection.AddSingleton<LogJournalViewModel>();
                 servicesCollection.AddSingleton<VideoPlayerViewModel>();
+                servicesCollection.AddTransient<ExportService>();
 
                 servicesCollection.AddSingleton<ConfigurationService>();
                 servicesCollection.AddTransient<FilesService>();
