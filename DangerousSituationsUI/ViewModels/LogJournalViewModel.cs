@@ -36,6 +36,13 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
     }
     #endregion
 
+    #region Public Methods
+    public void ClearUI()
+    {
+        logString = "";
+    }
+    #endregion
+
     #region Contructor
     public LogJournalViewModel(IScreen screen, IServiceProvider serviceProvider)
     {

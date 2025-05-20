@@ -131,6 +131,11 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     {
         CheckDisposedCancelletionToken();
         Router.Navigate.Execute(_serviceProvider.GetRequiredService<InputApplicationViewModel>());
+
+        _serviceProvider.GetRequiredService<MainViewModel>().ClearUI();
+        _serviceProvider.GetRequiredService<VideoPlayerViewModel>().ClearUI();
+        _serviceProvider.GetRequiredService<LogJournalViewModel>().ClearUI();
+        _serviceProvider.GetRequiredService<VideoEventJournalViewModel>().ClearUI();
     }
     private void NavigateToLogJournalWindow()
     {
