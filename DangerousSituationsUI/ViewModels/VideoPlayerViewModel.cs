@@ -459,6 +459,17 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
         var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandard(caption, message);
         messageBoxStandardWindow.ShowAsync();
     }
+    public void ClearUI()
+    {
+        StopVideo();
+        AreButtonsEnabled = false;
+        VideoItems = new();
+        SetPauseFlag(false);
+        SetPlayFlag(false);
+        SetStopFlag(false);
+        VideoTime = GetVideoTimeString(0);
+
+    }
     #endregion
 
     #region Classes

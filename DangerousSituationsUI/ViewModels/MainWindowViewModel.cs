@@ -813,7 +813,18 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandard(caption, message);
         messageBoxStandardWindow.ShowAsync();
     }
-
+    public void ClearUI()
+    {
+        ResetUI();
+        AreButtonsEnabled = false;
+        CanSwitchImages = false;
+        _frameItems = new();
+        _currentImage = null;
+        _frames = new();
+        AreConnectButtonEnabled = true;
+        AreButtonsEnabled = false;
+        _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
+    }
     #endregion
 
     #region Classes

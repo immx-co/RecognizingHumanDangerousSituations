@@ -386,18 +386,15 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         }).ToListAsync();
 
         VideoItems = videos;
-        try
-        {
-            SelectedVideoItem = VideoItems[0];
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            ;
-        }
     }
 
     public void ClearUI()
     {
+        SelectedEventResult = new();
+        SelectedVideoItem = new();
+        CurrentImage = null;
+        LegendItems = new();
+        RectItems = new();
         Log.Debug("VideoEventJournalViewModel.ClearUI: Start");
         LogJournalViewModel.logString += "VideoEventJournalViewModel.ClearUI: Start\n";
         Clear();
@@ -410,6 +407,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             ;
         }
         EventResults.Clear();
+        BoxPositionChanged = false;
         SelectedVideoItem = null;
         Log.Debug("VideoEventJournalViewModel.ClearUI: End");
         LogJournalViewModel.logString += "VideoEventJournalViewModel.ClearUI: End\n";
