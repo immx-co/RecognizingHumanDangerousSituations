@@ -915,6 +915,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     public void ClearUI()
     {
         ResetUI();
+        _telegramBotApi.ChatId = null;
         AreButtonsEnabled = false;
         CanSwitchImages = false;
         _frameItems = new();
@@ -923,6 +924,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         AreConnectButtonEnabled = true;
         AreButtonsEnabled = false;
         _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
+        _serviceProvider.GetRequiredService<NavigationViewModel>().TgBotConnectionStatus = Brushes.Red;
     }
     #endregion
 

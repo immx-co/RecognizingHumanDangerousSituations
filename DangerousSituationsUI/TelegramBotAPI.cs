@@ -46,7 +46,7 @@ public class TelegramBotAPI : IDisposable
     #region Properties
     public bool IsRunning => _isRunning;
 
-    public long? ChatId => _chatId;
+    public long? ChatId { get => _chatId; set => _chatId = value; }
     #endregion
 
     #region Constructor
