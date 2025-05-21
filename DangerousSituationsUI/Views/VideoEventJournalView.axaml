@@ -30,7 +30,7 @@
 				GridLinesVisibility="All"   
 				BorderThickness="1" 
 				BorderBrush="Gray"
-				CanUserSortColumns="False"
+				CanUserSortColumns="True"
 				CanUserResizeColumns="True"
 				MaxHeight="600">
 				<DataGrid.Styles>
