@@ -816,6 +816,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     public void ClearUI()
     {
         ResetUI();
+        _telegramBotApi.ChatId = null;
         AreButtonsEnabled = false;
         CanSwitchImages = false;
         _frameItems = new();
