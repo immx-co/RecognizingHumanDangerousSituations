@@ -825,6 +825,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         AreConnectButtonEnabled = true;
         AreButtonsEnabled = false;
         _serviceProvider.GetRequiredService<NavigationViewModel>().ConnectionStatus = Brushes.Red;
+        _serviceProvider.GetRequiredService<NavigationViewModel>().TgBotConnectionStatus = Brushes.Red;
     }
     #endregion
 
