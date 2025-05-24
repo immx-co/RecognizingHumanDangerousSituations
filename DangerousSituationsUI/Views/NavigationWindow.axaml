@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
-				xmlns:rxui="http://reactiveui.net"
-				xmlns:app="clr-namespace:DangerousSituationsUI"
+        xmlns:rxui="http://reactiveui.net"
+        xmlns:app="clr-namespace:DangerousSituationsUI"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -13,97 +13,96 @@
         x:DataType="vm:NavigationViewModel"
         Icon="/Assets/avalonia-logo.ico">
 
-  <Grid>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="*" />
-    </Grid.RowDefinitions>
+  <Grid Background="{StaticResource LavenderGradient}">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
 
-    <Menu Grid.Row="0"
-          IsVisible="{Binding IsAppButtonsEnable}">
-      <MenuItem Header="Статус сервисов">
-        <StackPanel Orientation="Vertical">
-          <StackPanel Orientation="Horizontal"
-                      Margin="0, 0, 0, 20">
-            <TextBlock Text="Нейросетевой сервис: "
-                     FontWeight="Bold" />
-            <Ellipse Width="20"
-                     Height="20"
-                     Fill="{Binding ConnectionStatus}"/>
+      <Menu Grid.Row="0"
+            IsVisible="{Binding IsAppButtonsEnable}">
+        <MenuItem Header="Статус сервисов">
+          <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal" Margin="0, 0, 0, 20">
+              <TextBlock Text="Нейросетевой сервис: " FontWeight="Bold" />
+              <Ellipse Width="20" Height="20" Fill="{Binding ConnectionStatus}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="Телеграм бот: " FontWeight="Bold"/>
+              <Ellipse Width="20" Height="20" Fill="{Binding TgBotConnectionStatus}" />
+            </StackPanel>
           </StackPanel>
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Телеграм бот: " 
-                       FontWeight="Bold"/>
-            <Ellipse Width="20"
-                     Height="20"
-                     Fill="{Binding TgBotConnectionStatus}"/>
-          </StackPanel>
-          
-          
-        </StackPanel>
-      </MenuItem>
-    </Menu>
+        </MenuItem>
+      </Menu>
 
-    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="5">
-      <StackPanel.Styles>
-        <Style Selector="StackPanel > :is(Control)">
-          <Setter Property="Margin" Value="2"/>
-        </Style>
-        <Style Selector="StackPanel > TextBlock">
-          <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-      </StackPanel.Styles>
+      <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="5">
+        <StackPanel.Styles>
+          <Style Selector="StackPanel > :is(Control)">
+            <Setter Property="Margin" Value="2"/>
+          </Style>
+          <Style Selector="StackPanel > TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+          </Style>
+        </StackPanel.Styles>
 
-      <Button Content="Главное окно"
-              Command="{Binding GoInputApplicationWindow}"
-              IsEnabled="True"/>
-      
-      <Button Content="Приложение"
-              Command="{Binding GoMainWindow}"
-              IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
+        <ToggleButton Content="Выход"
+                      Command="{Binding GoInputApplicationWindow}"
+                      IsChecked="{Binding IsInputApplicationWindowActive}"
+                      IsVisible="{Binding IsAppButtonsEnable}"/>
 
-	    <Button Content="Проигрыватель"
-			        Command="{Binding GoVideoPlayerWindow}"
-			        IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
-        
-      <Button Content="Журнал событий"
-              Command="{Binding GoVideoEventJournalWindow}"
-              IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
-      
-      <Button Content="Конфигурация"
-              Command="{Binding GoConfiguration}"
-              IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
-      
-		  <Button Content="Журнал логов"
-				      Command="{Binding GoLogJournalWindow}"
-				      IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
+        <ToggleButton Content="Приложение"
+                      Command="{Binding GoMainWindow}"
+                      IsChecked="{Binding IsMainWindowActive}"
+                      IsEnabled="{Binding IsAppButtonsEnable}"
+                      IsVisible="{Binding IsAppButtonsEnable}" />
 
-      <Button Content="Пользователи"
-              Command="{Binding GoUserManagement}"
-              IsEnabled="{Binding IsAdminPrivilege}"
-              IsVisible="{Binding IsAdminPrivilege}"/>
+        <ToggleButton Content="Проигрыватель"
+                      Command="{Binding GoVideoPlayerWindow}"
+                      IsChecked="{Binding IsVideoPlayerWindowActive}"
+                      IsEnabled="{Binding IsAppButtonsEnable}"
+                      IsVisible="{Binding IsAppButtonsEnable}" />
 
-      <TextBlock Text="{Binding CurrentUser}"
-                 Margin="20,0,5,0"
-                 VerticalAlignment="Center"
-                 HorizontalAlignment="Right"
-                 FontWeight="Bold"
-                 IsVisible="{Binding IsAppButtonsEnable}"/>
-    </StackPanel>
+        <ToggleButton Content="Журнал событий"
+                      Command="{Binding GoVideoEventJournalWindow}"
+                      IsChecked="{Binding IsVideoEventJournalWindowActive}"
+                      IsEnabled="{Binding IsAppButtonsEnable}"
+                      IsVisible="{Binding IsAppButtonsEnable}" />
 
-    <rxui:RoutedViewHost Grid.Row="2" Router="{Binding Router}">
-      <rxui:RoutedViewHost.DefaultContent>
-      </rxui:RoutedViewHost.DefaultContent>
-      <rxui:RoutedViewHost.ViewLocator>
-        <!-- See AppViewLocator.cs section below -->
-        <app:AppViewLocator />
-      </rxui:RoutedViewHost.ViewLocator>
-    </rxui:RoutedViewHost>
+        <ToggleButton Content="Конфигурация"
+                      Command="{Binding GoConfiguration}"
+                      IsChecked="{Binding IsConfigurationWindowActive}"
+                      IsEnabled="{Binding IsAppButtonsEnable}"
+                      IsVisible="{Binding IsAppButtonsEnable}" />
+
+        <ToggleButton Content="Журнал логов"
+                      Command="{Binding GoLogJournalWindow}"
+                      IsChecked="{Binding IsLogJournalWindowActive}"
+                      IsEnabled="{Binding IsAppButtonsEnable}"
+                      IsVisible="{Binding IsAppButtonsEnable}" />
+
+        <ToggleButton Content="Пользователи"
+                      Command="{Binding GoUserManagement}"
+                      IsChecked="{Binding IsUserManagementWindowActive}"
+                      IsEnabled="{Binding IsAdminPrivilege}"
+                      IsVisible="{Binding IsAdminPrivilege}" />
+
+        <TextBlock Text="{Binding CurrentUser}"
+                   Margin="20,0,5,0"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Right"
+                   FontWeight="Bold"
+                   IsVisible="{Binding IsAppButtonsEnable}" />
+      </StackPanel>
+
+      <rxui:RoutedViewHost Grid.Row="2" Router="{Binding Router}">
+        <rxui:RoutedViewHost.DefaultContent>
+        </rxui:RoutedViewHost.DefaultContent>
+        <rxui:RoutedViewHost.ViewLocator>
+          <app:AppViewLocator />
+        </rxui:RoutedViewHost.ViewLocator>
+      </rxui:RoutedViewHost>
+    </Grid>
   </Grid>
 </Window>

@@ -8,6 +8,7 @@
         Title="Новый пользователь"
         Width="400" Height="300">
 
+  <Grid Background="{StaticResource LavenderGradient}">
     <StackPanel Margin="20" Spacing="10">
         <TextBox Watermark="Имя пользователя" Text="{Binding Username}"/>
         <TextBox Watermark="Email" Text="{Binding Email}"/>
@@ -20,4 +21,5 @@
             <Button Content="Сохранить" Command="{Binding SaveCommand}"/>
         </StackPanel>
     </StackPanel>
+  </Grid>
 </Window>

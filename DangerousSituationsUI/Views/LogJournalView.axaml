@@ -7,15 +7,17 @@
              x:Class="DangerousSituationsUI.Views.LogJournalView"
              x:DataType="vm:LogJournalViewModel">
 
-	<Grid>
-		<StackPanel Width="600"
-						HorizontalAlignment="Left"
-						Margin="20">
-			<StackPanel Margin="0 0 0 10">
-				<Label Content="Журнал логирования:"/>
-				<TextBox Margin="0 0 0 10" Text="{Binding LogString}" AcceptsReturn="True" TextWrapping="WrapWithOverflow" Height="700" Width="600"></TextBox>
-			</StackPanel>
-		</StackPanel>
-	</Grid>
+  <Grid Background="{StaticResource LavenderGradient}">
+    <Grid>
+      <StackPanel Width="600"
+              HorizontalAlignment="Left"
+              Margin="20">
+        <StackPanel Margin="0 0 0 10">
+          <Label Content="Журнал логирования:"/>
+          <TextBox Margin="0 0 0 10" Text="{Binding LogString}" AcceptsReturn="True" TextWrapping="WrapWithOverflow" Height="700" Width="600"></TextBox>
+        </StackPanel>
+      </StackPanel>
+    </Grid>
+  </Grid>
 
 </UserControl>

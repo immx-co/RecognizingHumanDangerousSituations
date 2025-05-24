@@ -7,7 +7,7 @@
              x:Class="DangerousSituationsUI.Views.ConfigurationView"
              x:DataType="vm:ConfigurationViewModel">
 
-  <Grid>
+  <Grid Background="{StaticResource LavenderGradient}">
     <StackPanel Width="400"
 					HorizontalAlignment="Left"
 					Margin="20">

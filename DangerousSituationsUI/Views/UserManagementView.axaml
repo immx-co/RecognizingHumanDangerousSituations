@@ -7,45 +7,48 @@
              x:Class="DangerousSituationsUI.Views.UserManagementView"
              x:DataType="vm:UserManagementViewModel">
 
-  <Grid>
-    <StackPanel Orientation="Horizontal">
-      <DataGrid ItemsSource="{Binding UserItems}" 
-                SelectedItem="{Binding SelectedUser}" 
-                AutoGenerateColumns="False"
-                Width="500"
-                Margin="20"
-                MaxHeight="600"
-                GridLinesVisibility="All"   
-		            BorderThickness="1" 
-	              BorderBrush="Gray"
-                VerticalAlignment="Top">
-        <DataGrid.Columns>
-          <DataGridTextColumn Header="Пользователь" Binding="{Binding UserName}" Width="*" IsReadOnly="True"/>
-          <DataGridTemplateColumn Header="Администратор" Width="*">
-            <DataGridTemplateColumn.CellTemplate>
-              <DataTemplate>
-                <CheckBox IsChecked="{Binding UserAdmin}"
-                          HorizontalAlignment="Center"/>
-              </DataTemplate>
-            </DataGridTemplateColumn.CellTemplate>
-            <DataGridTemplateColumn.CellEditingTemplate>
-              <DataTemplate>
-                <CheckBox IsChecked="{Binding UserAdmin}"
-                          HorizontalAlignment="Center"/>
-              </DataTemplate>
-            </DataGridTemplateColumn.CellEditingTemplate>
-          </DataGridTemplateColumn>
-        </DataGrid.Columns>
-      </DataGrid>
-      <StackPanel Margin="20">
-        <Button Name="AddUserButton"
-                Content="Создать"
-                Command="{Binding AddUserCommand}"
-                Margin="10"/>
-        <Button Content="Удалить"
-                Command="{Binding DeleteUserCommand}"
-                Margin="10"/>
+  <Grid Background="{StaticResource LavenderGradient}">
+    <Grid>
+      <StackPanel Orientation="Horizontal">
+        <DataGrid ItemsSource="{Binding UserItems}"
+                  SelectedItem="{Binding SelectedUser}"
+                  AutoGenerateColumns="False"
+                  Width="500"
+                  Margin="20"
+                  MaxHeight="600"
+                  GridLinesVisibility="All"
+                  BorderThickness="1"
+                  BorderBrush="Gray"
+                  VerticalAlignment="Top">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Пользователь" Binding="{Binding UserName}" Width="*" IsReadOnly="True"/>
+            <DataGridTemplateColumn Header="Администратор" Width="*">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <CheckBox IsChecked="{Binding UserAdmin}"
+                            HorizontalAlignment="Center"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+              <DataGridTemplateColumn.CellEditingTemplate>
+                <DataTemplate>
+                  <CheckBox IsChecked="{Binding UserAdmin}"
+                            HorizontalAlignment="Center"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellEditingTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Margin="20">
+          <Button Name="AddUserButton"
+                  Content="Создать"
+                  Command="{Binding AddUserCommand}"
+                  Margin="10"/>
+          <Button Content="Удалить"
+                  Command="{Binding DeleteUserCommand}"
+                  Margin="10"/>
+        </StackPanel>
       </StackPanel>
-    </StackPanel>
+    </Grid>
   </Grid>
+
 </UserControl>

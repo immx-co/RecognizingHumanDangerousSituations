@@ -1,0 +1,19 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  
+  <!-- Brushes -->
+  <RadialGradientBrush x:Key="BlueBackground"
+                       Center="0.5,0.5"
+                       GradientOrigin="0.5,0.5"
+                       Radius="0.7">
+    <GradientStop Color="#FFE3F2FD" Offset="0"/>
+    <GradientStop Color="#FFBBDEFB" Offset="1"/>
+  </RadialGradientBrush>
+
+  <LinearGradientBrush x:Key="LavenderGradient" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#FFEDE7F6" Offset="0"/>
+    <GradientStop Color="#FFB39DDB" Offset="1"/>
+  </LinearGradientBrush>
+
+
+</ResourceDictionary>
