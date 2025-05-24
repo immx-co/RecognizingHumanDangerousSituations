@@ -104,21 +104,18 @@ namespace DangerousSituationsUI.ViewModels
             try
             {
                 var addUserViewModel = new AddUserViewModel();
-                while (true)
+                var result = _dialogService
+                    .ShowDialogAsync<AddUserViewModel, AddUserDialogResult>(addUserViewModel);
+
+                addUserViewModel.SaveCommand.Subscribe(async result =>
                 {
-                    var result = await _dialogService
-                        .ShowDialogAsync<AddUserViewModel, AddUserDialogResult>(addUserViewModel);
-
-                    if (result == null)
-                        break;
-
                     var (isValid, errorMessage) = await _userService
                         .ValidateNewUserAsync(result.Username, result.Email, result.Password);
-
+                    
                     if (!isValid)
                     {
                         await ShowMessageBox("Ошибка", errorMessage);
-                        continue;
+                        return;
                     }
 
                     await _userService.AddUserAsync(
@@ -127,11 +124,11 @@ namespace DangerousSituationsUI.ViewModels
                         result.Password,
                         result.IsAdmin
                     );
+
                     Log.Information($"Создан пользователь {result.Username}.");
                     LogJournalViewModel.logString += $"Создан пользователь {result.Username}.\n";
                     LoadUsers();
-                    break;
-                }
+                });
             }
             catch (Exception ex)
             {
