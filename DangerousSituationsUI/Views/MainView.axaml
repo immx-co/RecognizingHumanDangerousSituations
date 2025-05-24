@@ -11,236 +11,239 @@
 		<StreamGeometry x:Key="chevron_left_regular">M31.8839 8.36612C32.372 8.85427 32.372 9.64573 31.8839 10.1339L18.0178 24L31.8839 37.8661C32.372 38.3543 32.372 39.1457 31.8839 39.6339C31.3957 40.122 30.6043 40.122 30.1161 39.6339L15.3661 24.8839C14.878 24.3957 14.878 23.6043 15.3661 23.1161L30.1161 8.36612C30.6043 7.87796 31.3957 7.87796 31.8839 8.36612Z</StreamGeometry>
 		<StreamGeometry x:Key="chevron_right_regular">M16.1161 39.6339C15.628 39.1457 15.628 38.3543 16.1161 37.8661L29.9822 24L16.1161 10.1339C15.628 9.64573 15.628 8.85427 16.1161 8.36612C16.6043 7.87796 17.3957 7.87796 17.8839 8.36612L32.6339 23.1161C33.122 23.6043 33.122 24.3957 32.6339 24.8839L17.8839 39.6339C17.3957 40.122 16.6043 40.122 16.1161 39.6339Z</StreamGeometry>
 	</UserControl.Resources>
-	<Grid>
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="Auto" />
-			<ColumnDefinition Width="*" />
-		</Grid.ColumnDefinitions>
 
-		<StackPanel Grid.Column="0" Margin="10 20">
-			<ListBox ItemsSource="{Binding LegendItems}" MaxWidth="200">
-				<ListBox.ItemTemplate>
-					<DataTemplate>
-						<StackPanel Orientation="Horizontal" Spacing="5">
-							<Ellipse Width="15" Height="15" Fill="{Binding Color}"/>
-							<TextBlock Text="{Binding ClassName}" VerticalAlignment="Center"/>
-						</StackPanel>
-					</DataTemplate>
-				</ListBox.ItemTemplate>
-			</ListBox>
-		</StackPanel>
+  <Grid Background="{StaticResource SecondaryGradient}">
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
 
-		<StackPanel Grid.Column="1"
-					VerticalAlignment="Center"
-					HorizontalAlignment="Center">
-			<ComboBox Width="600"
-			   HorizontalAlignment="Stretch"
-			   Margin="0, 13, 0, 13"
-			   ItemsSource="{Binding FrameItems}"
-			   SelectedItem="{Binding SelectedFrameItem}"/>
-			<StackPanel HorizontalAlignment="Center"
-						Orientation="Horizontal"
-						Margin="0 0 0 10">
-				<TextBlock Text="{Binding CurrentFileName}"
-						   Margin="0 0 10 0"/>
-				<TextBlock Text="{Binding FrameTitle}"/>
-				<StackPanel Margin="20 0 0 0"
-							Orientation="Horizontal">
-					<ProgressBar Grid.Row="0"
-								 IsIndeterminate="True"
-								 HorizontalAlignment="Stretch"
-								 Height="10"
-								 IsVisible="{Binding IsLoading}"/>
-					<TextBlock Text="{Binding ProgressPercentage, StringFormat='{}{0}%'}"
-							   VerticalAlignment="Center"
-							   IsVisible="{Binding IsLoading}"
-							   Margin="5 0 0 0"/>
-				</StackPanel>
-			</StackPanel>
-			<StackPanel HorizontalAlignment="Center"
-									Orientation="Horizontal">
-				<Button Margin="0 0 5 0"
-								IsVisible="{Binding CanSwitchImages}"
-								Command="{Binding ImageBackCommand}">
-					<PathIcon Data="{StaticResource chevron_left_regular}"/>
-				</Button>
-				<Grid Width="800"
-							Height="400">
-					<Border Background="Gainsboro">
-						<Image MaxWidth="800"
-									 MaxHeight="400"
-									 Source="{Binding CurrentImage}"
-									 RenderOptions.BitmapInterpolationMode="HighQuality">
-						</Image>
-					</Border>
-					<ItemsControl ItemsSource="{Binding RectItems}">
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
-								<Canvas>
-									<Border BorderBrush="{Binding Color}"
-													BorderThickness="2"
-													Width="{Binding Width}"
-													Height="{Binding Height}"
-													Canvas.Left="{Binding X}"
-													Canvas.Top="{Binding Y}"/>
-								</Canvas>
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
-        	<ItemsControl ItemsSource="{Binding FigItems}">
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
-								<Canvas>
-                  <Ellipse Width="2" Height="2" 
-                           Canvas.Left="{Binding Nose[0]}" 
-                           Canvas.Top="{Binding Nose[1]}" 
-                           Fill="{Binding Color}" />
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding LeftEye[0]}"
-													 Canvas.Top="{Binding LeftEye[1]}"
-													 Fill="{Binding Color}" />
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding RightEye[0]}"
-													 Canvas.Top="{Binding RightEye[1]}"
-													 Fill="{Binding Color}" />
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding LeftEar[0]}"
-													 Canvas.Top="{Binding LeftEar[1]}"
-													 Fill="{Binding Color}" />
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding RightEar[0]}"
-													 Canvas.Top="{Binding RightEar[1]}"
-													 Fill="{Binding Color}" />
-                  
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding LeftShoulder[0]}"
-													 Canvas.Top="{Binding LeftShoulder[1]}"
-													 Fill="{Binding Color}" />
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding RightShoulder[0]}"
-													 Canvas.Top="{Binding RightShoulder[1]}"
-													 Fill="{Binding Color}" />
-                  <Line StartPoint="{Binding LeftShoulderPoint}" EndPoint="{Binding RightShoulderPoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-                  
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding LeftElbow[0]}"
-													 Canvas.Top="{Binding LeftElbow[1]}"
-													 Fill="{Binding Color}" />
-                  <Line StartPoint="{Binding LeftShoulderPoint}" EndPoint="{Binding LeftElbowPoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding RightElbow[0]}"
-													 Canvas.Top="{Binding RightElbow[1]}"
-													 Fill="{Binding Color}" />
-									<Line StartPoint="{Binding RightShoulderPoint}" EndPoint="{Binding RightElbowPoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-                  
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding LeftWrist[0]}"
-													 Canvas.Top="{Binding LeftWrist[1]}"
-													 Fill="{Binding Color}" />
-                  <Line StartPoint="{Binding LeftElbowPoint}" EndPoint="{Binding LeftWristPoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding RightWrist[0]}"
-													 Canvas.Top="{Binding RightWrist[1]}"
-													 Fill="{Binding Color}" />
-                  <Line StartPoint="{Binding RightElbowPoint}" EndPoint="{Binding RightWristPoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-                           
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding LeftHip[0]}"
-													 Canvas.Top="{Binding LeftHip[1]}"
-													 Fill="{Binding Color}" />
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding RightHip[0]}"
-													 Canvas.Top="{Binding RightHip[1]}"
-													 Fill="{Binding Color}" />
-									<Line StartPoint="{Binding LeftHipPoint}" EndPoint="{Binding RightHipPoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-                  
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding LeftKnee[0]}"
-													 Canvas.Top="{Binding LeftKnee[1]}"
-													 Fill="{Binding Color}" />
-                 <Line StartPoint="{Binding LeftHipPoint}" EndPoint="{Binding LeftKneePoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding RightKnee[0]}"
-													 Canvas.Top="{Binding RightKnee[1]}"
-													 Fill="{Binding Color}" />
-									<Line StartPoint="{Binding RightHipPoint}" EndPoint="{Binding RightKneePoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-                  
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding LeftAnkle[0]}"
-													 Canvas.Top="{Binding LeftAnkle[1]}"
-													 Fill="{Binding Color}" />
-									<Line StartPoint="{Binding LeftKneePoint}" EndPoint="{Binding LeftAnklePoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-                  <Ellipse Width="2" Height="2" 
-													 Canvas.Left="{Binding RightAnkle[0]}"
-													 Canvas.Top="{Binding RightAnkle[1]}"
-													 Fill="{Binding Color}" />
-                	<Line StartPoint="{Binding RightKneePoint}" EndPoint="{Binding RightAnklePoint}" 
-                        Stroke="Gray" StrokeThickness="1"/>
-								</Canvas>
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
-				</Grid>
-				<Button Margin="5 0 0 0"
-						IsVisible="{Binding CanSwitchImages}"
-						Command="{Binding ImageForwardCommand}">
-					<PathIcon Data="{StaticResource chevron_right_regular}"/>
-				</Button>
-			</StackPanel>
-      
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 20">
-        <Button Content="&lt;&lt;"
-                Margin="0 0 5 0"
-                Command="{Binding ImageRewindBackCommand}"
-                IsEnabled="{Binding RewindBackButtonEnabled}"/>
-        <Button Content="||"
-                Margin="0 0 5 0"
-                Command="{Binding ImageRewindPauseCommand}"
-                IsEnabled="{Binding RewindPauseButtonEnabled}"/>
-        <Button Content="&gt;&gt;"
-                Command="{Binding ImageRewindForwardCommand}"
-                IsEnabled="{Binding RewindForwardButtonEnabled}"/>
+      <StackPanel Grid.Column="0" Margin="10 20">
+        <ListBox ItemsSource="{Binding LegendItems}" MaxWidth="200">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Ellipse Width="15" Height="15" Fill="{Binding Color}"/>
+                <TextBlock Text="{Binding ClassName}" VerticalAlignment="Center"/>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
       </StackPanel>
-      
-			<Grid VerticalAlignment="Bottom"
-						HorizontalAlignment="Center"
-						Margin="0 0 0 20">
-				<Grid.RowDefinitions>
-					<RowDefinition Height="Auto"/>
-					<RowDefinition Height="Auto"/>
-				</Grid.RowDefinitions>
-				<StackPanel Grid.Row="1"
-							Orientation="Vertical"
-							Margin="0, 30"
-							VerticalAlignment="Bottom">
-					<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-					</StackPanel>
-					<StackPanel Orientation="Horizontal">
-						<Button Content="Отправить папку с видео"
-										Command="{Binding SendFolderCommand}"
-										IsEnabled="{Binding AreButtonsEnabled}"
-										Margin="0 0 5 0"/>
-						<Button Content="Отправить видео"
-										Command="{Binding SendVideoCommand}"
-										IsEnabled="{Binding AreButtonsEnabled}"
-										Margin="0 0 5 0"/>
-						<Button Content="Подключиться"
-										Command="{Binding ConnectCommand}"
-                    IsEnabled="{Binding AreConnectButtonEnabled}"
-										Margin="0 0 5 0"/>
-						<Ellipse Width="20" Height="20" Fill="{Binding ConnectionStatus}"/>
-					</StackPanel>
-				</StackPanel>
-			</Grid>
-		</StackPanel>
-	</Grid>
+
+      <StackPanel Grid.Column="1"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center">
+        <ComboBox Width="600"
+           HorizontalAlignment="Stretch"
+           Margin="0, 13, 0, 13"
+           ItemsSource="{Binding FrameItems}"
+           SelectedItem="{Binding SelectedFrameItem}"/>
+        <StackPanel HorizontalAlignment="Center"
+              Orientation="Horizontal"
+              Margin="0 0 0 10">
+          <TextBlock Text="{Binding CurrentFileName}"
+                 Margin="0 0 10 0"/>
+          <TextBlock Text="{Binding FrameTitle}"/>
+          <StackPanel Margin="20 0 0 0"
+                Orientation="Horizontal">
+            <ProgressBar Grid.Row="0"
+                   IsIndeterminate="True"
+                   HorizontalAlignment="Stretch"
+                   Height="10"
+                   IsVisible="{Binding IsLoading}"/>
+            <TextBlock Text="{Binding ProgressPercentage, StringFormat='{}{0}%'}"
+                   VerticalAlignment="Center"
+                   IsVisible="{Binding IsLoading}"
+                   Margin="5 0 0 0"/>
+          </StackPanel>
+        </StackPanel>
+        <StackPanel HorizontalAlignment="Center"
+                    Orientation="Horizontal">
+          <Button Margin="0 0 5 0"
+                  IsVisible="{Binding CanSwitchImages}"
+                  Command="{Binding ImageBackCommand}">
+            <PathIcon Data="{StaticResource chevron_left_regular}"/>
+          </Button>
+          <Grid Width="800"
+                Height="400">
+            <Border Background="Gainsboro">
+              <Image MaxWidth="800"
+                     MaxHeight="400"
+                     Source="{Binding CurrentImage}"
+                     RenderOptions.BitmapInterpolationMode="HighQuality">
+              </Image>
+            </Border>
+            <ItemsControl ItemsSource="{Binding RectItems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Canvas>
+                    <Border BorderBrush="{Binding Color}"
+                            BorderThickness="2"
+                            Width="{Binding Width}"
+                            Height="{Binding Height}"
+                            Canvas.Left="{Binding X}"
+                            Canvas.Top="{Binding Y}"/>
+                  </Canvas>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ItemsControl ItemsSource="{Binding FigItems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Canvas>
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding Nose[0]}"
+                             Canvas.Top="{Binding Nose[1]}"
+                             Fill="{Binding Color}" />
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding LeftEye[0]}"
+                             Canvas.Top="{Binding LeftEye[1]}"
+                             Fill="{Binding Color}" />
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding RightEye[0]}"
+                             Canvas.Top="{Binding RightEye[1]}"
+                             Fill="{Binding Color}" />
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding LeftEar[0]}"
+                             Canvas.Top="{Binding LeftEar[1]}"
+                             Fill="{Binding Color}" />
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding RightEar[0]}"
+                             Canvas.Top="{Binding RightEar[1]}"
+                             Fill="{Binding Color}" />
+
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding LeftShoulder[0]}"
+                             Canvas.Top="{Binding LeftShoulder[1]}"
+                             Fill="{Binding Color}" />
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding RightShoulder[0]}"
+                             Canvas.Top="{Binding RightShoulder[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding LeftShoulderPoint}" EndPoint="{Binding RightShoulderPoint}"
+                          Stroke="Gray" StrokeThickness="1"/>
+
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding LeftElbow[0]}"
+                             Canvas.Top="{Binding LeftElbow[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding LeftShoulderPoint}" EndPoint="{Binding LeftElbowPoint}"
+                          Stroke="Gray" StrokeThickness="1"/>
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding RightElbow[0]}"
+                             Canvas.Top="{Binding RightElbow[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding RightShoulderPoint}" EndPoint="{Binding RightElbowPoint}"
+                          Stroke="Gray" StrokeThickness="1"/>
+
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding LeftWrist[0]}"
+                             Canvas.Top="{Binding LeftWrist[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding LeftElbowPoint}" EndPoint="{Binding LeftWristPoint}"
+                          Stroke="Gray" StrokeThickness="1"/>
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding RightWrist[0]}"
+                             Canvas.Top="{Binding RightWrist[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding RightElbowPoint}" EndPoint="{Binding RightWristPoint}"
+                          Stroke="Gray" StrokeThickness="1"/>
+
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding LeftHip[0]}"
+                             Canvas.Top="{Binding LeftHip[1]}"
+                             Fill="{Binding Color}" />
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding RightHip[0]}"
+                             Canvas.Top="{Binding RightHip[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding LeftHipPoint}" EndPoint="{Binding RightHipPoint}"
+                          Stroke="Gray" StrokeThickness="1"/>
+
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding LeftKnee[0]}"
+                             Canvas.Top="{Binding LeftKnee[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding LeftHipPoint}" EndPoint="{Binding LeftKneePoint}"
+                           Stroke="Gray" StrokeThickness="1"/>
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding RightKnee[0]}"
+                             Canvas.Top="{Binding RightKnee[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding RightHipPoint}" EndPoint="{Binding RightKneePoint}"
+                          Stroke="Gray" StrokeThickness="1"/>
+
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding LeftAnkle[0]}"
+                             Canvas.Top="{Binding LeftAnkle[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding LeftKneePoint}" EndPoint="{Binding LeftAnklePoint}"
+                          Stroke="Gray" StrokeThickness="1"/>
+                    <Ellipse Width="2" Height="2"
+                             Canvas.Left="{Binding RightAnkle[0]}"
+                             Canvas.Top="{Binding RightAnkle[1]}"
+                             Fill="{Binding Color}" />
+                    <Line StartPoint="{Binding RightKneePoint}" EndPoint="{Binding RightAnklePoint}"
+                          Stroke="Gray" StrokeThickness="1"/>
+                  </Canvas>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Grid>
+          <Button Margin="5 0 0 0"
+              IsVisible="{Binding CanSwitchImages}"
+              Command="{Binding ImageForwardCommand}">
+            <PathIcon Data="{StaticResource chevron_right_regular}"/>
+          </Button>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 20">
+          <Button Content="&lt;&lt;"
+                  Margin="0 0 5 0"
+                  Command="{Binding ImageRewindBackCommand}"
+                  IsEnabled="{Binding RewindBackButtonEnabled}"/>
+          <Button Content="||"
+                  Margin="0 0 5 0"
+                  Command="{Binding ImageRewindPauseCommand}"
+                  IsEnabled="{Binding RewindPauseButtonEnabled}"/>
+          <Button Content="&gt;&gt;"
+                  Command="{Binding ImageRewindForwardCommand}"
+                  IsEnabled="{Binding RewindForwardButtonEnabled}"/>
+        </StackPanel>
+
+        <Grid VerticalAlignment="Bottom"
+              HorizontalAlignment="Center"
+              Margin="0 0 0 20">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <StackPanel Grid.Row="1"
+                Orientation="Vertical"
+                Margin="0, 30"
+                VerticalAlignment="Bottom">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Button Content="Отправить папку с видео"
+                      Command="{Binding SendFolderCommand}"
+                      IsEnabled="{Binding AreButtonsEnabled}"
+                      Margin="0 0 5 0"/>
+              <Button Content="Отправить видео"
+                      Command="{Binding SendVideoCommand}"
+                      IsEnabled="{Binding AreButtonsEnabled}"
+                      Margin="0 0 5 0"/>
+              <Button Content="Подключиться"
+                      Command="{Binding ConnectCommand}"
+                      IsEnabled="{Binding AreConnectButtonEnabled}"
+                      Margin="0 0 5 0"/>
+              <Ellipse Width="20" Height="20" Fill="{Binding ConnectionStatus}"/>
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </Grid>
+  </Grid>
 </UserControl>

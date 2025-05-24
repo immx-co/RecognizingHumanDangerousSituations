@@ -1,107 +1,73 @@
 <Window xmlns="https://github.com/avaloniaui"
-				xmlns:rxui="http://reactiveui.net"
-				xmlns:app="clr-namespace:DangerousSituationsUI"
+        xmlns:rxui="http://reactiveui.net"
+        xmlns:app="clr-namespace:DangerousSituationsUI"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:DangerousSituationsUI.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="1600" d:DesignHeight="900"
+        mc:Ignorable="d"
         x:Class="DangerousSituationsUI.Views.NavigationWindow"
-        Title="Dangerous Situations Recognition Application"
-        MinHeight="900"
-        MinWidth="1600"
+        Title="Dangerous Situations Recognition"
+        Width="1600" Height="900" MinWidth="1000" MinHeight="700"
         x:DataType="vm:NavigationViewModel"
         Icon="/Assets/avalonia-logo.ico">
 
-  <Grid>
+  <Grid Background="{StaticResource SecondaryGradient}">
     <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
     </Grid.RowDefinitions>
 
-    <Menu Grid.Row="0"
-          IsVisible="{Binding IsAppButtonsEnable}">
-      <MenuItem Header="Статус сервисов">
-        <StackPanel Orientation="Vertical">
-          <StackPanel Orientation="Horizontal"
-                      Margin="0, 0, 0, 20">
-            <TextBlock Text="Нейросетевой сервис: "
-                     FontWeight="Bold" />
-            <Ellipse Width="20"
-                     Height="20"
-                     Fill="{Binding ConnectionStatus}"/>
-          </StackPanel>
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Телеграм бот: " 
-                       FontWeight="Bold"/>
-            <Ellipse Width="20"
-                     Height="20"
-                     Fill="{Binding TgBotConnectionStatus}"/>
-          </StackPanel>
-          
-          
+    <Border Grid.Row="0"
+            Background="#FFF5F7FA"
+            BorderBrush="#FFE0E7EF"
+            BorderThickness="0,0,0,1"
+            Padding="12"
+            IsVisible="{Binding IsAppButtonsEnable}">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
+          <ToggleButton Content="Выход" Command="{Binding GoInputApplicationWindow}" 
+                        IsChecked="{Binding IsInputApplicationWindowActive}" />
+          <ToggleButton Content="Приложение" Command="{Binding GoMainWindow}" 
+                        IsChecked="{Binding IsMainWindowActive}" />
+          <ToggleButton Content="Проигрыватель" Command="{Binding GoVideoPlayerWindow}" 
+                        IsChecked="{Binding IsVideoPlayerWindowActive}" />
+          <ToggleButton Content="Журнал событий" Command="{Binding GoVideoEventJournalWindow}" 
+                        IsChecked="{Binding IsVideoEventJournalWindowActive}" />
+          <ToggleButton Content="Конфигурация" Command="{Binding GoConfiguration}" 
+                        IsChecked="{Binding IsConfigurationWindowActive}" />
+          <ToggleButton Content="Журнал логов" Command="{Binding GoLogJournalWindow}" 
+                        IsChecked="{Binding IsLogJournalWindowActive}" />
+          <ToggleButton Content="Пользователи" Command="{Binding GoUserManagement}" 
+                        IsChecked="{Binding IsUserManagementWindowActive}" IsVisible="{Binding IsAdminPrivilege}" />
         </StackPanel>
-      </MenuItem>
-    </Menu>
-
-    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="5">
-      <StackPanel.Styles>
-        <Style Selector="StackPanel > :is(Control)">
-          <Setter Property="Margin" Value="2"/>
-        </Style>
-        <Style Selector="StackPanel > TextBlock">
-          <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-      </StackPanel.Styles>
-
-      <Button Content="Главное окно"
-              Command="{Binding GoInputApplicationWindow}"
-              IsEnabled="True"/>
-      
-      <Button Content="Приложение"
-              Command="{Binding GoMainWindow}"
-              IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
-
-	    <Button Content="Проигрыватель"
-			        Command="{Binding GoVideoPlayerWindow}"
-			        IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
         
-      <Button Content="Журнал событий"
-              Command="{Binding GoVideoEventJournalWindow}"
-              IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
-      
-      <Button Content="Конфигурация"
-              Command="{Binding GoConfiguration}"
-              IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
-      
-		  <Button Content="Журнал логов"
-				      Command="{Binding GoLogJournalWindow}"
-				      IsEnabled="{Binding IsAppButtonsEnable}"
-              IsVisible="{Binding IsAppButtonsEnable}"/>
+        <Menu Grid.Column="1" Background="Transparent">
+          <MenuItem Header="Информация" Foreground="#FF5865A8">
+            <StackPanel Orientation="Vertical">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="Нейросетевой сервис:" FontWeight="Bold"/>
+                <Ellipse Width="14" Height="14" Fill="{Binding ConnectionStatus}" VerticalAlignment="Center"/>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,0">
+                <TextBlock Text="Телеграм бот:" FontWeight="Bold"/>
+                <Ellipse Width="14" Height="14" Fill="{Binding TgBotConnectionStatus}" VerticalAlignment="Center"/>
+              </StackPanel>
+            </StackPanel>
+            <TextBlock Text="{Binding CurrentUser}" FontWeight="Bold" Foreground="#FF44465E" />
+          </MenuItem>
+        </Menu>
+      </Grid>
+    </Border>
 
-      <Button Content="Пользователи"
-              Command="{Binding GoUserManagement}"
-              IsEnabled="{Binding IsAdminPrivilege}"
-              IsVisible="{Binding IsAdminPrivilege}"/>
-
-      <TextBlock Text="{Binding CurrentUser}"
-                 Margin="20,0,5,0"
-                 VerticalAlignment="Center"
-                 HorizontalAlignment="Right"
-                 FontWeight="Bold"
-                 IsVisible="{Binding IsAppButtonsEnable}"/>
-    </StackPanel>
-
-    <rxui:RoutedViewHost Grid.Row="2" Router="{Binding Router}">
-      <rxui:RoutedViewHost.DefaultContent>
-      </rxui:RoutedViewHost.DefaultContent>
+    <rxui:RoutedViewHost Grid.Row="1" Router="{Binding Router}" Margin="10">
       <rxui:RoutedViewHost.ViewLocator>
-        <!-- See AppViewLocator.cs section below -->
         <app:AppViewLocator />
       </rxui:RoutedViewHost.ViewLocator>
     </rxui:RoutedViewHost>
