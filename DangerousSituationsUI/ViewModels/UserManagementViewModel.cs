@@ -54,7 +54,6 @@ namespace DangerousSituationsUI.ViewModels
             HostScreen = screen;
             _userService = userService;
             _dialogService = dialogService;
-
             AddUserCommand = ReactiveCommand.CreateFromTask(AddUser);
             DeleteUserCommand = ReactiveCommand.CreateFromTask(DeleteUser,
                 this.WhenAnyValue(x => x.SelectedUser).Select(user => user != null));
@@ -105,18 +104,21 @@ namespace DangerousSituationsUI.ViewModels
             try
             {
                 var addUserViewModel = new AddUserViewModel();
-                var result = await _dialogService
-                    .ShowDialogAsync<AddUserViewModel, AddUserDialogResult>(addUserViewModel);
-
-                if (result != null)
+                while (true)
                 {
+                    var result = await _dialogService
+                        .ShowDialogAsync<AddUserViewModel, AddUserDialogResult>(addUserViewModel);
+
+                    if (result == null)
+                        break;
+
                     var (isValid, errorMessage) = await _userService
                         .ValidateNewUserAsync(result.Username, result.Email, result.Password);
 
                     if (!isValid)
                     {
                         await ShowMessageBox("Ошибка", errorMessage);
-                        return;
+                        continue;
                     }
 
                     await _userService.AddUserAsync(
@@ -128,6 +130,7 @@ namespace DangerousSituationsUI.ViewModels
                     Log.Information($"Создан пользователь {result.Username}.");
                     LogJournalViewModel.logString += $"Создан пользователь {result.Username}.\n";
                     LoadUsers();
+                    break;
                 }
             }
             catch (Exception ex)

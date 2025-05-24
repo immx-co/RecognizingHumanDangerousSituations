@@ -107,10 +107,10 @@ namespace DangerousSituationsUI.Services
                 const int minWidth = 20;
                 const int minHeight = 20;
 
-                double left = Canvas.GetLeft(this);
-                double top = Canvas.GetTop(this);
-                double right = left + Width;
-                double bottom = top + Height;
+                double left = Canvas.GetLeft(this); // координата X левого края рамки
+                double top = Canvas.GetTop(this);   // координата Y левого края рамки
+                double right = left + Width;        // координата X правого края рамки
+                double bottom = top + Height;       // координата Y правого края рамки
 
                 double newLeft = left, newTop = top, newRight = right, newBottom = bottom;
 
@@ -134,15 +134,19 @@ namespace DangerousSituationsUI.Services
                         break;
                 }
 
+                // проверка новой ширины рамки
                 if (newRight - newLeft < minWidth)
                 {
+                    // корректируем, чтобы была не меньше допустимой (minWidth)
                     if (handle.Name == "TopLeft" || handle.Name == "BottomLeft")
                         newLeft = newRight - minWidth;
                     else
                         newRight = newLeft + minWidth;
                 }
+                // проверка новой высоты рамки
                 if (newBottom - newTop < minHeight)
                 {
+                    // корректируем, чтобы была не меньше допустимой (minHeight)
                     if (handle.Name == "TopLeft" || handle.Name == "TopRight")
                         newTop = newBottom - minHeight;
                     else
