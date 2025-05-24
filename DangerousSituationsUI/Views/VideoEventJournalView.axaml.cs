@@ -79,4 +79,10 @@ public partial class VideoEventJournalView : ReactiveUserControl<VideoEventJourn
             border.ImageOffset = (800 - border.ImageWidth) / 2;
         }
     }
+
+    private void DataGrid_AutoGeneratingColumn(object? sender, DataGridAutoGeneratingColumnEventArgs e)
+    {
+        if (e.PropertyName == "Name")
+            e.Cancel = true;
+    }
 }

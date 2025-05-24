@@ -214,7 +214,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
         var dbFrame = db.Frames.Where(frame => frame.FrameId == videoEventResult.Name).FirstOrDefault();
-
+        
         if (dbFrame is null)
         {
             return null;
@@ -322,7 +322,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             return;
         
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
-        var dbDetection = await db.Detections.Where(d => d.FrameId == SelectedEventResult.Name 
+        var dbDetection = await db.Detections.Where(d => d.FrameId == SelectedEventResult.Name
             && d.X == oldX && d.Y == oldY && d.Width == oldWidth
             && d.Height == oldHeight).FirstOrDefaultAsync();
         
@@ -336,10 +336,13 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
         await db.SaveChangesAsync();
 
-        Log.Debug($"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} (X:{oldX}->{BoxTopLeftX}, " +
+        Log.Debug($"Видео {SelectedVideoItem.VideoName}, время {SelectedEventResult.DetectionTime}: " +
+            $"обновлены позиция и размеры детекции (X:{oldX}->{BoxTopLeftX}, " +
             $"Y:{oldY}->{BoxTopLeftY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})");
-        LogJournalViewModel.logString += $"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} " +
-            $"(X:{oldX}->{BoxTopLeftX}, Y:{oldY}->{BoxTopLeftY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})\n";
+        LogJournalViewModel.logString += $"Видео {SelectedVideoItem.VideoName}, " +
+            $"время {SelectedEventResult.DetectionTime}: обновлены позиция и размеры детекции " +
+            $"(X:{oldX}->{BoxTopLeftX}, Y:{oldY}->{BoxTopLeftY}, высота:{oldHeight}->{BoxHeight}, " +
+            $"ширина:{oldWidth}->{BoxWidth})\n";
 
         SelectedEventResult.X = BoxTopLeftX;
         SelectedEventResult.Y = BoxTopLeftY;
