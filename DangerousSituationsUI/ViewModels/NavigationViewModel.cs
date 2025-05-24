@@ -141,6 +141,7 @@ public class NavigationViewModel : ReactiveObject, IDisposable
     {
         CheckDisposedCancelletionToken();
         Router.Navigate.Execute(_serviceProvider.GetRequiredService<LogJournalViewModel>());
+        _serviceProvider.GetRequiredService<LogJournalViewModel>().ClearUI();
     }
 
     private void NavigateToUserManagementWindow()

@@ -76,7 +76,6 @@ namespace DangerousSituationsUI.ViewModels
             catch (Exception ex)
             {
                 Log.Error($"Ошибка загрузки пользователей: {ex}");
-                LogJournalViewModel.logString += $"Ошибка загрузки пользователей: {ex}\n";
             }
         }
 
@@ -89,14 +88,12 @@ namespace DangerousSituationsUI.ViewModels
                     var name = SelectedUser.UserName;
                     await _userService.DeleteUserAsync(SelectedUser.UserId);
                     Log.Information($"Удален пользователь {name}");
-                    LogJournalViewModel.logString += $"Удален пользователь {name}.\n";
                     LoadUsers();
                 }
             }
             catch (Exception ex)
             {
                 Log.Error($"Ошибка удаления пользователя: {ex}");
-                LogJournalViewModel.logString += $"Ошибка удаления пользователя: {ex}\n";
             }
         }
 
@@ -126,14 +123,12 @@ namespace DangerousSituationsUI.ViewModels
                         result.IsAdmin
                     );
                     Log.Information($"Создан пользователь {result.Username}.");
-                    LogJournalViewModel.logString += $"Создан пользователь {result.Username}.\n";
                     LoadUsers();
                 }
             }
             catch (Exception ex)
             {
                 Log.Error($"Ошибка добавления пользователя: {ex}");
-                LogJournalViewModel.logString += $"Ошибка добавления пользователя: {ex}\n";
             }
         }
 
@@ -153,12 +148,10 @@ namespace DangerousSituationsUI.ViewModels
             {
                 await _userService.UpdateUserAdminStatusAsync(userId, isAdmin);
                 Log.Information($"Для пользователя {userId} изменен статус администратора.");
-                LogJournalViewModel.logString += $"Для пользователя {userId} изменен статус администратора.\n";
             }
             catch (Exception ex)
             {
                 Log.Error($"Ошибка обновления статуса администратора: {ex}");
-                LogJournalViewModel.logString += $"Ошибка обновления статуса администратора: {ex}\n";
                 var user = UserItems.FirstOrDefault(u => u.UserId == userId);
                 if (user != null)
                     user.UserAdmin = !isAdmin;

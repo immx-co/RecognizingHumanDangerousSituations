@@ -308,9 +308,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private async Task OpenFolderAsync()
     {
         Log.Information("Start sending folder");
-        LogJournalViewModel.logString += "Start sending folder\n";
         Log.Debug("MainViewModel.OpenFolderAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Start\n";
 
         try
         {
@@ -331,7 +329,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                 try
                 {
                     Log.Information($"Start sending video: {file.Name}");
-                    LogJournalViewModel.logString += $"Start sending video: {file.Name}\n";
                     CurrentFileName = file.Name;
 
                     await InitFramesAsync(file);
@@ -339,12 +336,10 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     ProgressPercentage = 0;
 
                     Log.Information($"End sending video: {file.Name}");
-                    LogJournalViewModel.logString += $"End sending video: {file.Name}\n";
                 }
                 catch (Exception ex)
                 {
                     Log.Error($"Error processing video file {file.Name}: {ex.Message}");
-                    LogJournalViewModel.logString += $"Error processing video file {file.Name}: {ex.Message}\n";
                 }
             }
 
@@ -354,7 +349,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         {
             ShowMessageBox("Error", "В выбранной директории отсутствуют изображения или присутствуют файлы с недопустимым расширением.");
             Log.Warning($"MainViewModel.OpenFolderAsync: Error; Message: {ex.Message}");
-            LogJournalViewModel.logString += $"MainViewModel.OpenFolderAsync: Error; Message: {ex.Message}\n";
         }
         finally
         {
@@ -362,9 +356,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             IsLoading = false;
             ProgressPercentage = 0;
             Log.Information("End sending video");
-            LogJournalViewModel.logString += "End sending video\n";
             Log.Debug("MainViewModel.OpenFolderAsync: Done");
-            LogJournalViewModel.logString += "MainViewModel.OpenFolderAsync: Done\n";
         }
     }
 
@@ -372,9 +364,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private async Task OpenVideoAsync()
     {
         Log.Information("Start sending video");
-        LogJournalViewModel.logString += "Start sending video\n";
         Log.Debug("MainViewModel.OpenVideoAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Start\n";
         try
         {
             AreButtonsEnabled = false;
@@ -394,9 +384,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             IsLoading = false;
             ProgressPercentage = 0;
             Log.Information("End sending video");
-            LogJournalViewModel.logString += "End sending video\n";
             Log.Debug("MainViewModel.OpenVideoAsync: Done");
-            LogJournalViewModel.logString += "MainViewModel.OpenVideoAsync: Done\n";
         }
     }
     #endregion
@@ -419,7 +407,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private async Task InitFramesAsync(IStorageFile file)
     {
         Log.Debug("MainViewModel.InitFramesAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: Start\n";
         IsLoading = true;
         var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
         var figLists = new AvaloniaList<AvaloniaList<FigItem>>();
@@ -436,7 +423,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             try
             {
                 Log.Debug("Loading from JSON file.");
-                LogJournalViewModel.logString += $"Loading from JSON file {jsonPath}.\n";
 
                 var json = await File.ReadAllTextAsync(jsonPath);
                 if (string.IsNullOrWhiteSpace(json))
@@ -479,7 +465,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             catch (Exception ex)
             {
                 Log.Error(ex, "Error loading JSON detections");
-                LogJournalViewModel.logString += $"Exception: {ex.Message}\n";
                 ShowMessageBox("Error", $"Ошибка загрузки из JSON.\n{ex.Message}");
             }
         }
@@ -530,7 +515,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         else
         {
             Log.Error("No frame bitmaps were loaded.");
-            LogJournalViewModel.logString += "Error: No frame bitmaps were loaded.\n";
             return;
         }
 
@@ -550,10 +534,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         else
         {
             Log.Error("No frames were loaded.");
-            LogJournalViewModel.logString += "Error: No frames were loaded.\n";
         }
         Log.Debug("MainViewModel.InitFramesAsync: End");
-        LogJournalViewModel.logString += "MainViewModel.InitFramesAsync: End\n";
 
     }
 
@@ -561,7 +543,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     {
         
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Start\n";
 
         _videoPlayerViewModel.IsVideoLoading = true;
         using var scope = _serviceProvider.CreateScope();
@@ -643,14 +624,12 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _videoPlayerViewModel.IsVideoLoading = false;
 
         Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.SaveDataIntoDatabaseAsync: Done\n";
         return addedVideo;
     }
 
     private async Task<(AvaloniaList<RectItem> Rects, AvaloniaList<FigItem> Figs)> GetFrameDetectionResultsAsync(BitmapModel frameBitmapModel, int numberOfFrame)
     {
         Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.GetFrameDetectionResultsAsync: Start\n";
         List<RecognitionResult> detections = await GetFrameRecognitionResultsAsync(frameBitmapModel.frame, numberOfFrame);
         var items = new AvaloniaList<RectItem>();
         var figItems = new AvaloniaList<FigItem>();
@@ -683,19 +662,15 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             catch (Exception ex)
             {
                 ShowMessageBox("Error", $"Ошибка при обработке детекции: {ex.Message}");
-                Log.Warning("MainViewModel.GetFrameDetectionResultsAsync: Error; Message: {@Message}", ex.Message);
-                LogJournalViewModel.logString += ("MainViewModel.GetFrameDetectionResultsAsync: Error; Message: {@Message}\n", ex.Message);
             }
         }
         Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.GetFrameDetectionResultsAsync: Done\n";
         return (items, figItems);
     }
 
     private async Task<List<RecognitionResult>> GetFrameRecognitionResultsAsync(Bitmap frame, int numberOfFrame)
     {
         Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Start");
-        LogJournalViewModel.logString += "MainViewModel.GetFrameRecognitionResultsAsync: Start\n";
         string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
         using (var client = new HttpClient())
         {
@@ -712,7 +687,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     NeuralPipelineIsLoaded = true;
                 }
                 Log.Information($"Neural models is loaded. responseModelLoaded status code: {responseModelLoaded.StatusCode}");
-                LogJournalViewModel.logString += $"Neural models is loaded. responseModelLoaded status code: {responseModelLoaded.StatusCode}\n";
             }
 
             try
@@ -767,7 +741,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     {
                         ShowMessageBox("Error", $"Ошибка при отправке видео: {response.StatusCode}");
                         Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", $"Ошибка при отправке видео: {response.StatusCode}");
-                        LogJournalViewModel.logString += ("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", $"Ошибка при отправке видео: {response.StatusCode}\n");
                     }
                 }
             }
@@ -775,11 +748,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             {
                 ShowMessageBox("Error", $"Ошибка при отправке видео: {ex.Message}");
                 Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}", ex.Message);
-                LogJournalViewModel.logString += ("MainViewModel.GetFrameRecognitionResultsAsync: Error; Message: {@Message}\n", ex.Message);
             }
         }
         Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Done");
-        LogJournalViewModel.logString += "MainViewModel.GetFrameRecognitionResultsAsync: Done\n";
         return new List<RecognitionResult>();
     }
 
@@ -908,7 +879,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         using (var client = new HttpClient())
         {
             Log.Debug("MainViewModel.CheckHealthAsync: Start");
-            LogJournalViewModel.logString += "MainViewModel.CheckHealthAsync: Start\n";
             try
             {
                 var response = await client.GetAsync($"{surfaceRecognitionServiceAddress}/health");
@@ -926,7 +896,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                         Task.Run(() => StartNeuralServiceWatcher());
                         Task.Run(InitializeVideoEventJournalWindow);
                         Log.Debug("MainViewModel.CheckHealthAsync: Health checked");
-                        LogJournalViewModel.logString += "MainViewModel.CheckHealthAsync: Health checked\n";
                     }
                     else
                     {
@@ -934,7 +903,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                         _videoEventJournalViewModel.ClearUI();
                         ShowMessageBox("Failed", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}");
                         Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}");
-                        LogJournalViewModel.logString += ("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Сервис недоступен. Статус: {healthResponse?.StatusCode}\n");
                     }
                 }
                 else
@@ -943,7 +911,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     _videoEventJournalViewModel.ClearUI();
                     ShowMessageBox("Failed", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
                     Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
-                    LogJournalViewModel.logString += ("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}\n");
                 }
             }
             catch
@@ -952,7 +919,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                 _videoEventJournalViewModel.ClearUI();
                 ShowMessageBox("Failed", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
                 Log.Warning("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}");
-                LogJournalViewModel.logString += ("MainViewModel.CheckHealthAsync: Error; Message: {@Message}", $"Не удалось подключиться к сервису с адресом {surfaceRecognitionServiceAddress}\n");
             }
         }
     }
@@ -960,7 +926,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private async void StartNeuralServiceWatcher()
     {
         Log.Debug("MainViewModel.StartNeuralServiceWatcher: Start health check");
-        LogJournalViewModel.logString += "MainViewModel.StartNeuralServiceWatcher: Start health check\n";
         while (true)
         {
             string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
@@ -986,7 +951,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                             _videoEventJournalViewModel.ClearUI();
                             ShowMessageBox("Failed", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
                             Log.Debug("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
-                            LogJournalViewModel.logString += ("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.\n");
                         });
                         break;
                     }
@@ -1002,7 +966,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                         _videoEventJournalViewModel.ClearUI();
                         ShowMessageBox("Failed", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
                         Log.Debug("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.");
-                        LogJournalViewModel.logString += ("MainViewModel.StartNeuralServiceWatcher: Error; Message: {@Message}", "Пропало соединение с нейросетевым сервисом, попробуйте подключиться еще раз.\n");
                     });
                     break;
                 }
