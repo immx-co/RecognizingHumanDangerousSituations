@@ -13,6 +13,8 @@ public class AppSettings
     public int NeuralWatcherTimeout { get; set; }
 
     public FrameRate FrameRate { get; set; }
+
+    public FrameScrollTimeout FrameScrollTimeout { get; set; }
 }
 
 public class ConnectionStringsConfig
@@ -23,6 +25,11 @@ public class ConnectionStringsConfig
 }
 
 public class FrameRate
+{
+    public int Value { get; set; }
+}
+
+public class FrameScrollTimeout
 {
     public int Value { get; set; }
 }

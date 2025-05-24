@@ -19,7 +19,12 @@ public class HotificationHub : Hub
         _configurationService = configurationService;
     }
 
-    public async Task SaveConfig(string сonnectionString, string url, int neuralWatcherTimeout, int frameRate)
+    public async Task SaveConfig(
+        string сonnectionString, 
+        string url, 
+        int neuralWatcherTimeout, 
+        int frameRate, 
+        int frameScrollTimeout)
     {
         Log.Debug("HotificationHub.SaveConfig: Start.");
         LogJournalViewModel.logString += "HotificationHub.SaveConfig: Start.\n";
@@ -31,12 +36,14 @@ public class HotificationHub : Hub
                 appSettings.ConnectionStrings.srsStringConnection = url;
                 appSettings.NeuralWatcherTimeout = neuralWatcherTimeout;
                 appSettings.FrameRate.Value = frameRate;
+                appSettings.FrameScrollTimeout.Value = frameScrollTimeout;
             });
 
             await Clients.Caller.SendAsync("SaveConfigOk", _configurationService.GetConnectionString("dbStringConnection"), 
                 _configurationService.GetConnectionString("srsStringConnection"),
                 _configurationService.GetNeuralWatcherTimeout(), 
-                _configurationService.GetFrameRate());
+                _configurationService.GetFrameRate(),
+                _configurationService.GetFrameScrollTimeout());
             Log.Debug("HotificationHub.SaveConfig: Done.");
             LogJournalViewModel.logString += "HotificationHub.SaveConfig: Done.\n";
             return;

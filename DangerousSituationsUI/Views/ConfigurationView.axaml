@@ -23,11 +23,17 @@
         <Label Content="Таймаут нейросетевого watcher:"/>
         <TextBox Text="{Binding NeuralWatcherTimeout}"/>
       </StackPanel>
-      <StackPanel>
+      <StackPanel Margin="0 0 0 10">
         <Label Content="Частота отправки кадров на нейросетевой сервис:"/>
         <NumericUpDown Minimum="1"
-							   ShowButtonSpinner="False"
-							   Value="{Binding FrameRate}"/>
+							         ShowButtonSpinner="False"
+							         Value="{Binding FrameRate}"/>
+      </StackPanel>
+      <StackPanel>
+        <Label Content="Частота автоматического пролистывания кадров:"/>
+        <NumericUpDown Minimum="1"
+							         ShowButtonSpinner="False"
+							         Value="{Binding FrameScrollTimeout}"/>
       </StackPanel>
     </StackPanel>
     <StackPanel VerticalAlignment="Bottom"

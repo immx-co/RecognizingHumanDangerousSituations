@@ -21,6 +21,8 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
 
     private int _frameRate;
 
+    private int _frameScrollTimeout;
+
     private readonly ConfigurationService _configurationService;
 
     HubConnectionWrapper _hubConnectionWrapper;
@@ -62,6 +64,12 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
         get => _neuralWatcherTimeout;
         set => this.RaiseAndSetIfChanged(ref _neuralWatcherTimeout, value);
     }
+
+    public int FrameScrollTimeout
+    {
+        get => _frameScrollTimeout;
+        set => this.RaiseAndSetIfChanged(ref _frameScrollTimeout, value);
+    }
     #endregion
 
     #region Constructors
@@ -75,10 +83,11 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
         Url = _configurationService.GetConnectionString("srsStringConnection");
         NeuralWatcherTimeout = _configurationService.GetNeuralWatcherTimeout();
         FrameRate = _configurationService.GetFrameRate();
+        FrameScrollTimeout = _configurationService.GetFrameScrollTimeout();
 
         SaveConfigCommand = ReactiveCommand.CreateFromTask(SaveConfig);
 
-        _hubConnectionWrapper.Connection.On<string, string, int, int>("SaveConfigOk", (dbStringConnection, srsStringConnection, neuralWatcherTimeout, frameRate) =>
+        _hubConnectionWrapper.Connection.On<string, string, int, int, int>("SaveConfigOk", (dbStringConnection, srsStringConnection, neuralWatcherTimeout, frameRate, frameScrollTimeout) =>
         {
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
@@ -86,6 +95,7 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
                 _configurationService.SrsStringConnection = srsStringConnection;
                 _configurationService.NeuralWatcherTimeout = neuralWatcherTimeout;
                 _configurationService.FrameRate = frameRate;
+                _configurationService.FrameScrollTimeout = frameScrollTimeout;
                 ShowMessageBox("Success", $"Конфигурация успешно сохранена!");
                 return;
             });
@@ -105,7 +115,7 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
     #region Private Methods
     private async Task SaveConfig()
     {
-        await _hubConnectionWrapper.SaveConfig(ConnectionString, Url, NeuralWatcherTimeout, FrameRate);
+        await _hubConnectionWrapper.SaveConfig(ConnectionString, Url, NeuralWatcherTimeout, FrameRate, FrameScrollTimeout);
     }
     #endregion
 

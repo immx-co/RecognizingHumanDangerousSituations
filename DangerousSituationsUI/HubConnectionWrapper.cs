@@ -34,9 +34,9 @@ public class HubConnectionWrapper
     #endregion
 
     #region Configuration View Model
-    public async Task SaveConfig(string connectionString, string url, int neuralWatcherTimeout, int frameRate)
+    public async Task SaveConfig(string connectionString, string url, int neuralWatcherTimeout, int frameRate, int frameScrollTimeout)
     {
-        await Connection.InvokeAsync("SaveConfig", connectionString, url, neuralWatcherTimeout, frameRate);
+        await Connection.InvokeAsync("SaveConfig", connectionString, url, neuralWatcherTimeout, frameRate, frameScrollTimeout);
     }
     #endregion
 }

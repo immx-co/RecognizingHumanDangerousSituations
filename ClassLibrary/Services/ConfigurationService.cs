@@ -17,6 +17,8 @@ public class ConfigurationService
     public int NeuralWatcherTimeout { get; set; }
 
     public int FrameRate { get; set; }
+
+    public int FrameScrollTimeout { get; set; }
     #endregion
 
     #region Constructor
@@ -28,6 +30,7 @@ public class ConfigurationService
         SrsStringConnection = _configuration.GetConnectionString("srsStringConnection");
         NeuralWatcherTimeout = _configuration.GetSection("NeuralWatcherTimeout").Get<int>();
         FrameRate = Convert.ToInt32(_configuration.GetSection("FrameRate:Value").Value);
+        FrameScrollTimeout = Convert.ToInt32(_configuration.GetSection("FrameScrollTimeout:Value").Value);
     }
     #endregion
 
@@ -58,6 +61,11 @@ public class ConfigurationService
         return FrameRate;
     }
 
+    public int GetFrameScrollTimeout()
+    {
+        return FrameScrollTimeout;
+    }
+
     public async Task UpdateAppSettingsAsync(Action<AppSettings> updateAction)
     {
         var appSettingsPath = Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\..\\DangerousSituationsUI", "appsettings.json");
@@ -76,6 +84,7 @@ public class ConfigurationService
         SrsStringConnection = appSettings.ConnectionStrings.srsStringConnection;
         NeuralWatcherTimeout = appSettings.NeuralWatcherTimeout;
         FrameRate = appSettings.FrameRate.Value;
+        FrameScrollTimeout = appSettings.FrameScrollTimeout.Value;
     }
     #endregion
 }

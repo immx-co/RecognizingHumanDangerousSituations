@@ -34,6 +34,8 @@ namespace DangerousSituationsUI.ViewModels;
 public class MainViewModel : ReactiveObject, IRoutableViewModel
 {
     #region Private Fields
+    private CancellationTokenSource _rewindCts;
+
     private bool _neuralPipelineIsLoaded = false;
 
     private Bitmap? _currentImage;
@@ -73,6 +75,12 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     private int _progressPercentage;
 
     private bool _areButtonsEnabled;
+
+    private bool _rewindBackButtonEnabled;
+
+    private bool _rewindForwardButtonEnabled;
+
+    private bool _rewindPauseButtonEnabled;
 
     private bool _areConnectButtonEnabled = true;
 
@@ -116,6 +124,12 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
     public ReactiveCommand<Unit, Unit> ImageBackCommand { get; }
 
     public ReactiveCommand<Unit, Unit> ImageForwardCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> ImageRewindBackCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> ImageRewindForwardCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> ImageRewindPauseCommand { get; }
 
     public ReactiveCommand<Unit, Unit> SendVideoCommand { get; }
 
@@ -191,6 +205,24 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         private set => this.RaiseAndSetIfChanged(ref _areConnectButtonEnabled, value);
     }
 
+    public bool RewindBackButtonEnabled
+    {
+        get => _rewindBackButtonEnabled;
+        private set => this.RaiseAndSetIfChanged(ref _rewindBackButtonEnabled, value);
+    }
+
+    public bool RewindForwardButtonEnabled
+    {
+        get => _rewindForwardButtonEnabled;
+        private set => this.RaiseAndSetIfChanged(ref _rewindForwardButtonEnabled, value);
+    }
+
+    public bool RewindPauseButtonEnabled
+    {
+        get => _rewindPauseButtonEnabled;
+        private set => this.RaiseAndSetIfChanged(ref _rewindPauseButtonEnabled, value);
+    }
+
     public AvaloniaList<LegendItem> LegendItems
     {
         get => _legendItems;
@@ -248,6 +280,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _telegramBotApi.StartBotAsync();
 
         AreButtonsEnabled = false;
+        RewindBackButtonEnabled = false;
+        RewindForwardButtonEnabled = false;
+        RewindPauseButtonEnabled = false;
 
         _legendItems = new AvaloniaList<LegendItem>
         {
@@ -262,6 +297,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         SendFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
         ImageBackCommand = ReactiveCommand.Create(PreviousFrame);
         ImageForwardCommand = ReactiveCommand.Create(NextFrame);
+        ImageRewindBackCommand = ReactiveCommand.Create(RewindPreviousFrame);
+        ImageRewindForwardCommand = ReactiveCommand.Create(RewindNextFrame);
+        ImageRewindPauseCommand = ReactiveCommand.Create(RewindPause);
         _exportService = exportService;
     }
     #endregion
@@ -500,6 +538,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         _rectItemsLists = itemsLists;
         _figItemsLists = figLists;
         CurrentFileName = file.Name;
+
+        RewindBackButtonEnabled = true;
+        RewindForwardButtonEnabled = true;
 
         if (FrameItems != null && FrameItems.Count > 0)
         {
@@ -742,22 +783,6 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         return new List<RecognitionResult>();
     }
 
-    private void NextFrame()
-    {
-        if (_currentNumberOfFrame < _frames.Count - 1) _currentNumberOfFrame++;
-        else _currentNumberOfFrame = 0;
-
-        SetFrame();
-    }
-
-    private void PreviousFrame()
-    {
-        if (_currentNumberOfFrame > 0) _currentNumberOfFrame--;
-        else _currentNumberOfFrame = _frames.Count - 1;
-
-        SetFrame();
-    }
-
     private void SetFrame()
     {
         CurrentImage = _frames[_currentNumberOfFrame];
@@ -787,6 +812,106 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         RectItems = _rectItemsLists[_currentNumberOfFrame];
         FigItems = _figItemsLists[_currentNumberOfFrame];
         FrameTitle = $"{_currentNumberOfFrame + 1} / {_frames.Count}";
+    }
+    #endregion
+
+    #region Scroll Methods
+    private void NextFrame()
+    {
+        if (_currentNumberOfFrame < _frames.Count - 1) _currentNumberOfFrame++;
+        else _currentNumberOfFrame = 0;
+
+        SetFrame();
+    }
+
+    private void PreviousFrame()
+    {
+        if (_currentNumberOfFrame > 0) _currentNumberOfFrame--;
+        else _currentNumberOfFrame = _frames.Count - 1;
+
+        SetFrame();
+    }
+
+    private async void RewindPreviousFrame()
+    {
+        try
+        {
+            StopRewind();
+
+            CanSwitchImages = false;
+            RewindBackButtonEnabled = false;
+            RewindForwardButtonEnabled = true;
+            RewindPauseButtonEnabled = true;
+
+            _rewindCts = new CancellationTokenSource();
+            await RewindFramesAsync(forward: false, _rewindCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            ;
+        }
+    }
+
+    private async void RewindNextFrame()
+    {
+        try
+        {
+            StopRewind();
+
+            CanSwitchImages = false;
+            RewindForwardButtonEnabled = false;
+            RewindBackButtonEnabled = true;
+            RewindPauseButtonEnabled = true;
+
+            _rewindCts = new CancellationTokenSource();
+            await RewindFramesAsync(forward: true, _rewindCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            ;
+        }
+    }
+
+    private void RewindPause()
+    {
+        StopRewind();
+        CanSwitchImages = true;
+        RewindBackButtonEnabled = true;
+        RewindForwardButtonEnabled = true;
+    }
+
+    private async Task RewindFramesAsync(bool forward, CancellationToken cancellationToken)
+    {
+        int frameScrollTimeout = _configurationService.GetFrameScrollTimeout();
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            if (forward)
+            {
+                if (_currentNumberOfFrame < _frames.Count - 1) _currentNumberOfFrame++;
+                else _currentNumberOfFrame = 0;
+
+                SetFrame();
+
+                await Task.Delay(frameScrollTimeout);
+            }
+            else
+            {
+                if (_currentNumberOfFrame > 0) _currentNumberOfFrame--;
+                else _currentNumberOfFrame = _frames.Count - 1;
+
+                SetFrame();
+
+                await Task.Delay(frameScrollTimeout);
+            }
+        }
+    }
+
+    private void StopRewind()
+    {
+        _rewindCts?.Cancel();
+        _rewindCts?.Dispose();
+        _rewindCts = null;
     }
     #endregion
 
@@ -912,6 +1037,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandard(caption, message);
         messageBoxStandardWindow.ShowAsync();
     }
+
     public void ClearUI()
     {
         ResetUI();
