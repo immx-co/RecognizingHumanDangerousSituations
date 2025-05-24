@@ -317,7 +317,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
             if (files == null || !files.Any())
             {
-                ShowMessageBox("Error", "В папке нет видеофайлов с допустимыми расширениями.");
+                ShowMessageBox("Error", "There are no video files with valid extensions in the folder.");
+                Log.Error("Error: Folder don't have videos accessed");
                 return;
             }
 
@@ -355,7 +356,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             AreButtonsEnabled = true;
             IsLoading = false;
             ProgressPercentage = 0;
-            Log.Information("End sending video");
+            Log.Information($"End sending Folder");
             Log.Debug("MainViewModel.OpenFolderAsync: Done");
         }
     }
@@ -406,7 +407,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private async Task InitFramesAsync(IStorageFile file)
     {
-        Log.Debug("MainViewModel.InitFramesAsync: Start");
+        Log.Debug($"MainViewModel.InitFramesAsync: Start: {file.Name}");
         IsLoading = true;
         var itemsLists = new AvaloniaList<AvaloniaList<RectItem>>();
         var figLists = new AvaloniaList<AvaloniaList<FigItem>>();
@@ -422,7 +423,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         {
             try
             {
-                Log.Debug("Loading from JSON file.");
+                Log.Debug($"Loading from JSON file: {file.Name}");
 
                 var json = await File.ReadAllTextAsync(jsonPath);
                 if (string.IsNullOrWhiteSpace(json))
@@ -464,7 +465,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error loading JSON detections");
+                Log.Error(ex, $"Error loading JSON detections: {file.Name}");
                 ShowMessageBox("Error", $"Ошибка загрузки из JSON.\n{ex.Message}");
             }
         }
@@ -514,7 +515,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         }
         else
         {
-            Log.Error("No frame bitmaps were loaded.");
+            Log.Error($"No frame bitmaps were loaded: {file.Name}");
             return;
         }
 
@@ -533,16 +534,16 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         }
         else
         {
-            Log.Error("No frames were loaded.");
+            Log.Error($"No frames were loaded: {file.Name}");
         }
-        Log.Debug("MainViewModel.InitFramesAsync: End");
+        Log.Debug($"MainViewModel.InitFramesAsync: End: {file.Name}");
 
     }
 
     private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
     {
         
-        Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Start");
+        Log.Debug($"MainViewModel.SaveDataIntoDatabaseAsync: Start: {videoFile.Name}");
 
         _videoPlayerViewModel.IsVideoLoading = true;
         using var scope = _serviceProvider.CreateScope();
@@ -623,13 +624,13 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         await _videoEventJournalViewModel.FillComboBox();
         _videoPlayerViewModel.IsVideoLoading = false;
 
-        Log.Debug("MainViewModel.SaveDataIntoDatabaseAsync: Done");
+        Log.Debug($"MainViewModel.SaveDataIntoDatabaseAsync: Done: {videoFile.Name}");
         return addedVideo;
     }
 
     private async Task<(AvaloniaList<RectItem> Rects, AvaloniaList<FigItem> Figs)> GetFrameDetectionResultsAsync(BitmapModel frameBitmapModel, int numberOfFrame)
     {
-        Log.Debug("MainViewModel.GetFrameDetectionResultsAsync: Start");
+        Log.Debug($"MainViewModel.GetFrameDetectionResultsAsync: Start: TimeOfFrame:{frameBitmapModel.timeSpan}");
         List<RecognitionResult> detections = await GetFrameRecognitionResultsAsync(frameBitmapModel.frame, numberOfFrame);
         var items = new AvaloniaList<RectItem>();
         var figItems = new AvaloniaList<FigItem>();
@@ -670,7 +671,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     private async Task<List<RecognitionResult>> GetFrameRecognitionResultsAsync(Bitmap frame, int numberOfFrame)
     {
-        Log.Debug("MainViewModel.GetFrameRecognitionResultsAsync: Start");
+        Log.Debug($"MainViewModel.GetFrameRecognitionResultsAsync: Start");
         string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
         using (var client = new HttpClient())
         {

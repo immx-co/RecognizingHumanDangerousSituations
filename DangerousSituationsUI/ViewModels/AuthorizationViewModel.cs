@@ -5,6 +5,7 @@ using ClassLibrary.Repository;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
 using ReactiveUI;
+using Serilog;
 using System;
 using System.Linq;
 using System.Reactive;
@@ -139,6 +140,8 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
         }
 
         _userManagmentViewModel.UpdateUsersList();
+        Log.Information($"User:{ActiveUsername} is login");
+
     }
 
     private void ShowMessageBox(string caption, string message)
