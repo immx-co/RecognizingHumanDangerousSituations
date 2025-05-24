@@ -886,24 +886,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            if (forward)
-            {
-                if (_currentNumberOfFrame < _frames.Count - 1) _currentNumberOfFrame++;
-                else _currentNumberOfFrame = 0;
-
-                SetFrame();
-
-                await Task.Delay(frameScrollTimeout);
-            }
-            else
-            {
-                if (_currentNumberOfFrame > 0) _currentNumberOfFrame--;
-                else _currentNumberOfFrame = _frames.Count - 1;
-
-                SetFrame();
-
-                await Task.Delay(frameScrollTimeout);
-            }
+            if (forward) NextFrame();
+            else PreviousFrame();
+            await Task.Delay(frameScrollTimeout);
         }
     }
 
