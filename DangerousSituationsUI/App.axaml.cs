@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 using Serilog;
+using Serilog.Events;
 using System;
 using System.IO;
 using System.Linq;
@@ -66,13 +67,20 @@ namespace DangerousSituationsUI
                     .AddJsonFile("appsettings.json")
                     .Build();
 
-                Log.Logger = LoggerSetup.CreateLogger();
+                var loggerConfiguration = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                  .WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Information).WriteTo.File(@"Logs\Info.log"))
+                  .WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Debug).WriteTo.File(@"Logs\Debug.log"))
+                  .WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Warning).WriteTo.File(@"Logs\Warning.log"))
+                  .WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Error).WriteTo.File(@"Logs\Error.log"))
+                  .CreateLogger();
 
                 IServiceCollection servicesCollection = new ServiceCollection();
 
                 servicesCollection.AddSingleton<IScreen, IScreenRealization>();
 
                 servicesCollection.AddSingleton(configuration);
+                servicesCollection.AddSingleton<Serilog.ILogger>(loggerConfiguration);
                 servicesCollection.AddSingleton<InputApplicationViewModel>();
                 servicesCollection.AddSingleton<NavigationViewModel>();
                 servicesCollection.AddSingleton<MainViewModel>();
@@ -132,6 +140,8 @@ namespace DangerousSituationsUI
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
                 }
+
+                Log.Logger = servicesProvider.GetRequiredService<Serilog.ILogger>();
 
                 servicesProvider.GetRequiredService<HubConnectionWrapper>().Start();
                 Log.Logger.Information("Оформлено подключение к хабу.");
