@@ -5,6 +5,7 @@ using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MsBox.Avalonia;
 using ReactiveUI;
 using Serilog;
 using System;
@@ -14,6 +15,7 @@ using System.Linq;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
+using static DangerousSituationsUI.ViewModels.VideoPlayerViewModel;
 
 namespace DangerousSituationsUI.ViewModels;
 
@@ -50,6 +52,10 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
     private bool _boxPositionChanged;
 
+    private TimeSpan _eventStartTime;
+
+    private TimeSpan _eventEndTime;
+
     #endregion
 
     #region View Model Settings
@@ -62,6 +68,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     #region Commands
     public ReactiveCommand<Unit, Unit> SaveBoxPositionCommand { get; }
     public ReactiveCommand<Unit, Unit> AddNewDetectionCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> FindEventCommand { get; }
     #endregion
 
     #region Properties
@@ -163,6 +171,38 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     }
 
     public bool IsVideoProcessing = false;
+
+    public TimeSpan EventStartTime
+    {
+        get => _eventStartTime;
+        set => this.RaiseAndSetIfChanged(ref _eventStartTime, value);
+    }
+
+    public TimeSpan EventEndTime
+    {
+        get => _eventEndTime;
+        set => this.RaiseAndSetIfChanged(ref _eventEndTime, value);
+    }
+
+    public string EventStartTimeString
+    {
+        get => EventStartTime.ToString(@"hh\:mm\:ss\,ff");
+        set
+        {
+            if (TimeSpan.TryParse(value, out var ts))
+                EventStartTime = ts;
+        }
+    }
+
+    public string EventEndTimeString
+    {
+        get => EventEndTime.ToString(@"hh\:mm\:ss\,ff");
+        set
+        {
+            if (TimeSpan.TryParse(value, out var ts))
+                EventEndTime = ts;
+        }
+    }
     #endregion
 
     #region Constructor
@@ -182,6 +222,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         BoxPositionChanged = false;
 
         SaveBoxPositionCommand = ReactiveCommand.CreateFromTask(SaveBoxPosition);
+        FindEventCommand = ReactiveCommand.CreateFromTask(FindEventAsync);
     }
     #endregion
 
@@ -367,6 +408,32 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
         BoxPositionChanged = false;
     }
+
+    private async Task FindEventAsync()
+    {
+        if (SelectedVideoItem == null)
+        {
+            ShowMessageBox("Error", "Видео не выбрано.");
+            return;
+        }
+
+        if (EventEndTime <= EventStartTime)
+        {
+            ShowMessageBox("Error", "Время начала должно быть меньше времени конца.");
+            return;
+        }
+
+
+        try
+        {
+            await DisplayVideoImages(SelectedVideoItem);
+            EventResults = new(EventResults.Where(e => e.DetectionTime>=EventStartTime && e.DetectionTime<=EventEndTime));
+        }
+        catch (Exception ex)
+        {
+            ShowMessageBox("Error", $"Ошибка поиска: {ex.Message}");
+        }
+    }
     #endregion
 
     #region Public Methods
@@ -406,8 +473,16 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         EventResults.Clear();
         BoxPositionChanged = false;
         SelectedVideoItem = null;
+        EventEndTime = new TimeSpan();
+        EventStartTime = new TimeSpan();
         Log.Debug("VideoEventJournalViewModel.ClearUI: End");
         LogJournalViewModel.logString += "VideoEventJournalViewModel.ClearUI: End\n";
+    }
+
+    public void ShowMessageBox(string caption, string message)
+    {
+        var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandard(caption, message);
+        messageBoxStandardWindow.ShowAsync();
     }
     #endregion
 
