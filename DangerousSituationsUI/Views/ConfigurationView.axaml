@@ -8,30 +8,32 @@
              x:DataType="vm:ConfigurationViewModel">
 
   <Grid Background="{StaticResource SecondaryGradient}">
+    <Border Background="{StaticResource PrimaryGradient}"
+        Margin="30">
       <StackPanel Width=""
             HorizontalAlignment="Center"
             VerticalAlignment="Top"
             Margin="20">
         <StackPanel Margin="0 0 0 10">
-          <Label Classes="heading" Content="Строка подключения к базе данных:"/>
+          <Label Content="Строка подключения к базе данных:"/>
           <TextBox Text="{Binding ConnectionString}"/>
         </StackPanel>
         <StackPanel Margin="0 0 0 10">
-          <Label Classes="heading" Content="URL нейросетевого сервиса:"/>
+          <Label Content="URL нейросетевого сервиса:"/>
           <TextBox Text="{Binding Url}"/>
         </StackPanel>
         <StackPanel Margin="0 0 0 10">
-          <Label Classes="heading" Content="Таймаут нейросетевого watcher:"/>
+          <Label Content="Таймаут нейросетевого watcher:"/>
           <TextBox Text="{Binding NeuralWatcherTimeout}"/>
         </StackPanel>
         <StackPanel Margin="0 0 0 10">
-          <Label Classes="heading" Content="Частота отправки кадров на нейросетевой сервис:"/>
+          <Label Content="Частота отправки кадров на нейросетевой сервис:"/>
           <NumericUpDown Minimum="1"
                          ShowButtonSpinner="False"
                          Value="{Binding FrameRate}"/>
         </StackPanel>
         <StackPanel>
-          <Label Classes="heading" Content="Частота автоматического пролистывания кадров:"/>
+          <Label Content="Частота автоматического пролистывания кадров:"/>
           <NumericUpDown Minimum="1"
                          ShowButtonSpinner="False"
                          Value="{Binding FrameScrollTimeout}"/>
@@ -41,6 +43,7 @@
                 HorizontalAlignment="Center"
                 Margin="0,40,0,0"/>
       </StackPanel>
+    </Border>
   </Grid>
   
 </UserControl>
