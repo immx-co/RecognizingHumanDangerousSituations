@@ -29,7 +29,7 @@
 		  <RowDefinition Height="50"/>
 	  </Grid.RowDefinitions>
 	  <Grid.ColumnDefinitions>
-		  <ColumnDefinition Width="300"/>
+		  <ColumnDefinition Width="500"/>
 		  <ColumnDefinition Width="*"/>
 	  </Grid.ColumnDefinitions>
 	  <TextBlock Grid.Row="0"
@@ -50,7 +50,7 @@
 		  <ItemsControl ItemsSource="{Binding ControlZonesItems}">
 			  <ItemsControl.ItemTemplate>
 				  <DataTemplate>
-					  <views:ControlZoneSettingsItem DataContext="{Binding}"/>
+					  <ContentControl Content="{Binding}"/>
 				  </DataTemplate>
 			  </ItemsControl.ItemTemplate>
 		  </ItemsControl>

@@ -47,18 +47,22 @@
 					   MaxHeight="400"
 					   Source="{Binding Frame}"/>
 			</Border>
+			<Border Width="{Binding FrameWidth}"
+					Height="{Binding FrameHeight}">
 			<ItemsControl ItemsSource="{Binding Points}">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
 						<Canvas>
-							<Ellipse  Canvas.Top="{Binding Y}"
-									  Canvas.Right="{Binding X}"
-									  Width="100"
-									  Fill="Green"/>
+							<Ellipse Width="10"
+									 Height="10"
+									 Fill="Red"
+									 Canvas.Top="{Binding Y}"
+									 Canvas.Left="{Binding X}"/>
 						</Canvas>
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>
+			</Border>
 			<Canvas PointerPressed="Canvas_PointerPressed"
 					Width="{Binding FrameWidth}"
 					Height="{Binding FrameHeight}">

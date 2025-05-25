@@ -1,8 +1,10 @@
-﻿using Avalonia.Media.Imaging;
+﻿using Avalonia.Collections;
+using Avalonia.Media.Imaging;
 using DangerousSituationsUI.Services;
 using DangerousSituationsUI.Views;
 using ReactiveUI;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reactive;
 
 namespace DangerousSituationsUI.ViewModels;
@@ -11,7 +13,7 @@ public class AddControlZoneDialogViewModel : ReactiveObject
 {
     private Bitmap _frame;
     private List<ControlZone> _controlZones;
-    private List<ZonePoint> _points;
+    private AvaloniaList<ZonePoint> _points;
     private ControlZone _controlZone;
     private double _frameWidth;
     private double _frameHeight;
@@ -22,14 +24,10 @@ public class AddControlZoneDialogViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _controlZone, value);
     }
 
-    public List<ZonePoint> Points
+    public AvaloniaList<ZonePoint> Points
     {
         get => _points;
-        set
-        {
-            this.RaiseAndSetIfChanged(ref _points, value);
-            AddControlZoneDialogWindow?.UpdateLayout();
-        }
+        set => this.RaiseAndSetIfChanged(ref _points, value);
     }
 
     public Bitmap Frame
@@ -82,12 +80,6 @@ public class AddControlZoneDialogViewModel : ReactiveObject
 
         OnReset();
 
-        ControlZone = new()
-        {
-            Description = string.Empty,
-            Points = [new ZonePoint { X = 50, Y = 50 }]
-        };
-
         SaveCommand = ReactiveCommand.Create(OnSave);
         ResetCommand = ReactiveCommand.Create(OnReset);
         CancelCommand = ReactiveCommand.Create(OnCancel);
@@ -100,6 +92,7 @@ public class AddControlZoneDialogViewModel : ReactiveObject
 
     public void OnSave()
     {
+        ControlZone.Points = Points.ToList();
         AddControlZoneDialogWindow.Close();
     }
 
@@ -110,6 +103,11 @@ public class AddControlZoneDialogViewModel : ReactiveObject
 
     public void OnReset()
     {
+        ControlZone = new()
+        {
+            Description = string.Empty,
+            Points = new()
+        };
         Points = new();
     }
 }

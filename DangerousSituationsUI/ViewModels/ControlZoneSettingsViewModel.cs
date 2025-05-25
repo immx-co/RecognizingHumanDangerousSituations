@@ -1,10 +1,12 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia.Collections;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using ClassLibrary.Database.Models;
 using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
 using DangerousSituationsUI.Views;
+using DynamicData;
 using ReactiveUI;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,9 +25,9 @@ public class ControlZoneSettingsViewModel : ReactiveObject
 
     private double _frameHeight;
 
-    private List<ControlZone> _controlZones;
+    private AvaloniaList<ControlZone> _controlZones = new();
 
-    private List<ControlZoneSettingsItemViewModel> _controlZonesItem;
+    private AvaloniaList<ControlZoneSettingsItem> _controlZonesItem = new();
 
     public double FrameWidth
     {
@@ -47,13 +49,13 @@ public class ControlZoneSettingsViewModel : ReactiveObject
 
     public ControlZoneSettingsWindow ControlZoneSettingsWindow { get; }
 
-    public List<ControlZone> ControlZones
+    public AvaloniaList<ControlZone> ControlZones
     {
         get => _controlZones;
         set => this.RaiseAndSetIfChanged(ref _controlZones, value);
     }
 
-    public List<ControlZoneSettingsItemViewModel> ControlZonesItems
+    public AvaloniaList<ControlZoneSettingsItem> ControlZonesItems
     {
         get => _controlZonesItem;
         set => this.RaiseAndSetIfChanged(ref _controlZonesItem, value);
@@ -93,8 +95,15 @@ public class ControlZoneSettingsViewModel : ReactiveObject
 
     public async Task OnAddAsync()
     {
-        var AddControlZoneDialogViewModel = new AddControlZoneDialogViewModel(_frame, _controlZones);
+        var AddControlZoneDialogViewModel = new AddControlZoneDialogViewModel(_frame, _controlZones.ToList());
         
         await AddControlZoneDialogViewModel.AddControlZoneDialogWindow.ShowDialog(ControlZoneSettingsWindow);
+
+        ControlZones.Add(AddControlZoneDialogViewModel.ControlZone);
+
+        var controlZoneSettingsItemViewModel = new ControlZoneSettingsItemViewModel(AddControlZoneDialogViewModel.ControlZone);
+
+
+        ControlZonesItems.Add(new ControlZoneSettingsItem { DataContext = controlZoneSettingsItemViewModel});
     }
 }

@@ -21,15 +21,11 @@ public partial class AddControlZoneDialogWindow : Window
             var x = point.Position.X;
             var y = point.Position.Y;
 
-            var points = viewModel.Points;
-
-            points.Add(new ZonePoint
+            viewModel.Points.Add(new ZonePoint
             {
                 X = x,
                 Y = y
             });
-
-            viewModel.Points = points;
         }
     }
 }

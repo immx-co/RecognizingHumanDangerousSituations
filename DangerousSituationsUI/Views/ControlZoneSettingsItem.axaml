@@ -5,15 +5,10 @@
 			 xmlns:vm="using:DangerousSituationsUI.ViewModels"
 			 x:DataType="vm:ControlZoneSettingsItemViewModel"
              x:Class="DangerousSituationsUI.Views.ControlZoneSettingsItem">
-	<Grid RowDefinitions="*"
-		  ColumnDefinitions="*, Auto">
-		<TextBlock Grid.Row="0"
-				   Grid.Column="0"
+	<Grid ColumnDefinitions="*, *">
+		<TextBlock Grid.Column="0"
 				   Text="{Binding ControlZone.Description}"/>
-		<StackPanel Grid.RowSpan="0"
-					Grid.Column="1"
-					Orientation="Vertical">
-			<Button Content="Удалить"/>
-		</StackPanel>
+		<Button Grid.Column="1"
+				Content="Удалить"/>
 	</Grid>
 </UserControl>
