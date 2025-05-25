@@ -124,6 +124,9 @@ namespace DangerousSituationsUI.ViewModels
 
                     Log.Information($"Создан пользователь {result.Username}.");
                     LoadUsers();
+                    
+                    if (App.Current?.CurrentWindow?.OwnedWindows.First() is AddUserWindow window)
+                        window.Close(result);
                 });
             }
             catch (Exception ex)
@@ -135,7 +138,7 @@ namespace DangerousSituationsUI.ViewModels
         private async Task ShowMessageBox(string caption, string message)
         {
             var messageBox = MsBox.Avalonia.MessageBoxManager.GetMessageBoxStandard(caption, message);
-            await messageBox.ShowAsync();
+            await messageBox.ShowWindowDialogAsync(App.Current.CurrentWindow);
         }
 
         #endregion
