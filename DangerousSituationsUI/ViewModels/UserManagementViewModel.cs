@@ -153,18 +153,30 @@ namespace DangerousSituationsUI.ViewModels
             {
                 await _userService.UpdateUserAdminStatusAsync(userId, isAdmin);
                 Log.Information($"Для пользователя {userId} изменен статус администратора.");
-                LogJournalViewModel.logString += $"Для пользователя {userId} изменен статус администратора.\n";
             }
             catch (Exception ex)
             {
                 Log.Error($"Ошибка обновления статуса администратора: {ex}");
-                LogJournalViewModel.logString += $"Ошибка обновления статуса администратора: {ex}\n";
                 var user = UserItems.FirstOrDefault(u => u.UserId == userId);
                 if (user != null)
                     user.UserAdmin = !isAdmin;
             }
         }
-
+        public async Task UpdateUserDeletedStatus(int userId, bool isDeleted)
+        {
+            try
+            {
+                await _userService.UpdateUserDeletedStatusAsync(userId, isDeleted);
+                Log.Information($"Для пользователя {userId} изменен статус удаления.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Ошибка обновления статуса удаления: {ex}");
+                var user = UserItems.FirstOrDefault(u => u.UserId == userId);
+                if (user != null)
+                    user.IsDeleted = !isDeleted;
+            }
+        }
         public void UpdateUsersList()
         {
             LoadUsers();
@@ -191,6 +203,19 @@ namespace DangerousSituationsUI.ViewModels
                         _user.IsAdmin = value;
                         this.RaisePropertyChanged();
                         _ = _parentVm.UpdateUserAdminStatus(UserId, value);
+                    }
+                }
+            }
+            public bool IsDeleted
+            {
+                get => _user.IsDeleted;
+                set
+                {
+                    if (_user.IsDeleted != value)
+                    {
+                        _user.IsDeleted = value;
+                        this.RaisePropertyChanged();
+                        _ = _parentVm.UpdateUserDeletedStatus(UserId, value);
                     }
                 }
             }

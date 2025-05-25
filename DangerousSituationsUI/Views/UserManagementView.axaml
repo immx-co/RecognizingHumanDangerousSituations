@@ -35,15 +35,26 @@
               </DataTemplate>
             </DataGridTemplateColumn.CellEditingTemplate>
           </DataGridTemplateColumn>
+			<DataGridTemplateColumn Header="Удалены" Width="*">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<CheckBox IsChecked="{Binding IsDeleted}"
+								  HorizontalAlignment="Center"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+				<DataGridTemplateColumn.CellEditingTemplate>
+					<DataTemplate>
+						<CheckBox IsChecked="{Binding IsDeleted}"
+								  HorizontalAlignment="Center"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellEditingTemplate>
+			</DataGridTemplateColumn>
         </DataGrid.Columns>
       </DataGrid>
       <StackPanel Margin="20">
         <Button Name="AddUserButton"
                 Content="Создать"
                 Command="{Binding AddUserCommand}"
-                Margin="10"/>
-        <Button Content="Удалить"
-                Command="{Binding DeleteUserCommand}"
                 Margin="10"/>
       </StackPanel>
     </StackPanel>

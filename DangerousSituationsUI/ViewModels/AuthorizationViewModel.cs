@@ -96,7 +96,7 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
     {
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
-        ClassLibrary.Database.Models.User? dbUser = db.Users.SingleOrDefault(user => user.Name == Nickname);
+        ClassLibrary.Database.Models.User? dbUser = db.Users.Where(user => user.IsDeleted == false).SingleOrDefault(user => user.Name == Nickname);
         if (dbUser is null)
         {
             ShowMessageBox("Invalid Username", $"Имени пользователя {Nickname} не существует");
