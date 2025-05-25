@@ -170,7 +170,7 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Failed reading log: {ex.Message}");
+            Log.Error($"Failed reading log: {ex.Message}");
         }
 
         return logs;
@@ -197,7 +197,7 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error truncating file {file}");
+                Log.Error($"Error truncating file {file}");
             }
 
         }
@@ -229,7 +229,7 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error truncating file {filePath}");
+                Log.Error($"Error truncating file {filePath}");
             }
 
         }
@@ -243,17 +243,17 @@ public class LogJournalViewModel : ReactiveObject, IRoutableViewModel
         {
             if (!File.Exists(filePath))
             {
-                Debug.WriteLine($"File not found: {Path.GetFullPath(filePath)}");
+                Log.Error($"File not found: {Path.GetFullPath(filePath)}");
                 return;
             }
 
             using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
             fs.SetLength(0);
-            Debug.WriteLine($"Cleared file: {filePath}");
+            Log.Information($"Cleared file: {filePath}");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Failed to clear file {filePath}: {ex.Message}");
+            Log.Error($"Failed to clear file {filePath}: {ex.Message}");
         }
     }
 
