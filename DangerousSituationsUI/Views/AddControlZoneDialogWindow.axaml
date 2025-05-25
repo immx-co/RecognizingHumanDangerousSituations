@@ -47,6 +47,18 @@
 					   MaxHeight="400"
 					   Source="{Binding Frame}"/>
 			</Border>
+			<ItemsControl ItemsSource="{Binding Points}">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate>
+						<Canvas>
+							<Ellipse  Canvas.Top="{Binding Y}"
+									  Canvas.Right="{Binding X}"
+									  Width="100"
+									  Fill="Green"/>
+						</Canvas>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
 			<Canvas PointerPressed="Canvas_PointerPressed"
 					Width="{Binding FrameWidth}"
 					Height="{Binding FrameHeight}">
@@ -54,7 +66,6 @@
 						   Height="{Binding FrameHeight}"
 						   Fill="Transparent"/>
 			</Canvas>
-			
 		</Grid>
 		<StackPanel Grid.Row="2"
 					HorizontalAlignment="Right"

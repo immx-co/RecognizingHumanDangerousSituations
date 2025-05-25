@@ -11,6 +11,7 @@ public class AddControlZoneDialogViewModel : ReactiveObject
 {
     private Bitmap _frame;
     private List<ControlZone> _controlZones;
+    private List<ZonePoint> _points;
     private ControlZone _controlZone;
     private double _frameWidth;
     private double _frameHeight;
@@ -19,6 +20,16 @@ public class AddControlZoneDialogViewModel : ReactiveObject
     {
         get => _controlZone;
         set => this.RaiseAndSetIfChanged(ref _controlZone, value);
+    }
+
+    public List<ZonePoint> Points
+    {
+        get => _points;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _points, value);
+            AddControlZoneDialogWindow?.UpdateLayout();
+        }
     }
 
     public Bitmap Frame
@@ -69,6 +80,14 @@ public class AddControlZoneDialogViewModel : ReactiveObject
 
         _controlZones = controlZones;
 
+        OnReset();
+
+        ControlZone = new()
+        {
+            Description = string.Empty,
+            Points = [new ZonePoint { X = 50, Y = 50 }]
+        };
+
         SaveCommand = ReactiveCommand.Create(OnSave);
         ResetCommand = ReactiveCommand.Create(OnReset);
         CancelCommand = ReactiveCommand.Create(OnCancel);
@@ -91,10 +110,6 @@ public class AddControlZoneDialogViewModel : ReactiveObject
 
     public void OnReset()
     {
-        ControlZone = new()
-        {
-            Description = string.Empty,
-            Points = new()
-        };
+        Points = new();
     }
 }
