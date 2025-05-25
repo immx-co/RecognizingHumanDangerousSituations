@@ -8,16 +8,18 @@
         Title="Новый пользователь"
         Width="400" Height="300">
 
-    <StackPanel Margin="20" Spacing="10">
-        <TextBox Watermark="Имя пользователя" Text="{Binding Username}"/>
-        <TextBox Watermark="Email" Text="{Binding Email}"/>
-        <TextBox Watermark="Пароль" Text="{Binding Password}" PasswordChar="*"/>
-        
-        <CheckBox Content="Адмнистратор" IsChecked="{Binding IsAdmin}"/>
-        
-        <StackPanel Margin="0,10" Orientation="Horizontal" HorizontalAlignment="Left" Spacing="10">
-            <Button Content="Отмена" Command="{Binding CancelCommand}"/>
-            <Button Content="Сохранить" Command="{Binding SaveCommand}"/>
-        </StackPanel>
+  <Grid Background="{StaticResource SecondaryGradient}">
+    <StackPanel Margin="15" Spacing="15" VerticalAlignment="Center">
+      <TextBox Watermark="Имя пользователя" Text="{Binding Username}"/>
+      <TextBox Watermark="Email" Text="{Binding Email}"/>
+      <TextBox Watermark="Пароль" Text="{Binding Password}" PasswordChar="*"/>
+
+      <CheckBox Content="Администратор" IsChecked="{Binding IsAdmin}"/>
+
+      <StackPanel Margin="0,10" Orientation="Horizontal" HorizontalAlignment="Left" Spacing="10">
+        <Button Content="Сохранить" Command="{Binding SaveCommand}"/>
+        <Button Content="Отмена" Command="{Binding CancelCommand}"/>
+      </StackPanel>
     </StackPanel>
+  </Grid>
 </Window>

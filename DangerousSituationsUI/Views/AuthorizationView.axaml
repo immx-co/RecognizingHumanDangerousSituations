@@ -7,16 +7,18 @@
              x:Class="DangerousSituationsUI.Views.AuthorizationView"
              x:DataType="vm:AuthorizationViewModel">
 
-  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-    <StackPanel HorizontalAlignment="Center">
-      <TextBlock Text="Авторизация" Margin="0,0,0,20"/>
+  <Grid Background="{StaticResource PrimaryGradient}">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+      <StackPanel HorizontalAlignment="Center">
+        <TextBlock Classes="heading" Text="Авторизация" Margin="0,0,0,20"/>
+      </StackPanel>
+      <TextBox Text="{Binding Nickname, Mode=TwoWay}" Width="200" Height="30" Watermark="User" Margin="0, 5"/>
+      <TextBox Text="{Binding Password, Mode=TwoWay}" Width="200" Height="30" Watermark="Password" Margin="0, 5, 0, 20" PasswordChar="*"/>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
+        <Button Content="Назад" Command="{Binding BackCommand}" />
+        <Button Content="Войти" Command="{Binding LoginCommand}" />
+      </StackPanel>
     </StackPanel>
-    <TextBox Text="{Binding Nickname, Mode=TwoWay}" Width="200" Height="30" Watermark="User" Margin="0, 5"/>
-    <TextBox Text="{Binding Password, Mode=TwoWay}" Width="200" Height="30" Watermark="Password" Margin="0, 5, 0, 20" PasswordChar="*"/>
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-      <Button Content="Назад" Command="{Binding BackCommand}" Margin="15 0 " />
-      <Button Content="Войти" Command="{Binding LoginCommand}" />
-    </StackPanel>
-  </StackPanel>
+  </Grid>
   
 </UserControl>

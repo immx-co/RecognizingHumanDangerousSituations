@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="DangerousSituationsUI.App"
              xmlns:local="using:DangerousSituationsUI"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Light">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
@@ -12,5 +12,50 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+      
+      <Style Selector="Button">
+        <Setter Property="Background" Value="#FF5C7CFA"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+      </Style>
+
+      <Style Selector="ToggleButton">
+        <Setter Property="Background" Value="#FFE9EBF5"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="7"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+      </Style>
+
+      <Style Selector="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="#FF2E2E3E"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+      </Style>
+
+      <Style Selector="TextBlock.heading">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="#FF5865A8"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+      </Style>
+
+      <Style Selector="Label.heading">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="#FF5865A8"/>
+      </Style>
+
     </Application.Styles>
+
+
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://DangerousSituationsUI/Styles/ResourceDictionary.axaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+
 </Application>

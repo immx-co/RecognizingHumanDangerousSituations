@@ -1,0 +1,24 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Brushes -->
+  <RadialGradientBrush x:Key="PrimaryGradient"
+                       Center="0.5,0.5"
+                       GradientOrigin="0.5,0.5"
+                       Radius="0.8">
+    <GradientStop Color="#FFF5F7FA" Offset="0"/>
+    <GradientStop Color="#FFE0E7EF" Offset="1"/>
+  </RadialGradientBrush>
+
+  <LinearGradientBrush x:Key="SecondaryGradient" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#FFF7F8FC" Offset="0"/>
+    <GradientStop Color="#FFE9EBF5" Offset="1"/>
+  </LinearGradientBrush>
+
+  <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#FFCBD8F0" Offset="0"/>
+    <GradientStop Color="#FFA6B4E0" Offset="1"/>
+  </LinearGradientBrush>
+
+
+</ResourceDictionary>
