@@ -9,43 +9,55 @@
              x:DataType="vm:LogJournalViewModel">
 
 	<Grid>
-		<StackPanel Width="600"
-						HorizontalAlignment="Left"
+    <Border Background="{StaticResource PrimaryGradient}"
+						Margin="30">
+		<Grid Width=""
+						HorizontalAlignment="Center"
 						Margin="20">
-			<StackPanel Margin="0 0 0 10" Width="600">
-					<StackPanel Orientation="Horizontal" Margin="0 0 0 10" Width="600">
-						<ToggleButton Margin="0 0 10 0"
-							Content="Verbose"
-							Command="{Binding ToggleLevelFilterCommand}" 
-							CommandParameter="{x:Static serilog:LogEventLevel.Verbose}"/>
-						<ToggleButton Margin="0 0 10 0"
-							Content="Debug" 
-							Command="{Binding ToggleLevelFilterCommand}" 
-							CommandParameter="{x:Static serilog:LogEventLevel.Debug}"/>
-						<ToggleButton Margin="0 0 10 0"
-							Content="Information" 
-							IsDefault="True"
-							Command="{Binding ToggleLevelFilterCommand}" 
-							CommandParameter="{x:Static serilog:LogEventLevel.Information}"/>
-						<ToggleButton Margin="0 0 10 0"
-							Content="Warning"
-							Command="{Binding ToggleLevelFilterCommand}"
-							CommandParameter="{x:Static serilog:LogEventLevel.Warning}"/>
-						<ToggleButton Margin="0 0 10 0"
-							Content="Error"
-							Command="{Binding ToggleLevelFilterCommand}"
-							CommandParameter="{x:Static serilog:LogEventLevel.Error}"/>
-						<ToggleButton Margin="0 0 10 0"
-							Content="Fatal"
-							Command="{Binding ToggleLevelFilterCommand}"
-							CommandParameter="{x:Static serilog:LogEventLevel.Fatal}"/>
-					</StackPanel>
-					<Button HorizontalAlignment="Right" Content="Обновить" Command="{Binding UpdateUI}"></Button>
-				<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-					<ListBox HorizontalAlignment="Left" ItemsSource="{Binding Logs}"  Height="600" Width="1200" ></ListBox>
-				</ScrollViewer>
-				
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+			<StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center"
+                  Margin="0 0 0 10" Spacing="10">
+				<ToggleButton Content="Verbose"
+					Command="{Binding ToggleLevelFilterCommand}" 
+					CommandParameter="{x:Static serilog:LogEventLevel.Verbose}"/>
+				<ToggleButton Content="Debug" 
+					Command="{Binding ToggleLevelFilterCommand}" 
+					CommandParameter="{x:Static serilog:LogEventLevel.Debug}"/>
+				<ToggleButton Content="Information" 
+					IsDefault="True"
+					Command="{Binding ToggleLevelFilterCommand}" 
+					CommandParameter="{x:Static serilog:LogEventLevel.Information}"/>
+				<ToggleButton Content="Warning"
+					Command="{Binding ToggleLevelFilterCommand}"
+					CommandParameter="{x:Static serilog:LogEventLevel.Warning}"/>
+				<ToggleButton Content="Error"
+					Command="{Binding ToggleLevelFilterCommand}"
+					CommandParameter="{x:Static serilog:LogEventLevel.Error}"/>
+				<ToggleButton Content="Fatal"
+					Command="{Binding ToggleLevelFilterCommand}"
+					CommandParameter="{x:Static serilog:LogEventLevel.Fatal}"/>
 			</StackPanel>
-		</StackPanel>
+    <StackPanel Grid.Row="1" Orientation="Horizontal" 
+                HorizontalAlignment="Center" Spacing="10">
+      <Button Content="Удалить все" 
+              Command="{Binding DeleteAllLogsCommand}"></Button>
+      <Button Content="Удалить выбранные"
+							Command="{Binding DeleteFilteredLogsCommand}"></Button>
+      <Button Content="Обновить журнал" 
+              Command="{Binding UpdateUI}"></Button>
+    </StackPanel>
+    <ListBox Grid.Row="2" ItemsSource="{Binding Logs}"
+             VerticalAlignment="Stretch"
+             HorizontalAlignment="Stretch"
+             ScrollViewer.VerticalScrollBarVisibility="Auto"
+             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+             Background="{StaticResource SecondaryGradient}"
+             Margin="10"/>
+    </Grid>
+    </Border>
 	</Grid>
 </UserControl>
