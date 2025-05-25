@@ -565,7 +565,7 @@ public class VideoPlayerViewModel : ReactiveObject, IRoutableViewModel
     public void ShowMessageBox(string caption, string message)
     {
         var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandard(caption, message);
-        messageBoxStandardWindow.ShowAsync();
+        messageBoxStandardWindow.ShowWindowDialogAsync(App.Current.CurrentWindow);
     }
     public void ClearUI()
     {

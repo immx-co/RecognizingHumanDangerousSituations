@@ -138,7 +138,7 @@ namespace DangerousSituationsUI.ViewModels
         private async Task ShowMessageBox(string caption, string message)
         {
             var messageBox = MsBox.Avalonia.MessageBoxManager.GetMessageBoxStandard(caption, message);
-            await messageBox.ShowAsync();
+            await messageBox.ShowWindowDialogAsync(App.Current.CurrentWindow);
         }
 
         #endregion
