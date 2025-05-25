@@ -10,206 +10,61 @@
 
   <Grid Background="{StaticResource SecondaryGradient}">
     <Grid>
-
-<<<<<<< HEAD
-	<StackPanel Grid.Column="0">
-	  <ComboBox Width="600"
-				HorizontalAlignment="Stretch"
-				Margin="20, 13, 0, 13"
-				ItemsSource="{Binding VideoItems}"
-				SelectedItem="{Binding SelectedVideoItem}"/>
-		<DataGrid Width="600"
-				Margin="20" 
-				ItemsSource="{Binding EventResults}"
-				SelectedItem="{Binding SelectedEventResult}"
-				AutoGenerateColumns="True" 
-				IsReadOnly="True"
-				GridLinesVisibility="All"   
-				BorderThickness="1" 
-				BorderBrush="Gray"
-				CanUserSortColumns="True"
-				CanUserResizeColumns="True"
-				Height="500"
-				MaxHeight="600"
-				AutoGeneratingColumn="DataGrid_AutoGeneratingColumn">
-				<DataGrid.Styles>
-					<Style Selector="DataGrid">
-						<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
-						<Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
-					</Style>
-				</DataGrid.Styles>
-		</DataGrid>
-		<Grid>
-		<StackPanel Orientation="Horizontal" Margin="0 10 0 10"
-										HorizontalAlignment="Center">
-			<StackPanel Margin="10" Orientation="Horizontal">
-				<TextBlock Text="Начало (hh:mm:ss.ff) "
-			 VerticalAlignment="Center"/>
-				<MaskedTextBox Mask="00:00:00.00"
-				 Width="100"  
-				 Text="{Binding EventStartTimeString}"/>
-			</StackPanel>
-			<StackPanel Margin="10" Orientation="Horizontal">
-				<TextBlock Text="Конец (hh:mm:ss.ff) "
-			 VerticalAlignment="Center"/>
-				<MaskedTextBox Mask="00:00:00.00"
-				 Width="100"  
-				 Text="{Binding EventEndTimeString}"/>
-			</StackPanel>
-			<Button Content="Найти"
-					Command="{Binding FindEventCommand}"	
-					VerticalAlignment="Center"
-					Margin="10"/>
-		</StackPanel>
-		</Grid>
-	</StackPanel>
-
-	<StackPanel Grid.Column="1"
-								VerticalAlignment="Center"
-								HorizontalAlignment="Center">
-		<TextBlock Text="{Binding Title}"
-								   Margin="0 0 0 10"/>
-		<Grid Margin="0 0 0 10">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="0.25*" />
-				<ColumnDefinition Width="0.25*" />
-				<ColumnDefinition Width="0.25*" />
-				<ColumnDefinition Width="0.25*" />
-			</Grid.ColumnDefinitions>
-
-			<StackPanel Grid.Column="0" Margin="0 0 5 0">
-				<Label>X:</Label>
-				<TextBox Text="{Binding BoxTopLeftX}" AcceptsReturn="False" IsReadOnly="True" IsEnabled="false"/>
-			</StackPanel>
-			<StackPanel Grid.Column="1" Margin="0 0 5 0">
-				<Label>Y:</Label>
-				<TextBox Text="{Binding BoxTopLeftY}" AcceptsReturn="False" IsReadOnly="True" IsEnabled="false"/>
-			</StackPanel>
-			<StackPanel Grid.Column="2" Margin="0 0 5 0">
-				<Label>Высота:</Label>
-				<TextBox Text="{Binding BoxHeight}" AcceptsReturn="False" IsReadOnly="True" IsEnabled="false"/>
-			</StackPanel>
-			<StackPanel Grid.Column="3">
-				<Label>Ширина:</Label>
-				<TextBox Text="{Binding BoxWidth}" AcceptsReturn="False" IsReadOnly="True" IsEnabled="false"/>
-			</StackPanel>
-		</Grid>
-		<Grid Width="800" Height="400">
-			<Border Background="Gainsboro">
-				<Image
-					  MaxWidth="800"
-					  MaxHeight="400"
-					  Source="{Binding CurrentImage}"
-					  RenderOptions.BitmapInterpolationMode="HighQuality">
-				</Image>
-			</Border>
-			<ItemsControl ItemsSource="{Binding RectItems}">
-				<ItemsControl.ItemTemplate>
-					<DataTemplate>
-						<Canvas Background="Blue">
-							<services:InteractiveBorder Cursor="SizeAll"
-												  BorderBrush="{Binding Color}"
-												  BorderThickness="2"
-												  Width="{Binding Width}"
-												  Height="{Binding Height}"
-												  Canvas.Left="{Binding X}"
-												  Canvas.Top="{Binding Y}"
-												  BorderMoved="InteractiveBorder_BorderMoved"
-												  BorderResized="InteractiveBorder_BorderResized">
-								<Canvas IsVisible="{Binding $parent.IsPointerOver}"
-								  Width="{Binding $parent.Width}"
-								  Height="{Binding $parent.Height}">
-									<!-- Верхний левый угол -->
-									<Rectangle Name="TopLeft" Width="15" Height="15"
-											   Fill="{Binding Color}" Cursor="TopLeftCorner"
-											   Canvas.Left="0" Canvas.Top="0"
-											   PointerPressed="ResizeHandle_PointerPressed" />
-									<!-- Нижний левый угол -->
-									<Rectangle Name="BottomLeft" Width="15" Height="15"
-											   Fill="{Binding Color}" Cursor="BottomLeftCorner"
-											   Canvas.Left="0" Canvas.Bottom="0"
-											   PointerPressed="ResizeHandle_PointerPressed" />
-									<!-- Верхний верхний угол -->
-									<Rectangle Name="TopRight" Width="15" Height="15"
-											   Fill="{Binding Color}" Cursor="TopRightCorner"
-											   Canvas.Right="0" Canvas.Top="0"
-											   PointerPressed="ResizeHandle_PointerPressed" />
-									<!-- Нижний правый угол -->
-									<Rectangle Name="BottomRight" Width="15" Height="15"
-											   Fill="{Binding Color}" Cursor="BottomRightCorner"
-											   Canvas.Right="0" Canvas.Bottom="0"
-											   PointerPressed="ResizeHandle_PointerPressed" />
-								</Canvas>
-							</services:InteractiveBorder>
-						</Canvas>
-					</DataTemplate>
-				</ItemsControl.ItemTemplate>
-			</ItemsControl>
-		</Grid>
-		<Grid Margin="0 10 0 0">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="0.3*"/>
-				<ColumnDefinition Width="0.5*"/>
-				<ColumnDefinition Width="0.2*"/>
-			</Grid.ColumnDefinitions>
-			<ListBox ItemsSource="{Binding LegendItems}" MaxWidth="200" Grid.Column="0">
-				<ListBox.ItemTemplate>
-					<DataTemplate>
-						<StackPanel Orientation="Horizontal" Spacing="5">
-							<Ellipse Width="15" Height="15" Fill="{Binding Color}"/>
-							<TextBlock Text="{Binding ClassName}"/>
-						</StackPanel>
-					</DataTemplate>
-				</ListBox.ItemTemplate>
-			</ListBox>
-			<StackPanel Grid.Column="1">
-				<Button HorizontalAlignment="Stretch"
-				  VerticalContentAlignment="Center"
-				  HorizontalContentAlignment="Center"
-				  Content="Сохранить изменения"
-				  IsEnabled="{Binding BoxPositionChanged}"
-				  Command="{Binding SaveBoxPositionCommand}" />
-			</StackPanel>
-		</Grid>
-	</StackPanel>
-</Grid>
-  
-=======
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*"/>
         <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
 
-      <StackPanel Grid.Column="0">
-        <ComboBox Width=""
-            HorizontalAlignment="Stretch"
-            Margin="20, 13, 0, 13"
-            ItemsSource="{Binding VideoItems}"
-            SelectedItem="{Binding SelectedVideoItem}"/>
-        <DataGrid Width=""
-            Margin="20"
-            ItemsSource="{Binding EventResults}"
-            SelectedItem="{Binding SelectedEventResult}"
-            AutoGenerateColumns="True"
-            IsReadOnly="True"
-            GridLinesVisibility="All"
-            BorderThickness="1"
-            BorderBrush="Gray"
-            CanUserSortColumns="True"
-            CanUserResizeColumns="True"
-            MaxHeight="600">
-          <DataGrid.Styles>
-            <Style Selector="DataGrid">
-              <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
-              <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
-            </Style>
-          </DataGrid.Styles>
-        </DataGrid>
-        <Border Height="700"
-                    Width="600">
-
-        </Border>
-      </StackPanel>
+	  <StackPanel Grid.Column="0">
+	    <ComboBox Width=""
+				  HorizontalAlignment="Stretch"
+				  Margin="20"
+				  ItemsSource="{Binding VideoItems}"
+				  SelectedItem="{Binding SelectedVideoItem}"/>
+		  <DataGrid Width=""
+				  Margin="20" 
+				  ItemsSource="{Binding EventResults}"
+				  SelectedItem="{Binding SelectedEventResult}"
+				  AutoGenerateColumns="True" 
+				  IsReadOnly="True"
+				  GridLinesVisibility="All"   
+				  BorderThickness="1" 
+				  BorderBrush="Gray"
+				  CanUserSortColumns="True"
+				  CanUserResizeColumns="True"
+				  MaxHeight="600"
+				  AutoGeneratingColumn="DataGrid_AutoGeneratingColumn">
+				  <DataGrid.Styles>
+					  <Style Selector="DataGrid">
+						  <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+						  <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+					  </Style>
+				  </DataGrid.Styles>
+		  </DataGrid>
+		  <Grid>
+		  <StackPanel Orientation="Horizontal" Margin="0 10 0 10"
+										  HorizontalAlignment="Center">
+			  <StackPanel Margin="10" Orientation="Horizontal">
+				  <TextBlock Text="Начало (hh:mm:ss.ff) "
+			   VerticalAlignment="Center"/>
+				  <MaskedTextBox Mask="00:00:00.00"
+				   Width="100"  
+				   Text="{Binding EventStartTimeString}"/>
+			  </StackPanel>
+			  <StackPanel Margin="10" Orientation="Horizontal">
+				  <TextBlock Text="Конец (hh:mm:ss.ff) "
+			   VerticalAlignment="Center"/>
+				  <MaskedTextBox Mask="00:00:00.00"
+				   Width="100"  
+				   Text="{Binding EventEndTimeString}"/>
+			  </StackPanel>
+			  <Button Content="Найти"
+					  Command="{Binding FindEventCommand}"	
+					  VerticalAlignment="Center"
+					  Margin="10"/>
+		  </StackPanel>
+		  </Grid>
+	  </StackPanel>
 
       <StackPanel Grid.Column="1"
                     VerticalAlignment="Center"
@@ -321,5 +176,4 @@
       </StackPanel>
     </Grid>
   </Grid>
->>>>>>> refs/heads/_UI_redesign
 </UserControl>
