@@ -2,6 +2,7 @@
 using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
 using ClassLibrary.Repository;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
 using ReactiveUI;
@@ -96,10 +97,18 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
     {
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
-        ClassLibrary.Database.Models.User? dbUser = db.Users.Where(user => user.IsDeleted == false).SingleOrDefault(user => user.Name == Nickname);
+        ClassLibrary.Database.Models.User? dbUser = db.Users.SingleOrDefault(user => user.Name == Nickname);
         if (dbUser is null)
         {
             ShowMessageBox("Invalid Username", $"Имени пользователя {Nickname} не существует");
+            Nickname = string.Empty;
+            Password = string.Empty;
+            return;
+        }
+
+        if (dbUser.IsDeleted == true)
+        {
+            ShowMessageBox("Is Deleted User", $"Ученая запись пользователя {Nickname} заблокирована. Обратитесь к администратору.");
             Nickname = string.Empty;
             Password = string.Empty;
             return;
