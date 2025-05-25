@@ -25,11 +25,6 @@ namespace DangerousSituationsUI.Services
                     ViewModel = addUserViewModel
                 };
 
-                addUserViewModel.SaveCommand.Subscribe(result =>
-                {
-                    addUserWindow.Close(result);
-                });
-
                 addUserViewModel.CancelCommand.Subscribe(_ =>
                 {
                     addUserWindow.Close(null);

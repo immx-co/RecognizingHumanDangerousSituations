@@ -32,7 +32,9 @@
 				BorderBrush="Gray"
 				CanUserSortColumns="True"
 				CanUserResizeColumns="True"
-				Height="500">
+				Height="500"
+				MaxHeight="600"
+				AutoGeneratingColumn="DataGrid_AutoGeneratingColumn">
 				<DataGrid.Styles>
 					<Style Selector="DataGrid">
 						<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>

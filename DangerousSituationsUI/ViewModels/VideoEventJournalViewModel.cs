@@ -68,7 +68,6 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
     #region Commands
     public ReactiveCommand<Unit, Unit> SaveBoxPositionCommand { get; }
     public ReactiveCommand<Unit, Unit> AddNewDetectionCommand { get; }
-
     public ReactiveCommand<Unit, Unit> FindEventCommand { get; }
     #endregion
 
@@ -250,7 +249,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
 
         var dbFrame = db.Frames.Where(frame => frame.FrameId == videoEventResult.Name).FirstOrDefault();
-
+        
         if (dbFrame is null)
         {
             return null;
@@ -275,20 +274,6 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
         return (frameBitmap, dbFrame.FrameId);
     }
-
-    //private VideoEventResult ParseSelectedVideoEventResult()
-    //{
-    //    var values = SelectedEventResult.Split("; ");
-    //    return new VideoEventResult
-    //    {
-    //        Name = Guid.Parse(values[0].Split(": ")[1]),
-    //        Class = values[1].Split(": ")[1],
-    //        X = Convert.ToInt32(values[2].Split(": ")[1]),
-    //        Y = Convert.ToInt32(values[3].Split(": ")[1]),
-    //        Width = Convert.ToInt32(values[4].Split(": ")[1]),
-    //        Height = Convert.ToInt32(values[5].Split(": ")[1])
-    //    };
-    //}
 
     private void Clear()
     {
@@ -357,7 +342,7 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
             return;
         
         using ApplicationContext db = _serviceProvider.GetRequiredService<ApplicationContext>();
-        var dbDetection = await db.Detections.Where(d => d.FrameId == SelectedEventResult.Name 
+        var dbDetection = await db.Detections.Where(d => d.FrameId == SelectedEventResult.Name
             && d.X == oldX && d.Y == oldY && d.Width == oldWidth
             && d.Height == oldHeight).FirstOrDefaultAsync();
         
@@ -371,7 +356,8 @@ public class VideoEventJournalViewModel : ReactiveObject, IRoutableViewModel
 
         await db.SaveChangesAsync();
 
-        Log.Debug($"Видео {SelectedVideoItem.VideoName}, кадр {SelectedEventResult.Name}: обновлены позиция и размеры детекции {dbDetection.DetectionId} (X:{oldX}->{BoxTopLeftX}, " +
+        Log.Debug($"Видео {SelectedVideoItem.VideoName}, время {SelectedEventResult.DetectionTime}: " +
+            $"обновлены позиция и размеры детекции (X:{oldX}->{BoxTopLeftX}, " +
             $"Y:{oldY}->{BoxTopLeftY}, высота:{oldHeight}->{BoxHeight}, ширина:{oldWidth}->{BoxWidth})");
 
         SelectedEventResult.X = BoxTopLeftX;
