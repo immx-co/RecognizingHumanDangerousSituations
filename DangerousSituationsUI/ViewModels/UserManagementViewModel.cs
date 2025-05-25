@@ -124,6 +124,9 @@ namespace DangerousSituationsUI.ViewModels
 
                     Log.Information($"Создан пользователь {result.Username}.");
                     LoadUsers();
+                    
+                    if (App.Current?.CurrentWindow?.OwnedWindows.First() is AddUserWindow window)
+                        window.Close(result);
                 });
             }
             catch (Exception ex)
