@@ -39,7 +39,16 @@ namespace DangerousSituationsUI.Services
                 await db.SaveChangesAsync();
             }
         }
-
+        public async Task UpdateUserDeletedStatusAsync(int userId, bool isDeleted)
+        {
+            using var db = _serviceProvider.GetRequiredService<ApplicationContext>();
+            var user = await db.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.IsDeleted = isDeleted;
+                await db.SaveChangesAsync();
+            }
+        }
 
         public async Task<User> AddUserAsync(string username, string email, string password, bool isAdmin)
         {
@@ -66,7 +75,7 @@ namespace DangerousSituationsUI.Services
             var user = await db.Users.FindAsync(userId);
             if (user != null)
             {
-                db.Users.Remove(user);
+                user.IsDeleted = true;
                 await db.SaveChangesAsync();
                 return true;
             }
@@ -76,7 +85,7 @@ namespace DangerousSituationsUI.Services
         public async Task<(bool IsValid, string ErrorMessage)> ValidateNewUserAsync(string username, string email, string password)
         {
             using var db = _serviceProvider.GetRequiredService<ApplicationContext>();
-
+            
             if (await db.Users.AnyAsync(u => u.Name == username))
                 return (false, "Имя пользователя уже занято.");
 

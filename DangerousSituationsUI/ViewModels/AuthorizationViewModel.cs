@@ -2,6 +2,7 @@
 using ClassLibrary.Database;
 using ClassLibrary.Database.Models;
 using ClassLibrary.Repository;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using MsBox.Avalonia;
 using ReactiveUI;
@@ -101,6 +102,14 @@ public class AuthorizationViewModel : ReactiveObject, IRoutableViewModel
         if (dbUser is null)
         {
             ShowMessageBox("Invalid Username", $"Имени пользователя {Nickname} не существует");
+            Nickname = string.Empty;
+            Password = string.Empty;
+            return;
+        }
+
+        if (dbUser.IsDeleted == true)
+        {
+            ShowMessageBox("Is Deleted User", $"Ученая запись пользователя {Nickname} заблокирована. Обратитесь к администратору.");
             Nickname = string.Empty;
             Password = string.Empty;
             return;

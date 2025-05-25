@@ -12,5 +12,6 @@ public class User
 
     public bool IsAdmin { get; set; } = false;
 
+    public bool IsDeleted { get; set; }
     public long? TgChatId { get; set; } = null;
 }

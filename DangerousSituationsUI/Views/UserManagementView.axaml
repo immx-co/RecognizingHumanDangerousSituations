@@ -22,9 +22,6 @@
                 Content="Создать"
                 Command="{Binding AddUserCommand}"
                 Margin="10"/>
-        <Button Content="Удалить"
-                Command="{Binding DeleteUserCommand}"
-                Margin="10"/>
       </StackPanel>
       <StackPanel Grid.Row="1" Orientation="Horizontal">
         <DataGrid ItemsSource="{Binding UserItems}"
