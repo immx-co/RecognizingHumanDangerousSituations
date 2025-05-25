@@ -12,7 +12,7 @@ public class HubConnectionWrapper
     public HubConnectionWrapper()
     {
         Connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:1234/notify")
+                .WithUrl("https://localhost:1234/notify")
                 .Build();
 
         Connection.Closed += async (error) =>

@@ -49,4 +49,47 @@ public class RectItemService
             Color = color
         };
     }
+
+    public RectItem InitRect(
+        int xRecognition, 
+        int yRecognition, 
+        double widthRecognition, 
+        double heightRecognition, 
+        Bitmap file)
+    {
+        double widthImage = file.Size.Width;
+        double heightImage = file.Size.Height;
+
+        double k1 = widthImage / 800;
+        double k2 = heightImage / 400;
+
+        if (k1 > k2)
+        {
+            widthImage /= k1;
+            heightImage /= k1;
+        }
+        else
+        {
+            widthImage /= k2;
+            heightImage /= k2;
+        }
+
+        double xCenter = widthImage * (xRecognition / file.Size.Width) + (800 - widthImage) / 2;
+        double yCenter = heightImage * (yRecognition / file.Size.Height) + (400 - heightImage) / 2;
+
+        int width = (int)(widthImage * (widthRecognition / file.Size.Width));
+        int height = (int)(heightImage * (heightRecognition / file.Size.Height));
+
+        int x = (int)(xCenter - width / 2);
+        int y = (int)(yCenter - height / 2);
+
+        return new RectItem
+        {
+            X = x,
+            Y = y,
+            Width = width,
+            Height = height,
+            Color = "Red"
+        };
+    }
 }

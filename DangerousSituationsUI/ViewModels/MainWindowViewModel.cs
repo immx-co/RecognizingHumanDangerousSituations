@@ -27,6 +27,8 @@ using System.Collections.ObjectModel;
 using SkiaSharp;
 using System.Diagnostics;
 using FFMpegCore.Enums;
+using DangerousSituationsUI.Views;
+using Avalonia.Controls.ApplicationLifetimes;
 
 
 namespace DangerousSituationsUI.ViewModels;
@@ -475,6 +477,9 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             frameBitmapModels = await _videoService.GetFramesAsync(file);
+
+            var test = await ShowControlZoneSettingsDialogAsync(frameBitmapModels.First().frame);
+
             int totalFiles = frameBitmapModels.Count();
             for (int idx = 0; idx < totalFiles; idx++)
             {
@@ -538,6 +543,21 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         }
         Log.Debug($"MainViewModel.InitFramesAsync: End: {file.Name}");
 
+    }
+
+    private async Task<RectItem> ShowControlZoneSettingsDialogAsync(Bitmap frame)
+    {
+        var controlZone = new RectItem();
+        if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var controlZoneSettingsViewModel = new ControlZoneSettingsViewModel(frame);
+
+            if(desktop.MainWindow != null) 
+                await controlZoneSettingsViewModel.ControlZoneSettingsWindow.ShowDialog(desktop.MainWindow);
+
+            return controlZoneSettingsViewModel.ControlZones.First();
+        }
+        return controlZone;
     }
 
     private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
