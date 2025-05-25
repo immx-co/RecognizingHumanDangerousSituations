@@ -1,0 +1,73 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:vm="using:DangerousSituationsUI.ViewModels"
+        x:Class="DangerousSituationsUI.Views.AddControlZoneDialogWindow"
+		x:DataType="vm:AddControlZoneDialogViewModel"
+		
+        Height="600"
+		Width="1200"
+		
+		CanResize="False"
+		
+		WindowStartupLocation="CenterScreen"
+		
+		ExtendClientAreaToDecorationsHint="True"
+		ExtendClientAreaChromeHints="NoChrome"
+		ExtendClientAreaTitleBarHeightHint="-1"
+		SystemDecorations="BorderOnly">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="50"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="50"/>
+		</Grid.RowDefinitions>
+
+
+		<Grid Grid.Row="0" 
+			  ColumnDefinitions="Auto, *"
+			  VerticalAlignment="Center"
+			  Width="500">
+			<TextBlock Grid.Column="0"
+					   Text="Описание:"
+					   Margin="0 0 10 0"
+					   VerticalAlignment="Center"/>
+			<TextBox Grid.Column="1" 
+					 Text="{Binding ControlZone.Description}"/>
+		</Grid>
+		
+		<Grid Grid.Row="1"
+			  MaxWidth="800"
+			  MaxHeight="400"
+			  VerticalAlignment="Center"
+			  HorizontalAlignment="Center">
+			<Border>
+				<Image MaxWidth="800"
+					   MaxHeight="400"
+					   Source="{Binding Frame}"/>
+			</Border>
+			<Canvas PointerPressed="Canvas_PointerPressed"
+					Width="{Binding FrameWidth}"
+					Height="{Binding FrameHeight}">
+				<Rectangle Width="{Binding FrameWidth}"
+						   Height="{Binding FrameHeight}"
+						   Fill="Transparent"/>
+			</Canvas>
+			
+		</Grid>
+		<StackPanel Grid.Row="2"
+					HorizontalAlignment="Right"
+					Orientation="Horizontal"
+					Margin="0 0 10 0">
+			<Button Content="Сбросить"
+					Command="{Binding ResetCommand}"
+					Margin="0 0 5 0"/>
+			<Button Content="Создать"
+					Command="{Binding SaveCommand}"
+					Margin="0 0 5 0"/>
+			<Button Content="Отмена"
+					Command="{Binding CancelCommand}"/>
+		</StackPanel>
+	</Grid>
+</Window>

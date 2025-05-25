@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:vm="using:DangerousSituationsUI.ViewModels"
+			 x:DataType="vm:ControlZoneSettingsItemViewModel"
+             x:Class="DangerousSituationsUI.Views.ControlZoneSettingsItem">
+	<Grid RowDefinitions="*"
+		  ColumnDefinitions="*, Auto">
+		<TextBlock Grid.Row="0"
+				   Grid.Column="0"
+				   Text="{Binding ControlZone.Description}"/>
+		<StackPanel Grid.RowSpan="0"
+					Grid.Column="1"
+					Orientation="Vertical">
+			<Button Content="Удалить"/>
+		</StackPanel>
+	</Grid>
+</UserControl>

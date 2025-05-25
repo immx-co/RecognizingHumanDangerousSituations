@@ -1,4 +1,6 @@
-﻿using Avalonia.Media.Imaging;
+﻿using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media.Imaging;
 using ClassLibrary.Database.Models;
 using ClassLibrary.Services;
 using DangerousSituationsUI.Services;
@@ -8,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Threading;
+using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
 namespace DangerousSituationsUI.ViewModels;
@@ -15,11 +18,26 @@ namespace DangerousSituationsUI.ViewModels;
 public class ControlZoneSettingsViewModel : ReactiveObject
 {
     private Bitmap _frame;
-    private int _box_tl_x;
-    private int _box_tl_y;
-    private int _box_width;
-    private int _box_height;
-    private bool _boxPositionChanged;
+
+    private double _frameWidth;
+
+    private double _frameHeight;
+
+    private List<ControlZone> _controlZones;
+
+    private List<ControlZoneSettingsItemViewModel> _controlZonesItem;
+
+    public double FrameWidth
+    {
+        get => _frameWidth;
+        set => this.RaiseAndSetIfChanged(ref _frameWidth, value);
+    }
+
+    public double FrameHeight
+    {
+        get => _frameHeight;
+        set => this.RaiseAndSetIfChanged(ref _frameHeight, value);
+    }
 
     public Bitmap Frame
     {
@@ -29,56 +47,38 @@ public class ControlZoneSettingsViewModel : ReactiveObject
 
     public ControlZoneSettingsWindow ControlZoneSettingsWindow { get; }
 
-    public List<RectItem> ControlZones { get; private set; }
-
-    public int BoxTopLeftX
+    public List<ControlZone> ControlZones
     {
-        get => _box_tl_x;
-        set => this.RaiseAndSetIfChanged(ref _box_tl_x, value);
+        get => _controlZones;
+        set => this.RaiseAndSetIfChanged(ref _controlZones, value);
     }
 
-    public int BoxTopLeftY
+    public List<ControlZoneSettingsItemViewModel> ControlZonesItems
     {
-        get => _box_tl_y;
-        set => this.RaiseAndSetIfChanged(ref _box_tl_y, value);
-    }
-
-    public int BoxWidth
-    {
-        get => _box_width;
-        set => this.RaiseAndSetIfChanged(ref _box_width, value);
-    }
-
-    public int BoxHeight
-    {
-        get => _box_height;
-        set => this.RaiseAndSetIfChanged(ref _box_height, value);
-    }
-
-    public bool BoxPositionChanged
-    {
-        get => _boxPositionChanged;
-        set => this.RaiseAndSetIfChanged(ref _boxPositionChanged, value);
+        get => _controlZonesItem;
+        set => this.RaiseAndSetIfChanged(ref _controlZonesItem, value);
     }
 
     public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+
+    public ReactiveCommand<Unit, Task> AddCommand { get; }
 
     public ControlZoneSettingsViewModel(Bitmap frame)
     {
         _frame = frame;
 
-        SaveCommand = ReactiveCommand.Create(OnSave);
-
-        ControlZones = [new RectItemService().InitRect(
-            (int)frame.Size.Width / 2, 
+        var rectItem = new RectItemService().InitRect(
+            (int)frame.Size.Width / 2,
             (int)frame.Size.Height / 2,
-            frame.Size.Width, frame.Size.Height, 
-            frame)];
+            frame.Size.Width,
+            frame.Size.Height,
+            frame);
 
-        BoxTopLeftX = ControlZones.First().X;
-        BoxTopLeftY = ControlZones.First().Y;
-        BoxHeight = ControlZones.First().Height;
-        BoxWidth = ControlZones.First().Width;
+        FrameHeight = rectItem.Height;
+        FrameWidth = rectItem.Width;
+
+        SaveCommand = ReactiveCommand.Create(OnSave);
+        AddCommand = ReactiveCommand.Create(OnAddAsync);
 
         ControlZoneSettingsWindow = new ControlZoneSettingsWindow
         {
@@ -88,8 +88,13 @@ public class ControlZoneSettingsViewModel : ReactiveObject
 
     public void OnSave()
     {
-        
-
         ControlZoneSettingsWindow.Close();
+    }
+
+    public async Task OnAddAsync()
+    {
+        var AddControlZoneDialogViewModel = new AddControlZoneDialogViewModel(_frame, _controlZones);
+        
+        await AddControlZoneDialogViewModel.AddControlZoneDialogWindow.ShowDialog(ControlZoneSettingsWindow);
     }
 }

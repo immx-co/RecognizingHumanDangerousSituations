@@ -478,7 +478,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
             frameBitmapModels = await _videoService.GetFramesAsync(file);
 
-            var test = await ShowControlZoneSettingsDialogAsync(frameBitmapModels.First().frame);
+            await ShowControlZoneSettingsDialogAsync(frameBitmapModels.First().frame);
 
             int totalFiles = frameBitmapModels.Count();
             for (int idx = 0; idx < totalFiles; idx++)
@@ -545,7 +545,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
 
     }
 
-    private async Task<RectItem> ShowControlZoneSettingsDialogAsync(Bitmap frame)
+    private async Task ShowControlZoneSettingsDialogAsync(Bitmap frame)
     {
         var controlZone = new RectItem();
         if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -555,9 +555,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             if(desktop.MainWindow != null) 
                 await controlZoneSettingsViewModel.ControlZoneSettingsWindow.ShowDialog(desktop.MainWindow);
 
-            return controlZoneSettingsViewModel.ControlZones.First();
+           
         }
-        return controlZone;
     }
 
     private async Task<Video> SaveDataIntoDatabase(IStorageFile videoFile, List<FrameNDetections> framesNDetections)
