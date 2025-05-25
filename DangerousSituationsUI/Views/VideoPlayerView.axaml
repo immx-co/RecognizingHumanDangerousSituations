@@ -22,8 +22,9 @@
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
-      <StackPanel Grid.Column="1"
-                  VerticalAlignment="Center"
+      <Border Grid.Column="1" Background="{StaticResource PrimaryGradient}"
+              Margin="30">
+      <StackPanel VerticalAlignment="Center"
                   HorizontalAlignment="Center">
 
         <ComboBox Width="600"
@@ -261,6 +262,7 @@
         </Grid>
 
       </StackPanel>
-    </Grid>
+      </Border>
+      </Grid>
   </Grid>
 </UserControl>
