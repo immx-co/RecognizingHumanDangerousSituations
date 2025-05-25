@@ -651,6 +651,7 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     {
                         try
                         {
+                            await Task.Delay(1000);
                             string backgroundDescription = await GetBackgroundDescription(frameBitmapModel.frame);
                             await _telegramBotApi.SendEventDataWrapperAsync(frameBitmapModel, det, backgroundDescription);
                         }
