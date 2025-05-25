@@ -27,7 +27,6 @@ public class HotificationHub : Hub
         int frameScrollTimeout)
     {
         Log.Debug("HotificationHub.SaveConfig: Start.");
-        LogJournalViewModel.logString += "HotificationHub.SaveConfig: Start.\n";
         try
         {
             await _configurationService.UpdateAppSettingsAsync(appSettings =>
@@ -45,7 +44,6 @@ public class HotificationHub : Hub
                 _configurationService.GetFrameRate(),
                 _configurationService.GetFrameScrollTimeout());
             Log.Debug("HotificationHub.SaveConfig: Done.");
-            LogJournalViewModel.logString += "HotificationHub.SaveConfig: Done.\n";
             return;
         }
         catch (Exception ex)

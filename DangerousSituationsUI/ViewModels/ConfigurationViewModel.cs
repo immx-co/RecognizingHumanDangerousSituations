@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using MsBox.Avalonia;
 using ReactiveUI;
+using Serilog;
 using System;
 using System.Reactive;
 using System.Threading;
@@ -116,6 +117,7 @@ public class ConfigurationViewModel : ReactiveObject, IRoutableViewModel
     private async Task SaveConfig()
     {
         await _hubConnectionWrapper.SaveConfig(ConnectionString, Url, NeuralWatcherTimeout, FrameRate, FrameScrollTimeout);
+        Log.Information($"Save Configs: ConnectionString:{ConnectionString}, Url:{Url}, NeuralWatcherTimeout:{NeuralWatcherTimeout}, FrameRate:{FrameRate}, FrameScrollTimeout:{FrameScrollTimeout}");
     }
     #endregion
 

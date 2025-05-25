@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
 using System.Linq;
+using Serilog;
 
 
 namespace DangerousSituationsUI.Services;
@@ -20,6 +21,7 @@ public class FilesService
         var folder = await OpenFolderAsync();
         if (folder == null)
             return null;
+        Log.Information($"Sending folder: {folder.Name}");
 
         var storageFiles = new List<IStorageFile>();
         var supportedExtensions = new[] { ".mp4", ".avi" };

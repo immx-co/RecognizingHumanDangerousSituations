@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:DangerousSituationsUI.ViewModels"
+			 xmlns:serilog="clr-namespace:Serilog.Events;assembly=Serilog"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="DangerousSituationsUI.Views.LogJournalView"
              x:DataType="vm:LogJournalViewModel">
@@ -11,11 +12,40 @@
 		<StackPanel Width="600"
 						HorizontalAlignment="Left"
 						Margin="20">
-			<StackPanel Margin="0 0 0 10">
-				<Label Content="Журнал логирования:"/>
-				<TextBox Margin="0 0 0 10" Text="{Binding LogString}" AcceptsReturn="True" TextWrapping="WrapWithOverflow" Height="700" Width="600"></TextBox>
+			<StackPanel Margin="0 0 0 10" Width="600">
+					<StackPanel Orientation="Horizontal" Margin="0 0 0 10" Width="600">
+						<ToggleButton Margin="0 0 10 0"
+							Content="Verbose"
+							Command="{Binding ToggleLevelFilterCommand}" 
+							CommandParameter="{x:Static serilog:LogEventLevel.Verbose}"/>
+						<ToggleButton Margin="0 0 10 0"
+							Content="Debug" 
+							Command="{Binding ToggleLevelFilterCommand}" 
+							CommandParameter="{x:Static serilog:LogEventLevel.Debug}"/>
+						<ToggleButton Margin="0 0 10 0"
+							Content="Information" 
+							IsDefault="True"
+							Command="{Binding ToggleLevelFilterCommand}" 
+							CommandParameter="{x:Static serilog:LogEventLevel.Information}"/>
+						<ToggleButton Margin="0 0 10 0"
+							Content="Warning"
+							Command="{Binding ToggleLevelFilterCommand}"
+							CommandParameter="{x:Static serilog:LogEventLevel.Warning}"/>
+						<ToggleButton Margin="0 0 10 0"
+							Content="Error"
+							Command="{Binding ToggleLevelFilterCommand}"
+							CommandParameter="{x:Static serilog:LogEventLevel.Error}"/>
+						<ToggleButton Margin="0 0 10 0"
+							Content="Fatal"
+							Command="{Binding ToggleLevelFilterCommand}"
+							CommandParameter="{x:Static serilog:LogEventLevel.Fatal}"/>
+					</StackPanel>
+					<Button HorizontalAlignment="Right" Content="Обновить" Command="{Binding UpdateUI}"></Button>
+				<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+					<ListBox HorizontalAlignment="Left" ItemsSource="{Binding Logs}"  Height="600" Width="1200" ></ListBox>
+				</ScrollViewer>
+				
 			</StackPanel>
 		</StackPanel>
 	</Grid>
-
 </UserControl>

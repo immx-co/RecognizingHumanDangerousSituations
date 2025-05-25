@@ -60,7 +60,6 @@ public class TelegramBotAPI : IDisposable
         if (string.IsNullOrEmpty(token))
         {
             Log.Warning("Telegram bot token cannot be empty.");
-            _logJournalViewModel.LogString += "Telegram bot token cannot be empty\n";
             throw new ArgumentException("Telegram bot token cannot be empty", nameof(token));
         }
 
@@ -88,12 +87,10 @@ public class TelegramBotAPI : IDisposable
             _isRunning = true;
             var me = await _botClient.GetMe();
             Log.Information($"{me.FirstName} запущен!");
-            _logJournalViewModel.LogString += $"{me.FirstName} запущен!\n";
         }
         catch (Exception ex)
         {
             Log.Error($"Ошибка при запуске бота: {ex}");
-            _logJournalViewModel.LogString += $"Ошибка при запуске бота: {ex}\n";
             _isRunning = false;
             throw;
         }
@@ -108,12 +105,9 @@ public class TelegramBotAPI : IDisposable
             _cts.Cancel();
             _isRunning = false;
             Log.Information("Бот остановлен");
-            _logJournalViewModel.LogString += "Бот остановлен\n";
         }
         catch (Exception ex)
         {
-            Log.Error($"Ошибка при остановке бота: {ex}");
-            _logJournalViewModel.LogString += $"Ошибка при остановке бота: {ex}\n";
             throw;
         }
     }
@@ -143,7 +137,6 @@ public class TelegramBotAPI : IDisposable
         catch (Exception ex)
         {
             Log.Error($"Ошибка при отправке приветствия: {ex.Message}");
-            _logJournalViewModel.LogString += $"Ошибка при отправке приветствия: {ex.Message}\n";
         }
     }
 
@@ -160,7 +153,6 @@ public class TelegramBotAPI : IDisposable
         catch (Exception ex)
         {
             Log.Error($"Ошибка при отправке прощания: {ex.Message}");
-            _logJournalViewModel.LogString += $"Ошибка при отправке прощания: {ex.Message}\n";
         }
     }
 
@@ -181,7 +173,6 @@ public class TelegramBotAPI : IDisposable
 
                     string welcomeImagePath = Path.Combine(AppContext.BaseDirectory, "..//..//..//Assets/welcome.jpg");
                     await SendWelcomeMessage($"Добро пожаловать в Recognition Dangerous Situations, {userName}!", welcomeImagePath);
-                    _logJournalViewModel.LogString += $"Обновлен ChatId у телеграм бота, chatId == {ChatId}";
                     await Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         _navigationViewModel.TgBotConnectionStatus = Brushes.Green;
@@ -191,7 +182,6 @@ public class TelegramBotAPI : IDisposable
             catch (Exception ex)
             {
                 Log.Error(ex, "Ошибка при отправке приветственного сообщения.");
-                _logJournalViewModel.LogString += $"Ошибка при отправке приветственного сообщения.: {ex.Message}";
                 _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
             }
         }
@@ -358,7 +348,6 @@ public class TelegramBotAPI : IDisposable
                             var user = message.From;
                             Debug.Write($"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}");
                             Log.Information($"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}");
-                            _logJournalViewModel.LogString += $"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}\n";
 
                             var chat = message.Chat;
                             await botClient.SendMessage(
@@ -375,7 +364,6 @@ public class TelegramBotAPI : IDisposable
         catch (Exception ex)
         {
             Log.Error(ex.ToString());
-            _logJournalViewModel.LogString += $"{ex.ToString()}\n";
             _navigationViewModel.TgBotConnectionStatus = Brushes.Red;
         }
     }
@@ -391,7 +379,6 @@ public class TelegramBotAPI : IDisposable
 
         Debug.Write(ErrorMessage);
         Log.Error(ErrorMessage);
-        _logJournalViewModel.LogString += $"{ErrorMessage}\n";
         return Task.CompletedTask;
     }
 
@@ -409,7 +396,6 @@ public class TelegramBotAPI : IDisposable
         catch (Exception ex)
         {
             Log.Error($"Ошибка при отправке изображения с детекцией боту: {ex.Message}");
-            _logJournalViewModel.LogString += $"Ошибка при отправке изображения с детекцией боту: {ex.Message}\n";
         }
     }
     #endregion
