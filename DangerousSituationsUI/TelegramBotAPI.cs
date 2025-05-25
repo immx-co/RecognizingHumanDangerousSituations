@@ -198,7 +198,7 @@ public class TelegramBotAPI : IDisposable
         _botClient = null;
     }
 
-    public async Task SendEventDataWrapperAsync(BitmapModel frameBitmapModel, RecognitionResult det)
+    public async Task SendEventDataWrapperAsync(BitmapModel frameBitmapModel, RecognitionResult det, string backgroundDescription)
     {
         using var ms = new MemoryStream();
         frameBitmapModel.frame.Save(ms);
@@ -282,8 +282,11 @@ public class TelegramBotAPI : IDisposable
         data.SaveTo(resultMs);
         var frameBytes = resultMs.ToArray();
 
-        var detectionInfo = $"Человек упал {frameBitmapModel.timeSpan}! Координаты: X={topLeftCornerX}, Y={topLeftCornerY}, " +
-                           $"Ширина={det.Width}, Высота={det.Height}";
+        var detectionInfo = $"⚠️ Обнаружено падение!\n" +
+                       $"⏱ Время: {frameBitmapModel.timeSpan}\n" +
+                       $"📍 Координаты: X={topLeftCornerX}, Y={topLeftCornerY}\n" +
+                       $"📏 Размеры: Ширина={det.Width}, Высота={det.Height}\n" +
+                       $"📝 Описание фона: {backgroundDescription}";
         await SendEventDataAsync(frameBytes, detectionInfo);
     }
     #endregion

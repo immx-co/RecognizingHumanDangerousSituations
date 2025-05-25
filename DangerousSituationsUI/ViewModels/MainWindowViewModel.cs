@@ -651,7 +651,8 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
                     {
                         try
                         {
-                            await _telegramBotApi.SendEventDataWrapperAsync(frameBitmapModel, det);
+                            string backgroundDescription = await GetBackgroundDescription(frameBitmapModel.frame);
+                            await _telegramBotApi.SendEventDataWrapperAsync(frameBitmapModel, det, backgroundDescription);
                         }
                         catch (Exception ex)
                         {
@@ -973,6 +974,41 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
             }
         }
     }
+    
+    private async Task<string> GetBackgroundDescription(Bitmap frame)
+    {
+        string surfaceRecognitionServiceAddress = _configurationService.GetConnectionString("srsStringConnection");
+        string backgroundDescription = "Не удалось получить описание фона";
+        using (var client = new HttpClient())
+        {
+            Log.Debug("MainViewModel.GetBackgroundDescription: Start");
+            try
+            {
+                using (MemoryStream imageStream = new())
+                {
+                    frame.Save(imageStream);
+                    imageStream.Seek(0, SeekOrigin.Begin);
+
+                    var content = new MultipartFormDataContent();
+                    var imageContent = new StreamContent(imageStream);
+                    imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+                    content.Add(imageContent, "image", "frame.img");
+                    var response = await client.PostAsync($"{surfaceRecognitionServiceAddress}/background_description", content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var jsonResponse = await response.Content.ReadAsStringAsync();
+                        var backgroundInfo = JsonSerializer.Deserialize<BackgroundDescription>(jsonResponse);
+                        backgroundDescription = backgroundInfo?.Description ?? backgroundDescription;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                backgroundDescription = $"Ошибка при получении описания фона: {ex.Message}";
+            }
+        }
+        return backgroundDescription;
+    }
     #endregion
 
     #region Public Methods
@@ -1129,7 +1165,11 @@ public class MainViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
-    
+    public class BackgroundDescription
+    {
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+    }
 
     #endregion
 }
